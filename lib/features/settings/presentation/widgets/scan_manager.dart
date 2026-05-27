@@ -110,7 +110,7 @@ class _ScanManagerState extends ConsumerState<ScanManager> {
           const SizedBox(height: 12),
         ],
 
-        // 「自动创建歌单包含子目录」开关
+        // 「歌单包含子目录歌曲」开关
         _buildIncludeSubdirsTile(),
         const SizedBox(height: AppSpacing.md),
 
@@ -284,7 +284,7 @@ class _ScanManagerState extends ConsumerState<ScanManager> {
     );
   }
 
-  /// 「自动创建歌单包含子目录」开关
+  /// 「歌单包含子目录歌曲」开关
   Widget _buildIncludeSubdirsTile() {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -301,10 +301,10 @@ class _ScanManagerState extends ConsumerState<ScanManager> {
           Icons.account_tree_outlined,
           color: colorScheme.onSurfaceVariant,
         ),
-        title: const Text('自动创建歌单包含子目录'),
+        title: const Text('歌单包含子目录歌曲'),
         subtitle: Text(
           asyncValue.when(
-            data: (_) => '开启后子目录歌曲也会加入到祖先目录歌单',
+            data: (_) => '子目录的歌曲会同时归入祖先目录歌单',
             loading: () => '加载中...',
             error: (_, __) => '读取配置失败',
           ),
