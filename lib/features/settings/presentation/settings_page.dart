@@ -122,6 +122,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
           const SizedBox(height: 16),
 
+          // 分组: 电台 / 流媒体
+          _buildSectionCard(
+            title: '电台 / 流媒体',
+            icon: Icons.cell_tower_outlined,
+            children: [_buildHlsProxyTile()],
+          ),
+
+          const SizedBox(height: 16),
+
           // 分组: 数据管理
           _buildSectionCard(
             title: '数据管理',
@@ -415,6 +424,39 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => ref.invalidate(frontendVersionCheckProvider),
           ),
+    );
+  }
+
+  /// HLS 电台后端代理开关
+  Widget _buildHlsProxyTile() {
+    final enabledAsync = ref.watch(hlsProxyEnabledProvider);
+    final enabled = enabledAsync.value ?? false;
+
+    return SwitchListTile(
+      secondary: const Icon(Icons.cell_tower_outlined),
+      title: const Text('HLS 电台后端代理'),
+      subtitle: const Text(
+        '开启后服务端拉取电台 m3u8 并代理切片,可绕过 Referer 防盗链 / CORS。'
+        '所有切片走本机带宽,注意流量成本',
+      ),
+      value: enabled,
+      onChanged: enabledAsync.isLoading
+          ? null
+          : (value) async {
+              try {
+                await ref
+                    .read(hlsProxyEnabledProvider.notifier)
+                    .setValue(value);
+                if (!mounted) return;
+                ResponsiveSnackBar.show(
+                  context,
+                  message: value ? '已开启 HLS 代理' : '已关闭 HLS 代理',
+                );
+              } catch (e) {
+                if (!mounted) return;
+                ResponsiveSnackBar.showError(context, message: '保存失败: $e');
+              }
+            },
     );
   }
 

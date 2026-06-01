@@ -300,6 +300,48 @@ final autoCreateIncludeSubdirsProvider =
     );
 
 // ============================================================================
+// HLS 电台代理开关 Provider
+// ============================================================================
+
+/// HLS 反向代理开关 Notifier。
+/// 开启后服务端拉取并改写电台 m3u8、代理切片;绕过 Referer 防盗链/CORS,但走本机带宽。
+/// 后端 key: hls_proxy_enabled, 存 "true"/"false"。
+class HlsProxyEnabledNotifier extends AsyncNotifier<bool> {
+  static const _configKey = 'hls_proxy_enabled';
+
+  @override
+  Future<bool> build() async {
+    final configApi = ref.watch(configApiProvider);
+    try {
+      final config = await configApi.getConfig(_configKey);
+      return config.value.toLowerCase() == 'true';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> setValue(bool value) async {
+    state = AsyncValue.data(value);
+    try {
+      final configApi = ref.read(configApiProvider);
+      await configApi.updateConfig(
+        key: _configKey,
+        value: value ? 'true' : 'false',
+      );
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
+  }
+}
+
+/// HLS 电台代理开关 Provider
+final hlsProxyEnabledProvider =
+    AsyncNotifierProvider<HlsProxyEnabledNotifier, bool>(
+      HlsProxyEnabledNotifier.new,
+    );
+
+// ============================================================================
 // Upgrade Progress Provider
 // ============================================================================
 
