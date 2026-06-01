@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../config/app_config.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exceptions.dart';
+import '../../../../core/network/base_url_provider.dart';
+import '../../../../core/network/server_entry.dart';
+import '../../../../core/network/servers_provider.dart';
 import '../../../../core/storage/app_preferences.dart';
 import '../../../../core/storage/secure_storage.dart';
 import '../../data/auth_api.dart';
@@ -75,14 +78,11 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.loading();
 
     try {
-      // 如果提供了自定义 API 地址，更新配置
+      // 如果提供了自定义 API 地址，规范化并写入 baseUrl + 同步到服务器列表
       if (apiBaseUrl != null && apiBaseUrl.isNotEmpty) {
-        AppConfig.baseUrl = apiBaseUrl;
-        // 保存到偏好设置
-        final prefs = await ref.read(appPreferencesProvider.future);
-        await prefs.setApiBaseUrl(apiBaseUrl);
-        // 使已缓存的 dioProvider 失效，下次访问时会使用新的 baseUrl 重新创建
-        ref.invalidate(dioProvider);
+        final normalized = ServerEntry.normalizeUrl(apiBaseUrl);
+        ref.read(baseUrlProvider.notifier).set(normalized);
+        await _syncServerList(normalized);
       }
 
       // 创建临时 Dio 进行登录（不带认证拦截器）
@@ -117,10 +117,31 @@ class AuthNotifier extends Notifier<AuthState> {
       await prefs.setLastPassword(password);
 
       state = state.authenticated();
+    } on FormatException catch (e) {
+      state = state.unauthenticated(e.message);
     } on ApiException catch (e) {
       state = state.unauthenticated(e.message);
     } catch (e) {
       state = state.unauthenticated('登录失败：$e');
+    }
+  }
+
+  /// 把登录用的 url 同步到服务器列表：
+  /// - 列表为空：promote 为首项
+  /// - 列表恰好 1 项且 url 不同：更新该项 url（登录页编辑场景）
+  /// - 否则若 url 已存在：不动；不存在则不主动加（管理走设置页）
+  Future<void> _syncServerList(String url) async {
+    final notifier = ref.read(serversProvider.notifier);
+    final list = await ref.read(serversProvider.future);
+    if (list.isEmpty) {
+      await notifier.add(
+        ServerEntry(id: ServerEntry.generateId(), name: '', url: url),
+      );
+      return;
+    }
+    if (list.length == 1 && list.first.url != url) {
+      await notifier.editEntry(list.first.copyWith(url: url));
+      return;
     }
   }
 

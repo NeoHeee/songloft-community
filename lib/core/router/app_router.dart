@@ -10,6 +10,7 @@ import '../../features/home/presentation/plugin_webview_page.dart';
 import '../../features/library/presentation/library_page.dart';
 import '../../features/playlist/presentation/playlists_page.dart';
 import '../../features/playlist/presentation/playlist_detail_page.dart';
+import '../../features/settings/presentation/servers_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
 import '../../shared/layouts/shell_layout.dart';
 
@@ -21,6 +22,7 @@ class AppRoutes {
   static const String playlists = '/playlists';
   static const String playlistDetail = '/playlists/:id';
   static const String settings = '/settings';
+  static const String servers = '/settings/servers';
   static const String plugin = '/plugin';
 }
 
@@ -131,6 +133,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder:
                 (context, state) =>
                     const NoTransitionPage(child: SettingsPage()),
+          ),
+
+          // 服务器列表管理
+          GoRoute(
+            path: AppRoutes.servers,
+            pageBuilder:
+                (context, state) =>
+                    const NoTransitionPage(child: ServersPage()),
           ),
         ],
       ),

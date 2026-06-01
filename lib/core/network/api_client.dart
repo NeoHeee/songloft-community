@@ -6,6 +6,7 @@ import '../../config/app_config.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../storage/secure_storage.dart';
 import 'auth_interceptor.dart';
+import 'base_url_provider.dart';
 
 /// 创建并配置 Dio 实例
 Dio createDio({
@@ -89,6 +90,7 @@ class ApiClient {
   ApiClient(this.dio);
 
   /// 更新 baseUrl
+  @Deprecated('改走 baseUrlProvider.notifier.set；dioProvider 会自动重建带新 baseUrl 的 Dio')
   void updateBaseUrl(String baseUrl) {
     dio.options.baseUrl = baseUrl;
   }
@@ -106,8 +108,10 @@ final publicDioProvider = Provider.family<Dio, String?>((ref, customBaseUrl) {
 
 /// 认证 Dio Provider
 final dioProvider = Provider<Dio>((ref) {
+  final baseUrl = ref.watch(baseUrlProvider);
   final secureStorage = ref.watch(secureStorageProvider);
   return createDio(
+    customBaseUrl: baseUrl,
     secureStorage: secureStorage,
     onTokenExpired: () {
       debugPrint('[DioProvider] Token expired, notifying AuthNotifier');

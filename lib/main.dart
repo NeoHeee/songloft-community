@@ -19,6 +19,7 @@ import 'core/theme/responsive.dart';
 import 'core/router/app_router.dart';
 import 'core/utils/window_tray_manager.dart';
 import 'features/settings/presentation/providers/settings_provider.dart';
+import 'features/startup/presentation/startup_gate.dart';
 
 /// 全局 AudioHandler Provider
 final audioHandlerProvider = Provider<SongloftAudioHandler>((ref) {
@@ -74,14 +75,12 @@ void main(List<String> args) async {
       AppConfig.apiPrefix = '$trimmed/api/v1';
     }
   } else {
-    // 独立部署模式：从本地存储恢复用户之前配置的 API 地址
+    // 独立部署模式：迁移旧的单地址到新的服务器列表。
+    // 实际探测在 StartupGate 内异步执行，避免阻塞 main 让 Splash 立即可见。
     // shared_preferences_android 2.4.23 声明 minSdk=24，API 23 上可能失败
     try {
       final prefs = await AppPreferences.create();
-      final savedUrl = prefs.getApiBaseUrl();
-      if (savedUrl != null && savedUrl.isNotEmpty) {
-        AppConfig.baseUrl = savedUrl;
-      }
+      await prefs.migrateLegacyApiBaseUrl();
     } catch (e) {
       debugPrint('[Main] SharedPreferences 初始化失败，使用默认配置: $e');
     }
@@ -164,7 +163,7 @@ void main(List<String> args) async {
         // 将 audioHandler 注入到 Riverpod 中
         audioHandlerProvider.overrideWithValue(audioHandler),
       ],
-      child: const SongloftApp(),
+      child: const StartupGate(child: SongloftApp()),
     ),
   );
 }

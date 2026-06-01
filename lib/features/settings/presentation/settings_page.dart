@@ -5,10 +5,14 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/app_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/base_url_provider.dart';
+import '../../../core/network/servers_provider.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/theme/app_dimensions.dart';
 import '../../../shared/utils/responsive_snackbar.dart';
@@ -31,34 +35,6 @@ class SettingsPage extends ConsumerStatefulWidget {
 }
 
 class _SettingsPageState extends ConsumerState<SettingsPage> {
-  final _apiUrlController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    // 嵌入模式下 API 地址已由 main() 设定，无需加载存储的地址
-    if (!AppConfig.isEmbedded) {
-      _loadApiUrl();
-    }
-  }
-
-  Future<void> _loadApiUrl() async {
-    try {
-      final prefs = await ref.read(appPreferencesProvider.future);
-      final url = prefs.getApiBaseUrl();
-      if (url != null) {
-        _apiUrlController.text = url;
-      }
-    } catch (e) {
-      // 忽略
-    }
-  }
-
-  @override
-  void dispose() {
-    _apiUrlController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -185,10 +161,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               if (!AppConfig.isEmbedded) ...[
                 ListTile(
                   leading: const Icon(Icons.link),
-                  title: const Text('API 地址'),
+                  title: const Text('服务器'),
                   subtitle: _buildApiUrlSubtitle(),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: _showApiUrlDialog,
+                  onTap: () => context.push(AppRoutes.servers),
                 ),
                 const Divider(height: 1),
               ],
@@ -537,158 +513,20 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Widget _buildApiUrlSubtitle() {
-    final prefsAsync = ref.watch(appPreferencesProvider);
-    return prefsAsync.when(
-      data: (prefs) {
-        final url = prefs.getApiBaseUrl();
-        return Text(url ?? '使用默认地址');
+    final serversAsync = ref.watch(serversProvider);
+    final currentUrl = ref.watch(baseUrlProvider);
+    return serversAsync.when(
+      data: (servers) {
+        if (servers.isEmpty) return const Text('未配置 · 点击添加');
+        final current = servers.firstWhere(
+          (s) => s.url == currentUrl,
+          orElse: () => servers.first,
+        );
+        final label = current.name.isNotEmpty ? current.name : current.url;
+        return Text('${servers.length} 个地址 · 当前: $label');
       },
       loading: () => const Text('加载中...'),
-      error: (_, _) => const Text('使用默认地址'),
-    );
-  }
-
-  Future<void> _showApiUrlDialog() async {
-    // 先加载当前值
-    String oldUrl = '';
-    try {
-      final prefs = await ref.read(appPreferencesProvider.future);
-      final currentUrl = prefs.getApiBaseUrl();
-      oldUrl = currentUrl ?? '';
-      _apiUrlController.text = oldUrl;
-    } catch (e) {
-      _apiUrlController.text = '';
-    }
-
-    if (!mounted) return;
-
-    await showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('API 地址'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('设置服务器 API 地址。'),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _apiUrlController,
-                  decoration: const InputDecoration(
-                    labelText: 'API 地址',
-                    hintText: 'http://example.com:8080',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.url,
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('取消'),
-              ),
-              TextButton(
-                onPressed: () async {
-                  final dialogContext = context;
-                  try {
-                    final prefs = await ref.read(appPreferencesProvider.future);
-                    final urlBeforeReset = prefs.getApiBaseUrl() ?? '';
-                    await prefs.clearApiBaseUrl();
-                    _apiUrlController.clear();
-                    if (dialogContext.mounted) {
-                      Navigator.pop(dialogContext);
-                    }
-                    if (!mounted) return;
-                    if (urlBeforeReset.isNotEmpty) {
-                      // 地址从有值变为空（重置），需要重新登录
-                      AppConfig.baseUrl = '';
-                      ref.invalidate(dioProvider);
-                      await ref.read(authStateProvider.notifier).logout();
-                      if (mounted) {
-                        ResponsiveSnackBar.show(
-                          this.context,
-                          message: 'API 地址已重置，请重新登录',
-                        );
-                      }
-                    } else {
-                      if (mounted) {
-                        ResponsiveSnackBar.show(
-                          this.context,
-                          message: '已重置为默认地址',
-                        );
-                      }
-                    }
-                  } catch (e) {
-                    if (dialogContext.mounted) {
-                      ResponsiveSnackBar.showError(
-                        dialogContext,
-                        message: '重置失败: $e',
-                      );
-                    }
-                  }
-                },
-                child: const Text('重置'),
-              ),
-              FilledButton(
-                onPressed: () async {
-                  final dialogContext = context;
-                  final url = _apiUrlController.text.trim().replaceAll(
-                    RegExp(r'/+$'),
-                    '',
-                  );
-                  if (url.isNotEmpty && !Uri.tryParse(url)!.hasScheme) {
-                    ResponsiveSnackBar.show(
-                      dialogContext,
-                      message: '请输入有效的 URL（包含 http:// 或 https://）',
-                    );
-                    return;
-                  }
-
-                  try {
-                    final prefs = await ref.read(appPreferencesProvider.future);
-                    if (url.isEmpty) {
-                      await prefs.clearApiBaseUrl();
-                    } else {
-                      await prefs.setApiBaseUrl(url);
-                    }
-                    if (dialogContext.mounted) {
-                      Navigator.pop(dialogContext);
-                    }
-                    if (!mounted) return;
-                    if (url != oldUrl) {
-                      // 地址发生变化，更新运行时配置并退出登录
-                      AppConfig.baseUrl = url;
-                      ref.invalidate(dioProvider);
-                      await ref.read(authStateProvider.notifier).logout();
-                      if (mounted) {
-                        ResponsiveSnackBar.show(
-                          this.context,
-                          message: 'API 地址已更新，请重新登录',
-                        );
-                      }
-                    } else {
-                      if (mounted) {
-                        ResponsiveSnackBar.show(
-                          this.context,
-                          message: 'API 地址已更新',
-                        );
-                      }
-                    }
-                  } catch (e) {
-                    if (dialogContext.mounted) {
-                      ResponsiveSnackBar.showError(
-                        dialogContext,
-                        message: '保存失败: $e',
-                      );
-                    }
-                  }
-                },
-                child: const Text('保存'),
-              ),
-            ],
-          ),
+      error: (_, _) => const Text('加载失败'),
     );
   }
 

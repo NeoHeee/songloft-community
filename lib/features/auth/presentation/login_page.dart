@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../config/app_config.dart';
+import '../../../core/network/base_url_provider.dart';
+import '../../../core/network/server_entry.dart';
+import '../../../core/network/servers_provider.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/tv_theme.dart';
 import '../../../shared/utils/responsive_snackbar.dart';
@@ -70,10 +73,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _loadSavedApiUrl() async {
-    final prefs = await ref.read(appPreferencesProvider.future);
-    final savedUrl = prefs.getApiBaseUrl();
-    if (savedUrl != null && savedUrl.isNotEmpty) {
-      _apiUrlController.text = savedUrl;
+    // 列表 1 项时预填该项的 url（与单地址旧版体验一致）。
+    // 列表 ≥ 2 项时输入框被替换为下拉，无需预填。
+    try {
+      final servers = await ref.read(serversProvider.future);
+      if (servers.length == 1 && servers.first.url.isNotEmpty) {
+        _apiUrlController.text = servers.first.url;
+      }
+    } catch (_) {
+      // 忽略
     }
   }
 
@@ -109,14 +117,25 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     final authNotifier = ref.read(authStateProvider.notifier);
 
+    String? apiBaseUrl;
+    if (!AppConfig.isEmbedded) {
+      final servers = ref.read(serversProvider).value ?? const <ServerEntry>[];
+      if (servers.length >= 2) {
+        // 多服务器：默认布局走 dropdown，TV 布局也以 baseUrlProvider 为准
+        apiBaseUrl = ref.read(baseUrlProvider);
+      } else {
+        // 0/1 项：使用单输入框的值
+        final raw = _apiUrlController.text.trim();
+        if (raw.isNotEmpty) {
+          apiBaseUrl = raw.replaceAll(RegExp(r'/+$'), '');
+        }
+      }
+    }
+
     await authNotifier.login(
       username: _usernameController.text.trim(),
       password: _passwordController.text,
-      // 嵌入模式不传 apiBaseUrl，baseUrl 已在 main() 中通过 Uri.base.origin 设定
-      apiBaseUrl:
-          (!AppConfig.isEmbedded && _apiUrlController.text.trim().isNotEmpty)
-              ? _apiUrlController.text.trim().replaceAll(RegExp(r'/+$'), '')
-              : null,
+      apiBaseUrl: apiBaseUrl,
     );
   }
 
@@ -683,6 +702,34 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Widget _buildApiUrlField(ColorScheme colorScheme) {
+    final servers = ref.watch(serversProvider).value ?? const <ServerEntry>[];
+    if (servers.length >= 2) {
+      final current = ref.watch(baseUrlProvider);
+      final selected = servers.any((s) => s.url == current)
+          ? current
+          : servers.first.url;
+      return DropdownButtonFormField<String>(
+        initialValue: selected,
+        decoration: const InputDecoration(
+          labelText: '服务器',
+          prefixIcon: Icon(Icons.cloud_outlined),
+        ),
+        items: servers
+            .map(
+              (s) => DropdownMenuItem(
+                value: s.url,
+                child: Text(
+                  s.name.isNotEmpty ? '${s.name} (${s.url})' : s.url,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            )
+            .toList(),
+        onChanged: (url) {
+          if (url != null) ref.read(baseUrlProvider.notifier).set(url);
+        },
+      );
+    }
     return TextFormField(
       controller: _apiUrlController,
       decoration: InputDecoration(
@@ -693,11 +740,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       keyboardType: TextInputType.url,
       textInputAction: TextInputAction.done,
       validator: (value) {
-        if (value != null && value.isNotEmpty) {
-          // 简单的 URL 格式验证
-          if (!value.startsWith('http://') && !value.startsWith('https://')) {
-            return '请输入有效的 URL（以 http:// 或 https:// 开头）';
-          }
+        if (value == null || value.trim().isEmpty) {
+          return '请输入 API 地址';
+        }
+        if (!value.startsWith('http://') && !value.startsWith('https://')) {
+          return '请输入有效的 URL（以 http:// 或 https:// 开头）';
         }
         return null;
       },

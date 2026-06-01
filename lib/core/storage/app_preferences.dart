@@ -1,10 +1,15 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../network/server_entry.dart';
 
 /// 应用偏好设置存储
 class AppPreferences {
   static const _themeModeKey = 'theme_mode';
   static const _apiBaseUrlKey = 'api_base_url';
+  static const _apiServersKey = 'api_servers';
   static const _lastUsedDeviceKey = 'last_used_device';
   static const _volumeKey = 'player_volume';
   static const _playModeKey = 'player_play_mode';
@@ -52,19 +57,78 @@ class AppPreferences {
     return _prefs.setString(_themeModeKey, value);
   }
 
-  /// 获取自定义 API 地址（独立部署模式）
+  /// 获取自定义 API 地址（独立部署模式，旧版单地址）
+  @Deprecated('使用 getApiServers()；保留仅为迁移使用')
   String? getApiBaseUrl() {
     return _prefs.getString(_apiBaseUrlKey);
   }
 
-  /// 设置自定义 API 地址
+  /// 设置自定义 API 地址（旧版单地址）
+  @Deprecated('使用 setApiServers()；保留仅为迁移使用')
   Future<bool> setApiBaseUrl(String url) {
     return _prefs.setString(_apiBaseUrlKey, url);
   }
 
-  /// 清除自定义 API 地址
+  /// 清除自定义 API 地址（旧版单地址）
+  @Deprecated('使用 setApiServers([])；保留仅为迁移使用')
   Future<bool> clearApiBaseUrl() {
     return _prefs.remove(_apiBaseUrlKey);
+  }
+
+  /// 获取服务器列表（顺序即启动探测优先级）
+  List<ServerEntry> getApiServers() {
+    final raw = _prefs.getString(_apiServersKey);
+    if (raw == null || raw.isEmpty) return const [];
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return const [];
+      return decoded
+          .whereType<Map<String, dynamic>>()
+          .map(ServerEntry.fromJson)
+          .toList(growable: false);
+    } catch (e) {
+      debugPrint('[AppPreferences] 解析 api_servers 失败: $e');
+      return const [];
+    }
+  }
+
+  /// 设置服务器列表，按 url 去重（保留首次出现的 entry）。
+  Future<bool> setApiServers(List<ServerEntry> servers) {
+    final seen = <String>{};
+    final deduped = <ServerEntry>[];
+    for (final s in servers) {
+      if (seen.add(s.url)) deduped.add(s);
+    }
+    final encoded = jsonEncode(deduped.map((s) => s.toJson()).toList());
+    return _prefs.setString(_apiServersKey, encoded);
+  }
+
+  /// 幂等：若新 key 为空且旧 `api_base_url` 有值，promote 为单条 ServerEntry，
+  /// 然后清除旧 key。已迁移过的设备多次调用无副作用。
+  Future<void> migrateLegacyApiBaseUrl() async {
+    final hasNew = _prefs.containsKey(_apiServersKey);
+    final legacy = _prefs.getString(_apiBaseUrlKey);
+    if (legacy == null || legacy.isEmpty) {
+      // 没有旧值，无须迁移
+      if (_prefs.containsKey(_apiBaseUrlKey)) {
+        await _prefs.remove(_apiBaseUrlKey);
+      }
+      return;
+    }
+    if (!hasNew) {
+      try {
+        final url = ServerEntry.normalizeUrl(legacy);
+        final entry = ServerEntry(
+          id: ServerEntry.generateId(),
+          name: '',
+          url: url,
+        );
+        await setApiServers([entry]);
+      } catch (e) {
+        debugPrint('[AppPreferences] 旧 api_base_url 规范化失败，跳过迁移: $e');
+      }
+    }
+    await _prefs.remove(_apiBaseUrlKey);
   }
 
   /// 获取最后使用的设备 ID
