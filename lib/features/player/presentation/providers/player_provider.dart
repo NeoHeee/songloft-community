@@ -75,6 +75,25 @@ class PlayerNotifier extends Notifier<PlayerState> {
     _audioHandler.onSkipToPrevious = () => playPrev();
     _audioHandler.onSongCompleted = _onSongCompleted;
 
+    // 切歌前主动通知后端 cancel 旧 song 的进行中工作（issue #79）。
+    // fire-and-forget：不阻塞 setAudioSource，失败也不影响播放主路径。
+    _audioHandler.notifySongActivated = (int songId) {
+      final dio = ref.read(dioProvider);
+      unawaited(
+        dio
+            .post('/api/v1/songs/$songId/activate')
+            .catchError(
+              (e) {
+                debugPrint('[Player] activate notify failed (ignored): $e');
+                return Response(
+                  requestOptions: RequestOptions(path: ''),
+                  statusCode: 0,
+                );
+              },
+            ),
+      );
+    };
+
     _initListeners();
     ref.onDispose(() {
       _positionSubscription?.cancel();

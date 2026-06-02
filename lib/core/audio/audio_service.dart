@@ -22,6 +22,14 @@ class SongloftAudioHandler extends BaseAudioHandler with SeekHandler {
   VoidCallback? onSkipToPrevious;
   VoidCallback? onSongCompleted;
 
+  /// 切歌前主动通知后端"放弃旧 songID 工作"的钩子（由 PlayerNotifier 注入）。
+  ///
+  /// 后端 issue #79：just_audio 的 LockCachingAudioSource 在切歌时不会 abort 上游 HTTP，
+  /// 导致后端无法靠 r.Context() 取消旧 song 的 prefetch/transcode/reassign。客户端切歌
+  /// 之前调一下 POST /api/v1/songs/{id}/activate，后端立即让位。
+  /// 失败被吞，绝不能让 activate 失败影响播放主路径。
+  void Function(int songId)? notifySongActivated;
+
   /// 初始化 Future，用于确保初始化完成
   late final Future<void> _initFuture;
 
@@ -228,6 +236,14 @@ class SongloftAudioHandler extends BaseAudioHandler with SeekHandler {
       // 导致系统限制后台网络访问，使下一首歌曲无法加载。
       if (kIsWeb) {
         await _player.stop();
+      }
+
+      // 主动通知后端：本会话已切到 song.id，让其他 songID 的 prefetch/transcode/reassign 退场。
+      // 必须在 setAudioSource 之前发起，让后端 plugin worker 尽早释放给本次播放使用。
+      try {
+        notifySongActivated?.call(song.id);
+      } catch (e) {
+        debugPrint('[Player] notifySongActivated error (ignored): $e');
       }
 
       debugPrint('[Player] SongloftAudioHandler: setting audio source');
