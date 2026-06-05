@@ -114,6 +114,10 @@ class _ScanManagerState extends ConsumerState<ScanManager> {
         _buildIncludeSubdirsTile(),
         const SizedBox(height: AppSpacing.md),
 
+        // 「标题来源」切换
+        _buildTitleSourceTile(),
+        const SizedBox(height: AppSpacing.md),
+
         // 排除目录设置（可展开/折叠）
         Card(
           elevation: 0,
@@ -320,6 +324,61 @@ class _ScanManagerState extends ConsumerState<ScanManager> {
                   await ref
                       .read(autoCreateIncludeSubdirsProvider.notifier)
                       .setValue(value);
+                } catch (e) {
+                  if (mounted) {
+                    ResponsiveSnackBar.showError(
+                      context,
+                      message: '保存失败: $e',
+                    );
+                  }
+                }
+              },
+      ),
+    );
+  }
+
+  /// 「标题来源」切换（标签 / 文件名）
+  Widget _buildTitleSourceTile() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final asyncValue = ref.watch(scanTitleSourceProvider);
+
+    final isFilename = (asyncValue.value ?? 'tag') == 'filename';
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        side: BorderSide(color: colorScheme.outlineVariant),
+      ),
+      child: SwitchListTile(
+        secondary: Icon(
+          Icons.title_outlined,
+          color: colorScheme.onSurfaceVariant,
+        ),
+        title: const Text('使用文件名作为标题'),
+        subtitle: Text(
+          isFilename
+              ? '歌曲标题使用文件名（不含扩展名），适合文件名已编号的情况'
+              : '歌曲标题优先使用音频标签信息',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+        value: isFilename,
+        onChanged: asyncValue.isLoading
+            ? null
+            : (value) async {
+                try {
+                  await ref
+                      .read(scanTitleSourceProvider.notifier)
+                      .setValue(value ? 'filename' : 'tag');
+                  if (mounted) {
+                    ResponsiveSnackBar.show(
+                      context,
+                      message: '已保存，需以「重新导入」模式扫描后生效',
+                    );
+                  }
                 } catch (e) {
                   if (mounted) {
                     ResponsiveSnackBar.showError(

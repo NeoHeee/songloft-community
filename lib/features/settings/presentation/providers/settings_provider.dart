@@ -301,6 +301,42 @@ final autoCreateIncludeSubdirsProvider =
     );
 
 // ============================================================================
+// 扫描标题来源 Provider
+// ============================================================================
+
+/// 扫描标题来源 Notifier。
+/// tag：优先使用音频标签中的标题（默认）；filename：始终使用文件名作为标题。
+/// 业务端点：GET/PUT /api/v1/settings/scan-title-source
+class ScanTitleSourceNotifier extends AsyncNotifier<String> {
+  @override
+  Future<String> build() async {
+    final api = ref.watch(settingsApiProvider);
+    try {
+      return await api.getScanTitleSource();
+    } catch (_) {
+      return 'tag';
+    }
+  }
+
+  Future<void> setValue(String value) async {
+    state = AsyncValue.data(value);
+    try {
+      final api = ref.read(settingsApiProvider);
+      await api.setScanTitleSource(value);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
+  }
+}
+
+/// 扫描标题来源 Provider
+final scanTitleSourceProvider =
+    AsyncNotifierProvider<ScanTitleSourceNotifier, String>(
+      ScanTitleSourceNotifier.new,
+    );
+
+// ============================================================================
 // HLS 电台代理开关 Provider
 // ============================================================================
 

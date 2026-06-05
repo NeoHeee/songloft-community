@@ -138,6 +138,31 @@ class SettingsApi {
     }
   }
 
+  // ---------- 扫描标题来源 ----------
+
+  Future<String> getScanTitleSource() async {
+    try {
+      final response = await dio.get(
+        '${AppConfig.apiPrefix}/settings/scan-title-source',
+      );
+      final data = response.data as Map<String, dynamic>;
+      return data['title_source'] as String? ?? 'tag';
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  Future<void> setScanTitleSource(String titleSource) async {
+    try {
+      await dio.put(
+        '${AppConfig.apiPrefix}/settings/scan-title-source',
+        data: {'title_source': titleSource},
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
   // ---------- 音乐路径与扫描排除 ----------
 
   Future<MusicPathSetting> getMusicPath() async {
