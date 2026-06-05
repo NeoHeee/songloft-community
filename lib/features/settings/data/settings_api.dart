@@ -79,6 +79,92 @@ class PluginRegistryConfig {
       );
 }
 
+/// 插件 Tab 条目
+class PluginTabEntry {
+  final int pluginId;
+  final String entryPath;
+  final String name;
+
+  PluginTabEntry({
+    required this.pluginId,
+    required this.entryPath,
+    required this.name,
+  });
+
+  factory PluginTabEntry.fromJson(Map<String, dynamic> json) {
+    return PluginTabEntry(
+      pluginId: json['plugin_id'] as int? ?? 0,
+      entryPath: json['entry_path'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'plugin_id': pluginId,
+        'entry_path': entryPath,
+        'name': name,
+      };
+
+  PluginTabEntry copyWith({int? pluginId, String? entryPath, String? name}) =>
+      PluginTabEntry(
+        pluginId: pluginId ?? this.pluginId,
+        entryPath: entryPath ?? this.entryPath,
+        name: name ?? this.name,
+      );
+}
+
+/// 底部导航栏 Tab 配置
+class TabConfig {
+  final bool showLibrary;
+  final bool showPlaylists;
+  final List<PluginTabEntry> pluginTabs;
+
+  TabConfig({
+    required this.showLibrary,
+    required this.showPlaylists,
+    required this.pluginTabs,
+  });
+
+  factory TabConfig.defaultConfig() => TabConfig(
+        showLibrary: true,
+        showPlaylists: true,
+        pluginTabs: [],
+      );
+
+  factory TabConfig.fromJson(Map<String, dynamic> json) {
+    return TabConfig(
+      showLibrary: json['show_library'] as bool? ?? true,
+      showPlaylists: json['show_playlists'] as bool? ?? true,
+      pluginTabs: (json['plugin_tabs'] as List?)
+              ?.map((e) => PluginTabEntry.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          <PluginTabEntry>[],
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'show_library': showLibrary,
+        'show_playlists': showPlaylists,
+        'plugin_tabs': pluginTabs.map((e) => e.toJson()).toList(),
+      };
+
+  TabConfig copyWith({
+    bool? showLibrary,
+    bool? showPlaylists,
+    List<PluginTabEntry>? pluginTabs,
+  }) =>
+      TabConfig(
+        showLibrary: showLibrary ?? this.showLibrary,
+        showPlaylists: showPlaylists ?? this.showPlaylists,
+        pluginTabs: pluginTabs ?? this.pluginTabs,
+      );
+
+  int get optionalCount =>
+      (showLibrary ? 1 : 0) + (showPlaylists ? 1 : 0) + pluginTabs.length;
+
+  int get totalCount => 2 + optionalCount; // 首页 + 设置 + 可选项
+}
+
 /// 业务化设置 API 集合（/api/v1/settings/*）
 ///
 /// 用户可见的功能开关一律走这里；通用 KV 配置仍走 ConfigApi（admin 入口）。
@@ -269,6 +355,31 @@ class SettingsApi {
         '${AppConfig.apiPrefix}/settings/http-proxy',
         data: {'proxy': proxy},
       );
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  // ---------- 底部导航栏 Tab 配置 ----------
+
+  Future<TabConfig> getTabConfig() async {
+    try {
+      final response = await dio.get(
+        '${AppConfig.apiPrefix}/settings/tab-config',
+      );
+      return TabConfig.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  Future<TabConfig> updateTabConfig(TabConfig config) async {
+    try {
+      final response = await dio.put(
+        '${AppConfig.apiPrefix}/settings/tab-config',
+        data: config.toJson(),
+      );
+      return TabConfig.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }

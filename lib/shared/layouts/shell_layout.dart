@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/router/app_router.dart';
 import '../../core/theme/responsive.dart';
 import '../../features/library/presentation/providers/favorite_provider.dart';
 import '../../features/player/domain/player_state.dart';
@@ -13,6 +12,7 @@ import '../../features/player/presentation/widgets/mini_player.dart';
 import '../../features/player/presentation/widgets/playlist_drawer.dart';
 import '../../features/player/presentation/widgets/tv_player.dart';
 import '../utils/responsive_snackbar.dart';
+import 'active_destinations.dart';
 import 'adaptive_scaffold.dart';
 
 /// ShellRoute 的布局组件
@@ -22,32 +22,29 @@ class ShellLayout extends ConsumerWidget {
 
   const ShellLayout({super.key, required this.child});
 
-  /// 路由路径到导航索引的映射
-  static const Map<String, int> _routeToIndex = {
-    AppRoutes.home: 0,
-    AppRoutes.library: 1,
-    AppRoutes.playlists: 2,
-    AppRoutes.settings: 3,
-  };
-
-  /// 导航索引到路由路径的映射
-  static const List<String> _indexToRoute = [
-    AppRoutes.home,
-    AppRoutes.library,
-    AppRoutes.playlists,
-    AppRoutes.settings,
-  ];
-
   /// 根据当前路由路径计算导航索引
-  int _getCurrentIndex(String location) {
+  int _getCurrentIndex(String location, ActiveDestinations activeDest) {
     // 精确匹配
-    if (_routeToIndex.containsKey(location)) {
-      return _routeToIndex[location]!;
+    if (activeDest.routeToIndex.containsKey(location)) {
+      return activeDest.routeToIndex[location]!;
     }
 
     // 前缀匹配（处理子路由情况，如 /playlists/:id）
     if (location.startsWith('/playlists')) {
-      return 2;
+      final idx = activeDest.routeToIndex['/playlists'];
+      if (idx != null) return idx;
+    }
+
+    // 插件 Tab 前缀匹配（/plugin-tab/xxx）
+    if (location.startsWith('/plugin-tab/')) {
+      final idx = activeDest.routeToIndex[location];
+      if (idx != null) return idx;
+    }
+
+    // 设置子路由匹配（如 /settings/tab-config）
+    if (location.startsWith('/settings')) {
+      final idx = activeDest.routeToIndex['/settings'];
+      if (idx != null) return idx;
     }
 
     // 默认返回首页索引
@@ -56,9 +53,11 @@ class ShellLayout extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final activeDest = ref.watch(activeDestinationsProvider);
+
     // 获取当前路由位置
     final location = GoRouterState.of(context).uri.path;
-    final currentIndex = _getCurrentIndex(location);
+    final currentIndex = _getCurrentIndex(location, activeDest);
 
     // 确保收藏系统被初始化（FavoriteNotifier.build 中自动调度）
     ref.watch(favoriteProvider);
@@ -76,16 +75,18 @@ class ShellLayout extends ConsumerWidget {
       playerStateProvider.select((s) => s.showPlaylistDrawer),
     );
 
+    final isPluginTab = location.startsWith('/plugin-tab/');
+
     return AdaptiveScaffold(
       body: child,
       currentIndex: currentIndex,
+      destinations: activeDest.destinations,
       onDestinationSelected: (index) {
-        // 根据索引导航到对应路由
-        if (index >= 0 && index < _indexToRoute.length) {
-          context.go(_indexToRoute[index]);
+        if (index >= 0 && index < activeDest.indexToRoute.length) {
+          context.go(activeDest.indexToRoute[index]);
         }
       },
-      bottomPlayer: _buildBottomPlayer(context),
+      bottomPlayer: isPluginTab ? null : _buildBottomPlayer(context),
       playlistDrawer: showPlaylistDrawer ? const PlaylistDrawer() : null,
     );
   }

@@ -182,6 +182,60 @@ class _PluginRegistryDialogState extends ConsumerState<_PluginRegistryDialog> {
             onPressed: () => Navigator.of(context).pop(),
           ),
           actions: [
+            PopupMenuButton<int>(
+              icon: Icon(
+                Icons.vpn_key_outlined,
+                color: _effectiveProxy.isNotEmpty
+                    ? theme.colorScheme.primary
+                    : null,
+              ),
+              tooltip: 'GitHub 代理',
+              onSelected: (value) {
+                if (value == -1) {
+                  _showCustomProxyDialog();
+                } else {
+                  setState(() => _selectedProxyIndex = value);
+                  _refreshPlugins();
+                }
+              },
+              itemBuilder: (context) => [
+                ...List.generate(_kGithubProxies.length, (index) {
+                  return PopupMenuItem<int>(
+                    value: index,
+                    child: Row(
+                      children: [
+                        if (_selectedProxyIndex == index)
+                          Icon(Icons.check,
+                              size: 18,
+                              color: Theme.of(context).colorScheme.primary)
+                        else
+                          const SizedBox(width: 18),
+                        const SizedBox(width: 8),
+                        Text(_kGithubProxies[index].label),
+                      ],
+                    ),
+                  );
+                }),
+                const PopupMenuDivider(),
+                PopupMenuItem<int>(
+                  value: -1,
+                  child: Row(
+                    children: [
+                      if (_selectedProxyIndex == -1)
+                        Icon(Icons.check,
+                            size: 18,
+                            color: Theme.of(context).colorScheme.primary)
+                      else
+                        const SizedBox(width: 18),
+                      const SizedBox(width: 8),
+                      Text(_selectedProxyIndex == -1
+                          ? '自定义: ${_customProxyController.text}'
+                          : '自定义代理...'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
             if (_selectedRegistry != null)
               IconButton(
                 icon: const Icon(Icons.refresh),
@@ -294,7 +348,6 @@ class _PluginRegistryDialogState extends ConsumerState<_PluginRegistryDialog> {
                 onChanged: _onRegistryChanged,
               ),
               const SizedBox(height: AppSpacing.sm),
-              _buildProxySelector(theme),
               TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
@@ -442,68 +495,42 @@ class _PluginRegistryDialogState extends ConsumerState<_PluginRegistryDialog> {
     );
   }
 
-  Widget _buildProxySelector(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('GitHub 代理', style: theme.textTheme.titleSmall),
-          const SizedBox(height: 8),
-          RadioGroup<int>(
-            groupValue: _selectedProxyIndex,
-            onChanged: (value) {
-              if (value != null) {
-                setState(() => _selectedProxyIndex = value);
-                _refreshPlugins();
-              }
-            },
-            child: Column(
-              children: [
-                ...List.generate(_kGithubProxies.length, (index) {
-                  final proxy = _kGithubProxies[index];
-                  return RadioListTile<int>(
-                    title: Text(proxy.label, style: theme.textTheme.bodyMedium),
-                    value: index,
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                    visualDensity: VisualDensity.compact,
-                  );
-                }),
-                RadioListTile<int>(
-                  title: Text('自定义代理', style: theme.textTheme.bodyMedium),
-                  value: -1,
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  visualDensity: VisualDensity.compact,
-                ),
-              ],
-            ),
+  void _showCustomProxyDialog() {
+    final controller = TextEditingController(text: _customProxyController.text);
+    showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('自定义代理'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'https://your-proxy.com/',
+            helperText: '输入代理地址，如 https://ghproxy.com/',
+            border: OutlineInputBorder(),
           ),
-          if (_selectedProxyIndex == -1)
-            Padding(
-              padding: const EdgeInsets.only(left: 16, top: 4),
-              child: TextField(
-                controller: _customProxyController,
-                decoration: const InputDecoration(
-                  hintText: 'https://your-proxy.com/',
-                  helperText: '输入代理地址，如 https://ghproxy.com/',
-                  helperMaxLines: 2,
-                  isDense: true,
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                ),
-                style: theme.textTheme.bodySmall,
-                onSubmitted: (_) => _refreshPlugins(),
-              ),
-            ),
-          const Divider(height: 24),
+          onSubmitted: (_) =>
+              Navigator.of(context).pop(controller.text.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.of(context).pop(controller.text.trim()),
+            child: const Text('确定'),
+          ),
         ],
       ),
-    );
+    ).then((value) {
+      if (value != null) {
+        _customProxyController.text = value;
+        setState(() => _selectedProxyIndex = -1);
+        _refreshPlugins();
+      }
+    });
   }
 
   void _showRegistryManagement() {

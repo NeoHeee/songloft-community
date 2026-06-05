@@ -62,6 +62,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 ),
                 child: ThemeSelector(),
               ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.tab_outlined),
+                title: const Text('菜单设置'),
+                subtitle: const Text('自定义底部导航栏显示的标签'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push(AppRoutes.tabConfig),
+              ),
             ],
           ),
 

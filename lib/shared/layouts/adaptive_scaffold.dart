@@ -23,6 +23,7 @@ class AdaptiveScaffold extends StatelessWidget {
   final Widget body;
   final int currentIndex;
   final ValueChanged<int> onDestinationSelected;
+  final List<NavDestination> destinations;
   final Widget? bottomPlayer;
   final Widget? playlistDrawer;
 
@@ -31,33 +32,10 @@ class AdaptiveScaffold extends StatelessWidget {
     required this.body,
     required this.currentIndex,
     required this.onDestinationSelected,
+    required this.destinations,
     this.bottomPlayer,
     this.playlistDrawer,
   });
-
-  /// 导航项定义
-  static const List<NavDestination> destinations = [
-    NavDestination(
-      label: '首页',
-      icon: Icons.home_outlined,
-      selectedIcon: Icons.home,
-    ),
-    NavDestination(
-      label: '歌曲库',
-      icon: Icons.library_music_outlined,
-      selectedIcon: Icons.library_music,
-    ),
-    NavDestination(
-      label: '歌单',
-      icon: Icons.queue_music_outlined,
-      selectedIcon: Icons.queue_music,
-    ),
-    NavDestination(
-      label: '设置',
-      icon: Icons.settings_outlined,
-      selectedIcon: Icons.settings,
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {

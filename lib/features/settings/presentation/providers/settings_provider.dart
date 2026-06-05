@@ -443,6 +443,40 @@ final httpProxyProvider = AsyncNotifierProvider<HttpProxyNotifier, String>(
 );
 
 // ============================================================================
+// Tab 配置 Provider
+// ============================================================================
+
+/// 底部导航栏 Tab 配置 Notifier。
+/// 业务端点：GET/PUT /api/v1/settings/tab-config
+class TabConfigNotifier extends AsyncNotifier<TabConfig> {
+  @override
+  Future<TabConfig> build() async {
+    final api = ref.watch(settingsApiProvider);
+    try {
+      return await api.getTabConfig();
+    } catch (_) {
+      return TabConfig.defaultConfig();
+    }
+  }
+
+  Future<void> updateConfig(TabConfig config) async {
+    state = AsyncValue.data(config);
+    try {
+      final api = ref.read(settingsApiProvider);
+      await api.updateTabConfig(config);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
+  }
+}
+
+/// 底部导航栏 Tab 配置 Provider
+final tabConfigProvider = AsyncNotifierProvider<TabConfigNotifier, TabConfig>(
+  TabConfigNotifier.new,
+);
+
+// ============================================================================
 // Upgrade Progress Provider
 // ============================================================================
 

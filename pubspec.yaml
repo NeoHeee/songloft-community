@@ -42,6 +42,7 @@ dependencies:
   flutter_markdown: ^0.7.6
   # WebView（用于应用内加载插件页面）
   flutter_inappwebview: ^6.1.5
+  web: ^1.1.1
   json_annotation: ^4.9.0
   # 系统音量控制
   volume_controller: ^2.0.7

@@ -6,12 +6,14 @@ import '../../features/auth/domain/auth_state.dart';
 import '../../features/auth/presentation/login_page.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/home/presentation/home_page.dart';
+import '../../features/home/presentation/plugin_tab_page.dart';
 import '../../features/home/presentation/plugin_webview_page.dart';
 import '../../features/library/presentation/library_page.dart';
 import '../../features/playlist/presentation/playlists_page.dart';
 import '../../features/playlist/presentation/playlist_detail_page.dart';
 import '../../features/settings/presentation/servers_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
+import '../../features/settings/presentation/tab_config_page.dart';
 import '../../shared/layouts/shell_layout.dart';
 
 /// 路由路径常量
@@ -23,7 +25,9 @@ class AppRoutes {
   static const String playlistDetail = '/playlists/:id';
   static const String settings = '/settings';
   static const String servers = '/settings/servers';
+  static const String tabConfig = '/settings/tab-config';
   static const String plugin = '/plugin';
+  static const String pluginTab = '/plugin-tab/:entryPath';
 }
 
 /// 将 Riverpod 认证状态变化桥接为 GoRouter 的 refreshListenable，
@@ -141,6 +145,24 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder:
                 (context, state) =>
                     const NoTransitionPage(child: ServersPage()),
+          ),
+
+          // 菜单设置
+          GoRoute(
+            path: AppRoutes.tabConfig,
+            builder: (context, state) => const TabConfigPage(),
+          ),
+
+          // 插件 Tab 页面
+          GoRoute(
+            path: AppRoutes.pluginTab,
+            pageBuilder: (context, state) {
+              final entryPath = state.pathParameters['entryPath'] ?? '';
+              return NoTransitionPage(
+                key: ValueKey('plugin-tab-$entryPath'),
+                child: PluginTabPage(entryPath: entryPath),
+              );
+            },
           ),
         ],
       ),
