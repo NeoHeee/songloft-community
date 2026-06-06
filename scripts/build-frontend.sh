@@ -139,6 +139,21 @@ build_web() {
             need_download=true
         fi
 
+        # 验证字体数量与当前 Flutter SDK 一致（防止升级 Flutter 后分片不全）
+        if [ "$need_download" = false ]; then
+            local font_data_file
+            font_data_file="$(flutter --no-version-check sdk-path 2>/dev/null || true)/bin/cache/flutter_web_sdk/lib/_engine/engine/font_fallback_data.dart"
+            if [ -f "$font_data_file" ]; then
+                local expected_sc actual_sc
+                expected_sc=$(grep -c "notosanssc" "$font_data_file" 2>/dev/null || echo "0")
+                actual_sc=$(find "$FRONTEND_DIR/web/fonts/notosanssc" -name "*.woff2" 2>/dev/null | wc -l)
+                if [ "$expected_sc" -gt 0 ] && [ "$actual_sc" -lt "$expected_sc" ]; then
+                    need_download=true
+                    echo -e "${YELLOW}⚠ [Web]${NC} 字体分片不完整（有 ${actual_sc}/${expected_sc}），需要补全"
+                fi
+            fi
+        fi
+
         if [ "$need_download" = true ]; then
             echo -e "${BLUE}[Web]${NC} 下载本地字体文件..."
             if [ -f "$SCRIPT_DIR/download-fonts.sh" ]; then
@@ -147,7 +162,7 @@ build_web() {
                 echo -e "${YELLOW}⚠ [Web]${NC} 字体下载脚本不存在，跳过字体下载"
             fi
         else
-            echo -e "${GREEN}✓ [Web]${NC} 本地字体文件已存在"
+            echo -e "${GREEN}✓ [Web]${NC} 本地字体文件已存在且完整"
         fi
     fi
 
