@@ -236,6 +236,8 @@ class ScanProgressNotifier extends Notifier<ScanProgress> {
         if (state.isCompleted && previousStatus != 'completed') {
           ref.invalidate(playlistListProvider);
         }
+      } else if (state.isScanning && _pollTimer == null) {
+        _startPolling();
       }
     } catch (e) {
       // 获取进度失败忽略
@@ -275,6 +277,41 @@ final scanProgressProvider =
 // ============================================================================
 // Upgrade Progress Provider
 // ============================================================================
+
+// ============================================================================
+// 自动扫描 Provider
+// ============================================================================
+
+/// 自动扫描配置 Notifier。
+/// 业务端点：GET/PUT /api/v1/settings/auto-scan
+class AutoScanNotifier extends AsyncNotifier<AutoScanSetting> {
+  @override
+  Future<AutoScanSetting> build() async {
+    final api = ref.watch(settingsApiProvider);
+    try {
+      return await api.getAutoScan();
+    } catch (_) {
+      return AutoScanSetting(enabled: false, intervalSeconds: 3600);
+    }
+  }
+
+  Future<void> setValue(AutoScanSetting value) async {
+    state = AsyncValue.data(value);
+    try {
+      final api = ref.read(settingsApiProvider);
+      await api.setAutoScan(value);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
+  }
+}
+
+/// 自动扫描配置 Provider
+final autoScanProvider =
+    AsyncNotifierProvider<AutoScanNotifier, AutoScanSetting>(
+      AutoScanNotifier.new,
+    );
 
 // ============================================================================
 // Auto-Create Playlists Include Subdirs Provider

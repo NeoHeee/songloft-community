@@ -45,6 +45,32 @@ class MusicPathSetting {
       );
 }
 
+/// 自动扫描配置（GET/PUT /settings/auto-scan）
+class AutoScanSetting {
+  final bool enabled;
+  final int intervalSeconds;
+
+  AutoScanSetting({required this.enabled, required this.intervalSeconds});
+
+  factory AutoScanSetting.fromJson(Map<String, dynamic> json) {
+    return AutoScanSetting(
+      enabled: json['enabled'] as bool? ?? false,
+      intervalSeconds: json['interval_seconds'] as int? ?? 3600,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'enabled': enabled,
+        'interval_seconds': intervalSeconds,
+      };
+
+  AutoScanSetting copyWith({bool? enabled, int? intervalSeconds}) =>
+      AutoScanSetting(
+        enabled: enabled ?? this.enabled,
+        intervalSeconds: intervalSeconds ?? this.intervalSeconds,
+      );
+}
+
 /// 插件订阅源配置
 class PluginRegistryConfig {
   final String url;
@@ -354,6 +380,30 @@ class SettingsApi {
       await dio.put(
         '${AppConfig.apiPrefix}/settings/http-proxy',
         data: {'proxy': proxy},
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  // ---------- 自动扫描配置 ----------
+
+  Future<AutoScanSetting> getAutoScan() async {
+    try {
+      final response = await dio.get(
+        '${AppConfig.apiPrefix}/settings/auto-scan',
+      );
+      return AutoScanSetting.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  Future<void> setAutoScan(AutoScanSetting setting) async {
+    try {
+      await dio.put(
+        '${AppConfig.apiPrefix}/settings/auto-scan',
+        data: setting.toJson(),
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);

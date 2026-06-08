@@ -5,6 +5,7 @@ import '../../../../core/network/api_exceptions.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../shared/utils/responsive_snackbar.dart';
 import '../../data/scan_api.dart';
+import '../../data/settings_api.dart';
 import '../providers/settings_provider.dart';
 import 'exclude_dir_manager.dart';
 
@@ -116,6 +117,10 @@ class _ScanManagerState extends ConsumerState<ScanManager> {
 
         // 「标题来源」切换
         _buildTitleSourceTile(),
+        const SizedBox(height: AppSpacing.md),
+
+        // 自动扫描设置
+        _buildAutoScanTile(),
         const SizedBox(height: AppSpacing.md),
 
         // 排除目录设置（可展开/折叠）
@@ -388,6 +393,132 @@ class _ScanManagerState extends ConsumerState<ScanManager> {
                   }
                 }
               },
+      ),
+    );
+  }
+
+  static const _intervalOptions = <int, String>{
+    600: '10 分钟',
+    1800: '30 分钟',
+    3600: '1 小时',
+    10800: '3 小时',
+    21600: '6 小时',
+    43200: '12 小时',
+    86400: '24 小时',
+  };
+
+  static String _intervalLabel(int seconds) {
+    return _intervalOptions[seconds] ?? '$seconds 秒';
+  }
+
+  Widget _buildAutoScanTile() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final asyncValue = ref.watch(autoScanProvider);
+    final setting = asyncValue.value ??
+        AutoScanSetting(enabled: false, intervalSeconds: 3600);
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        side: BorderSide(color: colorScheme.outlineVariant),
+      ),
+      child: Column(
+        children: [
+          SwitchListTile(
+            secondary: Icon(
+              Icons.autorenew,
+              color: colorScheme.onSurfaceVariant,
+            ),
+            title: const Text('自动扫描'),
+            subtitle: Text(
+              setting.enabled
+                  ? '每 ${_intervalLabel(setting.intervalSeconds)} 自动扫描一次'
+                  : '关闭',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            value: setting.enabled,
+            onChanged: asyncValue.isLoading
+                ? null
+                : (value) async {
+                    try {
+                      await ref
+                          .read(autoScanProvider.notifier)
+                          .setValue(setting.copyWith(enabled: value));
+                    } catch (e) {
+                      if (mounted) {
+                        ResponsiveSnackBar.showError(
+                          context,
+                          message: '保存失败: $e',
+                        );
+                      }
+                    }
+                  },
+          ),
+          if (setting.enabled)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md + 40,
+                0,
+                AppSpacing.md,
+                AppSpacing.md,
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    '扫描间隔',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: DropdownButtonFormField<int>(
+                      initialValue: _intervalOptions.containsKey(setting.intervalSeconds)
+                          ? setting.intervalSeconds
+                          : 3600,
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      items: _intervalOptions.entries
+                          .map(
+                            (e) => DropdownMenuItem(
+                              value: e.key,
+                              child: Text(e.value),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: asyncValue.isLoading
+                          ? null
+                          : (value) async {
+                              if (value == null) return;
+                              try {
+                                await ref
+                                    .read(autoScanProvider.notifier)
+                                    .setValue(setting.copyWith(
+                                        intervalSeconds: value));
+                              } catch (e) {
+                                if (mounted) {
+                                  ResponsiveSnackBar.showError(
+                                    context,
+                                    message: '保存失败: $e',
+                                  );
+                                }
+                              }
+                            },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
