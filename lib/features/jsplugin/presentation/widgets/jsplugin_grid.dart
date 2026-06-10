@@ -51,32 +51,29 @@ class JSPluginGrid extends ConsumerWidget {
             const SizedBox(height: 12),
             LayoutBuilder(
               builder: (context, constraints) {
-                final containerWidth = constraints.maxWidth - 32;
-                final crossAxisCount =
-                    context.isMobile ||
-                            containerWidth < ResponsiveBreakpoints.tablet
-                        ? (containerWidth / 180).floor().clamp(1, 2)
-                        : context.responsive<int>(
-                          mobile: 2,
-                          tablet: 3,
-                          desktop: 4,
-                        );
-
-                final spacing = context.responsive<double>(
-                  mobile: 12,
-                  tablet: 16,
-                  desktop: 16,
-                );
+                final containerWidth = constraints.maxWidth - 24;
+                final int crossAxisCount;
+                if (context.isMobile ||
+                    containerWidth < ResponsiveBreakpoints.tablet) {
+                  // 手机：每列约 90px，3-5 列自适应
+                  crossAxisCount = (containerWidth / 90).floor().clamp(3, 5);
+                } else if (containerWidth < ResponsiveBreakpoints.desktop) {
+                  // 平板：4-5 列
+                  crossAxisCount = (containerWidth / 110).floor().clamp(4, 5);
+                } else {
+                  // 桌面：5-8 列
+                  crossAxisCount = (containerWidth / 120).floor().clamp(5, 8);
+                }
 
                 return GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
-                    mainAxisSpacing: spacing,
-                    crossAxisSpacing: spacing,
-                    childAspectRatio: 2.2,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: 0.88,
                   ),
                   itemCount: activePlugins.length,
                   itemBuilder: (context, index) {
@@ -108,49 +105,32 @@ class _JSPluginCard extends StatelessWidget {
 
     return Card(
       clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      color: colorScheme.surfaceContainerLow,
       child: InkWell(
         onTap: () => _openPlugin(context),
         child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // 左侧插件图标
+              // 顶部插件图标
               PluginIcon(
                 iconUrl: plugin.iconUrl,
                 displayName: plugin.displayName,
-                size: 40,
+                size: 46,
               ),
-              const SizedBox(width: 12),
-              // 中间信息
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      plugin.displayName,
-                      style: textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (plugin.version != null &&
-                        plugin.version!.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        'v${plugin.version}',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ],
+              const SizedBox(height: 8),
+              // 底部插件名称
+              Text(
+                plugin.displayName,
+                style: textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w500,
                 ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -165,8 +145,10 @@ class _JSPluginCard extends StatelessWidget {
       return;
     }
 
-    final url = '${AppConfig.baseUrl}${AppConfig.basePath}/api/v1/jsplugin/${plugin.entryPath}';
-    final theme = Theme.of(context).brightness == Brightness.dark ? 'dark' : 'light';
+    final url =
+        '${AppConfig.baseUrl}${AppConfig.basePath}/api/v1/jsplugin/${plugin.entryPath}';
+    final theme =
+        Theme.of(context).brightness == Brightness.dark ? 'dark' : 'light';
 
     if (kIsWeb) {
       // Web 平台：使用 launchUrl 在新标签页打开
