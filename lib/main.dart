@@ -191,6 +191,13 @@ void main(List<String> args) async {
           androidNotificationChannelName: 'Songloft 播放控制',
           androidNotificationOngoing: false,
           androidStopForegroundOnPause: false,
+          androidBrowsableRootExtras: {
+            AndroidContentStyle.supportedKey: true,
+            AndroidContentStyle.playableHintKey:
+                AndroidContentStyle.listItemHintValue,
+            AndroidContentStyle.browsableHintKey:
+                AndroidContentStyle.gridItemHintValue,
+          },
         ),
       );
       await audioHandler.ensureInitialized();

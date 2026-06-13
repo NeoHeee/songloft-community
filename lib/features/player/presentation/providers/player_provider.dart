@@ -8,6 +8,7 @@ import 'package:just_audio/just_audio.dart' as ja;
 import 'package:volume_controller/volume_controller.dart';
 
 import '../../../../core/audio/audio_service.dart';
+import '../../../../core/audio/media_browse_data_source.dart';
 import '../../../../core/platform/live_activity_service.dart';
 import '../../../../core/storage/app_preferences.dart';
 import '../../../../core/utils/audio_format_helper.dart';
@@ -94,6 +95,15 @@ class PlayerNotifier extends Notifier<PlayerState> {
               },
             ),
       );
+    };
+
+    // Android Auto 媒体浏览数据源
+    _audioHandler.mediaBrowseDataSource = ApiMediaBrowseDataSource(
+      songsApi: ref.read(songsApiProvider),
+      playlistApi: ref.read(playlistApiProvider),
+    );
+    _audioHandler.onPlayFromBrowse = (Song song) async {
+      await playSong(song);
     };
 
     _initListeners();

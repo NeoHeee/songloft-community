@@ -9,8 +9,10 @@ import 'package:audio_session/audio_session.dart';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart' as ja;
 
+import '../../features/playlist/domain/playlist.dart';
 import '../../shared/models/song.dart';
 import '../utils/url_helper.dart';
+import 'media_browse_data_source.dart';
 
 /// Songloft 音频处理器 - 集成 audio_service 实现通知栏控制
 /// 严格遵循 audio_service 官方示例模式：使用 .pipe() 绑定 playbackState
@@ -21,6 +23,12 @@ class SongloftAudioHandler extends BaseAudioHandler with SeekHandler {
   VoidCallback? onSkipToNext;
   VoidCallback? onSkipToPrevious;
   VoidCallback? onSongCompleted;
+
+  /// Android Auto 媒体浏览数据源（由 PlayerNotifier 注入）
+  MediaBrowseDataSource? mediaBrowseDataSource;
+
+  /// Android Auto 浏览树点击播放回调（由 PlayerNotifier 注入）
+  Future<void> Function(Song song)? onPlayFromBrowse;
 
   /// 切歌前主动通知后端"放弃旧 songID 工作"的钩子（由 PlayerNotifier 注入）。
   ///
@@ -185,6 +193,149 @@ class SongloftAudioHandler extends BaseAudioHandler with SeekHandler {
   Future<void> skipToPrevious() async {
     debugPrint('[AudioService] ⏮️ skipToPrevious() 被调用');
     onSkipToPrevious?.call();
+  }
+
+  // ====================== Android Auto 媒体浏览 ======================
+
+  @override
+  Future<List<MediaItem>> getChildren(
+    String parentMediaId, [
+    Map<String, dynamic>? options,
+  ]) async {
+    final dataSource = mediaBrowseDataSource;
+    if (dataSource == null) return [];
+
+    try {
+      switch (parentMediaId) {
+        case 'root':
+          return [
+            _buildBrowsableItem('recent_plays', '最近播放'),
+            _buildBrowsableItem('favorites', '我的收藏'),
+            _buildBrowsableItem('playlists', '歌单'),
+            _buildBrowsableItem('all_songs', '所有歌曲'),
+          ];
+        case 'recent':
+        case 'recent_plays':
+          final songs = await dataSource.getRecentSongs();
+          return songs.map(_songToMediaItem).toList();
+        case 'favorites':
+          final songs = await dataSource.getFavoriteSongs();
+          return songs.map(_songToMediaItem).toList();
+        case 'playlists':
+          final playlists = await dataSource.getPlaylists();
+          return playlists.map(_playlistToMediaItem).toList();
+        case 'all_songs':
+          final songs = await dataSource.getAllSongs();
+          return songs.map(_songToMediaItem).toList();
+        default:
+          if (parentMediaId.startsWith('playlist_')) {
+            final id = int.tryParse(parentMediaId.substring(9));
+            if (id != null) {
+              final songs = await dataSource.getPlaylistSongs(id);
+              return songs.map(_songToMediaItem).toList();
+            }
+          }
+          return [];
+      }
+    } catch (e) {
+      debugPrint('[AudioService] getChildren($parentMediaId) error: $e');
+      return [];
+    }
+  }
+
+  @override
+  Future<MediaItem?> getMediaItem(String mediaId) async {
+    final dataSource = mediaBrowseDataSource;
+    if (dataSource == null) return null;
+
+    try {
+      final id = int.tryParse(mediaId.replaceFirst(RegExp(r'^song_'), ''));
+      if (id == null) return null;
+      final song = await dataSource.getSongById(id);
+      if (song == null) return null;
+      return _songToMediaItem(song);
+    } catch (e) {
+      debugPrint('[AudioService] getMediaItem($mediaId) error: $e');
+      return null;
+    }
+  }
+
+  @override
+  Future<List<MediaItem>> search(
+    String query, [
+    Map<String, dynamic>? extras,
+  ]) async {
+    final dataSource = mediaBrowseDataSource;
+    if (dataSource == null) return [];
+
+    try {
+      final songs = await dataSource.searchSongs(query);
+      return songs.map(_songToMediaItem).toList();
+    } catch (e) {
+      debugPrint('[AudioService] search($query) error: $e');
+      return [];
+    }
+  }
+
+  @override
+  Future<void> playFromMediaId(
+    String mediaId, [
+    Map<String, dynamic>? extras,
+  ]) async {
+    final dataSource = mediaBrowseDataSource;
+    if (dataSource == null || onPlayFromBrowse == null) return;
+
+    try {
+      final id = int.tryParse(mediaId.replaceFirst(RegExp(r'^song_'), ''));
+      if (id == null) return;
+      final song = await dataSource.getSongById(id);
+      if (song == null) return;
+      await onPlayFromBrowse!.call(song);
+    } catch (e) {
+      debugPrint('[AudioService] playFromMediaId($mediaId) error: $e');
+    }
+  }
+
+  MediaItem _songToMediaItem(Song song) {
+    Uri? artUri;
+    final coverUrl = song.coverUrl;
+    if (coverUrl != null && coverUrl.isNotEmpty) {
+      artUri = Uri.parse(UrlHelper.buildCoverUrl(coverUrl));
+    }
+
+    return MediaItem(
+      id: 'song_${song.id}',
+      title: song.title,
+      artist: song.artist ?? '',
+      album: song.album ?? '',
+      artUri: artUri,
+      duration: Duration(milliseconds: (song.duration * 1000).toInt()),
+      playable: true,
+    );
+  }
+
+  MediaItem _buildBrowsableItem(String id, String title) {
+    return MediaItem(
+      id: id,
+      title: title,
+      playable: false,
+    );
+  }
+
+  MediaItem _playlistToMediaItem(Playlist playlist) {
+    Uri? artUri;
+    final coverUrl = playlist.coverUrl;
+    if (coverUrl != null && coverUrl.isNotEmpty) {
+      artUri = Uri.parse(UrlHelper.buildCoverUrl(coverUrl));
+    }
+
+    return MediaItem(
+      id: 'playlist_${playlist.id}',
+      title: playlist.name,
+      artist: '${playlist.songCount} 首歌曲',
+      artUri: artUri,
+      playable: false,
+    );
   }
 
   // ====================== 业务方法 ======================
