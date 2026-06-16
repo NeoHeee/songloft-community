@@ -29,7 +29,6 @@ class PlaylistListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final coverUrl = playlist.coverUrl;
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -65,9 +64,11 @@ class PlaylistListItem extends StatelessWidget {
                   width: 56,
                   height: 56,
                   child:
-                      coverUrl != null
+                      playlist.coverImageUrl != null
                           ? CachedNetworkImage(
-                            imageUrl: UrlHelper.buildCoverUrl(coverUrl),
+                            imageUrl: UrlHelper.buildCoverUrl(
+                              playlist.coverImageUrl!,
+                            ),
                             fit: BoxFit.cover,
                             placeholder:
                                 (context, url) =>

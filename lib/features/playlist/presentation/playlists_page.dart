@@ -522,7 +522,6 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
       onReorder: _onReorder,
       itemBuilder: (context, index) {
         final playlist = _sortablePlaylists[index];
-        final coverUrl = playlist.coverUrl;
         return Card(
           key: ValueKey(playlist.id),
           child: Padding(
@@ -548,9 +547,11 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
                     width: 48,
                     height: 48,
                     child:
-                        coverUrl != null
+                        playlist.coverImageUrl != null
                             ? CachedNetworkImage(
-                              imageUrl: UrlHelper.buildCoverUrl(coverUrl),
+                              imageUrl: UrlHelper.buildCoverUrl(
+                                playlist.coverImageUrl!,
+                              ),
                               fit: BoxFit.cover,
                               placeholder:
                                   (context, url) => Container(

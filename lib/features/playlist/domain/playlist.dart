@@ -85,6 +85,16 @@ class Playlist {
     );
   }
 
+  /// 带缓存刷新参数的封面 URL
+  ///
+  /// 封面端点路径固定（/api/v1/playlists/{id}/cover），内容更新后 URL 不变，
+  /// 追加 updatedAt 时间戳使浏览器和图片缓存自动失效。
+  String? get coverImageUrl {
+    final url = coverUrl;
+    if (url == null || url.isEmpty) return null;
+    return '$url?_t=${updatedAt.millisecondsSinceEpoch}';
+  }
+
   /// 是否是内置歌单
   bool get isBuiltIn => labels.contains('built_in');
 

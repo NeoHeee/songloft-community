@@ -541,9 +541,9 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
             boxShadow: AppShadows.medium,
           ),
           clipBehavior: Clip.antiAlias,
-          child: coverUrl != null
+          child: playlist.coverImageUrl != null
               ? CachedNetworkImage(
-                  imageUrl: UrlHelper.buildCoverUrl(coverUrl),
+                  imageUrl: UrlHelper.buildCoverUrl(playlist.coverImageUrl!),
                   fit: BoxFit.cover,
                   placeholder: (context, url) =>
                       Container(color: colorScheme.surfaceContainerHighest),
@@ -1098,8 +1098,10 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
     );
 
     if (result == true && mounted) {
-      // 刷新歌单详情
+      // 强制刷新歌单详情并等待完成，确保封面等变更立即生效
+      ref.invalidate(coverColorsProvider(playlist.coverUrl));
       ref.invalidate(playlistDetailProvider(_playlistIdInt));
+      await ref.read(playlistDetailProvider(_playlistIdInt).future);
     }
   }
 
@@ -1709,9 +1711,9 @@ class _PlaylistEditDialogState extends ConsumerState<_PlaylistEditDialog> {
 
     // 网络图片预览
     final previewUrl = _previewCoverUrl;
-    if (previewUrl != null) {
+    if (previewUrl != null && previewUrl.isNotEmpty) {
       return CachedNetworkImage(
-        imageUrl: previewUrl,
+        imageUrl: UrlHelper.buildCoverUrl(previewUrl),
         fit: BoxFit.cover,
         placeholder:
             (context, url) =>

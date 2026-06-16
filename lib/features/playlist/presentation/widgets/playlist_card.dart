@@ -29,7 +29,6 @@ class PlaylistCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final coverUrl = playlist.coverUrl;
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -55,9 +54,11 @@ class PlaylistCard extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   // 封面图
-                  coverUrl != null
+                  playlist.coverImageUrl != null
                       ? CachedNetworkImage(
-                        imageUrl: UrlHelper.buildCoverUrl(coverUrl),
+                        imageUrl: UrlHelper.buildCoverUrl(
+                          playlist.coverImageUrl!,
+                        ),
                         fit: BoxFit.cover,
                         placeholder:
                             (context, url) => _buildPlaceholder(colorScheme),
