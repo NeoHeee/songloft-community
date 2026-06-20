@@ -689,26 +689,26 @@ final audioQualityProvider = NotifierProvider<AudioQualityNotifier, String>(
 );
 
 // ============================================================================
-// Duration Refresh Provider
+// Metadata Refresh Provider
 // ============================================================================
 
-class DurationRefreshNotifier extends Notifier<DurationRefreshProgress> {
+class MetadataRefreshNotifier extends Notifier<MetadataRefreshProgress> {
   late SettingsApi _api;
   Timer? _pollTimer;
 
   @override
-  DurationRefreshProgress build() {
+  MetadataRefreshProgress build() {
     _api = ref.watch(settingsApiProvider);
     ref.onDispose(() {
       _stopPolling();
     });
-    return DurationRefreshProgress.idle;
+    return MetadataRefreshProgress.idle;
   }
 
   Future<void> startRefresh() async {
     try {
-      await _api.startDurationRefresh();
-      state = const DurationRefreshProgress(
+      await _api.startMetadataRefresh();
+      state = const MetadataRefreshProgress(
         status: 'running',
         total: 0,
         processed: 0,
@@ -720,7 +720,7 @@ class DurationRefreshNotifier extends Notifier<DurationRefreshProgress> {
 
   Future<void> refreshProgress() async {
     try {
-      final progress = await _api.getDurationRefreshProgress();
+      final progress = await _api.getMetadataRefreshProgress();
       state = progress;
       if (progress.isDone) {
         _stopPolling();
@@ -730,7 +730,7 @@ class DurationRefreshNotifier extends Notifier<DurationRefreshProgress> {
 
   Future<void> cancel() async {
     try {
-      await _api.cancelDurationRefresh();
+      await _api.cancelMetadataRefresh();
       _stopPolling();
       await refreshProgress();
     } catch (_) {}
@@ -750,7 +750,7 @@ class DurationRefreshNotifier extends Notifier<DurationRefreshProgress> {
   }
 }
 
-final durationRefreshProvider =
-    NotifierProvider<DurationRefreshNotifier, DurationRefreshProgress>(
-      DurationRefreshNotifier.new,
+final metadataRefreshProvider =
+    NotifierProvider<MetadataRefreshNotifier, MetadataRefreshProgress>(
+      MetadataRefreshNotifier.new,
     );

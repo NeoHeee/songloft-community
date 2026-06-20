@@ -4,27 +4,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/settings_api.dart';
 import '../providers/settings_provider.dart';
 
-class DurationRefreshManager extends ConsumerStatefulWidget {
-  const DurationRefreshManager({super.key});
+class MetadataRefreshManager extends ConsumerStatefulWidget {
+  const MetadataRefreshManager({super.key});
 
   @override
-  ConsumerState<DurationRefreshManager> createState() =>
-      _DurationRefreshManagerState();
+  ConsumerState<MetadataRefreshManager> createState() =>
+      _MetadataRefreshManagerState();
 }
 
-class _DurationRefreshManagerState
-    extends ConsumerState<DurationRefreshManager> {
+class _MetadataRefreshManagerState
+    extends ConsumerState<MetadataRefreshManager> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(durationRefreshProvider.notifier).refreshProgress();
+      ref.read(metadataRefreshProvider.notifier).refreshProgress();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final progress = ref.watch(durationRefreshProvider);
+    final progress = ref.watch(metadataRefreshProvider);
     final theme = Theme.of(context);
 
     if (progress.isRunning) {
@@ -38,19 +38,25 @@ class _DurationRefreshManagerState
 
   Widget _buildIdleState(ThemeData theme) {
     return ListTile(
-      leading: Icon(Icons.timer_outlined, color: theme.colorScheme.primary),
-      title: const Text('刷新网络歌曲时长'),
-      subtitle: const Text('探测所有时长未知的网络歌曲'),
+      leading: Icon(
+        Icons.library_music_outlined,
+        color: theme.colorScheme.primary,
+      ),
+      title: const Text('刷新网络歌曲元数据'),
+      subtitle: const Text('探测所有元数据缺失的网络歌曲'),
       trailing: FilledButton.tonal(
         onPressed: () {
-          ref.read(durationRefreshProvider.notifier).startRefresh();
+          ref.read(metadataRefreshProvider.notifier).startRefresh();
         },
         child: const Text('开始'),
       ),
     );
   }
 
-  Widget _buildRunningState(DurationRefreshProgress progress, ThemeData theme) {
+  Widget _buildRunningState(
+    MetadataRefreshProgress progress,
+    ThemeData theme,
+  ) {
     final label = progress.total > 0
         ? '${progress.completedCount} / ${progress.total}'
         : '准备中...';
@@ -63,7 +69,7 @@ class _DurationRefreshManagerState
           value: progress.total > 0 ? progress.progress : null,
         ),
       ),
-      title: const Text('正在刷新时长'),
+      title: const Text('正在刷新元数据'),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -77,14 +83,14 @@ class _DurationRefreshManagerState
       ),
       trailing: TextButton(
         onPressed: () {
-          ref.read(durationRefreshProvider.notifier).cancel();
+          ref.read(metadataRefreshProvider.notifier).cancel();
         },
         child: const Text('取消'),
       ),
     );
   }
 
-  Widget _buildDoneState(DurationRefreshProgress progress, ThemeData theme) {
+  Widget _buildDoneState(MetadataRefreshProgress progress, ThemeData theme) {
     final statusText = progress.status == 'cancelled'
         ? '已取消'
         : progress.status == 'failed'
@@ -99,11 +105,11 @@ class _DurationRefreshManagerState
             ? theme.colorScheme.primary
             : theme.colorScheme.outline,
       ),
-      title: Text('刷新时长$statusText'),
+      title: Text('刷新元数据$statusText'),
       subtitle: Text(detail),
       trailing: FilledButton.tonal(
         onPressed: () {
-          ref.read(durationRefreshProvider.notifier).startRefresh();
+          ref.read(metadataRefreshProvider.notifier).startRefresh();
         },
         child: const Text('重新刷新'),
       ),

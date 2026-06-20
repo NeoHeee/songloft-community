@@ -25,7 +25,7 @@ import '../../../features/jsplugin/presentation/providers/jsplugin_provider.dart
 import '../../../features/jsplugin/presentation/widgets/jsplugin_manager.dart';
 import '../../../features/jsplugin/presentation/widgets/plugin_icon.dart';
 import '../data/settings_api.dart';
-import 'widgets/duration_refresh_manager.dart';
+import 'widgets/metadata_refresh_manager.dart';
 import 'widgets/scan_manager.dart';
 import 'widgets/section_card.dart';
 import 'widgets/settings_master_detail.dart';
@@ -385,7 +385,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         children: [
           const Padding(padding: EdgeInsets.all(16), child: ScanManager()),
           const Divider(height: 1),
-          const DurationRefreshManager(),
+          const MetadataRefreshManager(),
           const Divider(height: 1),
           ListTile(
             leading: const Icon(Icons.fingerprint),

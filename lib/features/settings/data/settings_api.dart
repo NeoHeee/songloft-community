@@ -548,22 +548,22 @@ class SettingsApi {
     }
   }
 
-  // ---------- 刷新远程歌曲时长 ----------
+  // ---------- 刷新远程歌曲元数据 ----------
 
-  Future<void> startDurationRefresh() async {
+  Future<void> startMetadataRefresh() async {
     try {
-      await dio.post('${AppConfig.apiPrefix}/songs/refresh-duration');
+      await dio.post('${AppConfig.apiPrefix}/songs/refresh-metadata');
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
 
-  Future<DurationRefreshProgress> getDurationRefreshProgress() async {
+  Future<MetadataRefreshProgress> getMetadataRefreshProgress() async {
     try {
       final response = await dio.get(
-        '${AppConfig.apiPrefix}/songs/refresh-duration/progress',
+        '${AppConfig.apiPrefix}/songs/refresh-metadata/progress',
       );
-      return DurationRefreshProgress.fromJson(
+      return MetadataRefreshProgress.fromJson(
         response.data as Map<String, dynamic>,
       );
     } on DioException catch (e) {
@@ -571,38 +571,38 @@ class SettingsApi {
     }
   }
 
-  Future<void> cancelDurationRefresh() async {
+  Future<void> cancelMetadataRefresh() async {
     try {
-      await dio.post('${AppConfig.apiPrefix}/songs/refresh-duration/cancel');
+      await dio.post('${AppConfig.apiPrefix}/songs/refresh-metadata/cancel');
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
 }
 
-/// 远程歌曲时长刷新进度
-class DurationRefreshProgress {
+/// 远程歌曲元数据刷新进度
+class MetadataRefreshProgress {
   final String status;
   final int total;
   final int processed;
   final int failed;
 
-  const DurationRefreshProgress({
+  const MetadataRefreshProgress({
     required this.status,
     required this.total,
     required this.processed,
     required this.failed,
   });
 
-  static const idle = DurationRefreshProgress(
+  static const idle = MetadataRefreshProgress(
     status: 'idle',
     total: 0,
     processed: 0,
     failed: 0,
   );
 
-  factory DurationRefreshProgress.fromJson(Map<String, dynamic> json) {
-    return DurationRefreshProgress(
+  factory MetadataRefreshProgress.fromJson(Map<String, dynamic> json) {
+    return MetadataRefreshProgress(
       status: json['status'] as String? ?? 'idle',
       total: json['total'] as int? ?? 0,
       processed: json['processed'] as int? ?? 0,
