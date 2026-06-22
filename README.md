@@ -42,7 +42,7 @@ https://github.com/songloft-org/songloft/issues/6
 | | [songloft-x86_64.apk](https://github.com/songloft-org/songloft-player/releases/latest/download/songloft-x86_64.apk) | x86_64 模拟器/设备 |
 | 📱 **iOS** | [songloft-ios-nosign.ipa](https://github.com/songloft-org/songloft-player/releases/latest/download/songloft-ios-nosign.ipa) | 未签名 IPA，可通过 AltStore/Sideloadly 安装 |
 
-> 开发版可在 [main 分支 Release](https://github.com/songloft-org/songloft-player/releases/tag/main) 获取。
+> 开发版可在 [dev 分支 Release](https://github.com/songloft-org/songloft-player/releases/tag/dev) 获取。
 
 ## 功能特性
 
