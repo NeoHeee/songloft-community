@@ -94,24 +94,28 @@ class SongloftBackendPlugin: NSObject {
 
     private func callStop() {
         let selector = NSSelectorFromString("stop")
-        if let cls = mobileClass, cls.responds(to: selector) {
-            _ = cls.perform(selector)
-        }
+        guard let cls = mobileClass, cls.responds(to: selector) else { return }
+        let method = cls.method(for: selector)
+        typealias StopFunc = @convention(c) (AnyClass, Selector) -> Void
+        let impl = unsafeBitCast(method, to: StopFunc.self)
+        impl(cls, selector)
     }
 
     private func callIsRunning() -> Bool {
         let selector = NSSelectorFromString("isRunning")
         guard let cls = mobileClass, cls.responds(to: selector) else { return false }
-        // gomobile 布尔返回通过 perform 不太方便，用安全默认值
-        let result = cls.perform(selector)
-        return result != nil
+        let method = cls.method(for: selector)
+        typealias IsRunningFunc = @convention(c) (AnyClass, Selector) -> Bool
+        let impl = unsafeBitCast(method, to: IsRunningFunc.self)
+        return impl(cls, selector)
     }
 
     private func callGetPort() -> Int {
         let selector = NSSelectorFromString("getPort")
         guard let cls = mobileClass, cls.responds(to: selector) else { return 0 }
-        // gomobile int 返回
-        let result = cls.perform(selector)
-        return Int(bitPattern: result?.toOpaque() ?? UnsafeMutableRawPointer(bitPattern: 0))
+        let method = cls.method(for: selector)
+        typealias GetPortFunc = @convention(c) (AnyClass, Selector) -> Int
+        let impl = unsafeBitCast(method, to: GetPortFunc.self)
+        return impl(cls, selector)
     }
 }
