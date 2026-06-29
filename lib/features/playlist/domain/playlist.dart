@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// 歌单实体模型
 class Playlist {
   final int id;
@@ -24,25 +26,15 @@ class Playlist {
 
   factory Playlist.fromJson(Map<String, dynamic> json) {
     return Playlist(
-      id: json['id'] as int,
+      id: _intFromJson(json['id']),
       type: json['type'] as String? ?? 'normal',
-      name: json['name'] as String,
+      name: json['name'] as String? ?? '',
       description: json['description'] as String?,
       coverUrl: json['cover_url'] as String?,
-      labels:
-          (json['labels'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          [],
-      songCount: json['song_count'] as int? ?? 0,
-      createdAt:
-          json['created_at'] != null
-              ? DateTime.parse(json['created_at'] as String)
-              : DateTime.now(),
-      updatedAt:
-          json['updated_at'] != null
-              ? DateTime.parse(json['updated_at'] as String)
-              : DateTime.now(),
+      labels: _labelsFromJson(json['labels']),
+      songCount: _intFromJson(json['song_count']),
+      createdAt: _dateTimeFromJson(json['created_at']),
+      updatedAt: _dateTimeFromJson(json['updated_at']),
     );
   }
 
@@ -111,6 +103,38 @@ class Playlist {
   int get hashCode => id.hashCode;
 }
 
+int _intFromJson(dynamic value) {
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value) ?? 0;
+  return 0;
+}
+
+List<String> _labelsFromJson(dynamic value) {
+  if (value == null) return [];
+  if (value is String) {
+    try {
+      final decoded = jsonDecode(value);
+      if (decoded is List) {
+        return decoded.whereType<String>().toList();
+      }
+    } on FormatException {
+      return [];
+    }
+    return [];
+  }
+  if (value is List) {
+    return value.whereType<String>().toList();
+  }
+  return [];
+}
+
+DateTime _dateTimeFromJson(dynamic value) {
+  if (value is String && value.isNotEmpty) {
+    return DateTime.tryParse(value) ?? DateTime.now();
+  }
+  return DateTime.now();
+}
+
 /// 歌单列表响应
 class PlaylistListResponse {
   final List<Playlist> playlists;
@@ -124,9 +148,10 @@ class PlaylistListResponse {
             ?.map((e) => Playlist.fromJson(e as Map<String, dynamic>))
             .toList() ??
         [];
+    final total = _intFromJson(json['total']);
     return PlaylistListResponse(
       playlists: playlistsList,
-      total: json['total'] as int? ?? playlistsList.length,
+      total: total == 0 ? playlistsList.length : total,
     );
   }
 }
