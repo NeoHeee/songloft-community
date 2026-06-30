@@ -27,6 +27,9 @@ class SongloftAudioHandler extends BaseAudioHandler with SeekHandler {
     ),
   );
 
+  String? _originalTitle;
+  String? _originalArtist;
+
   /// 通知栏回调（由 PlayerNotifier 设置）
   VoidCallback? onSkipToNext;
   VoidCallback? onSkipToPrevious;
@@ -433,6 +436,9 @@ class SongloftAudioHandler extends BaseAudioHandler with SeekHandler {
 
   /// 更新通知栏元数据
   void _updateNowPlaying(Song song) {
+    _originalTitle = song.title;
+    _originalArtist = song.artist ?? '未知艺术家';
+
     // artUri 由 Android 系统直接拉取，必须是带 baseUrl + access_token 的完整 URL
     Uri? artUri;
     final coverUrl = song.coverUrl;
@@ -443,7 +449,7 @@ class SongloftAudioHandler extends BaseAudioHandler with SeekHandler {
     final item = MediaItem(
       id: '${song.type}_${song.id}',
       title: song.title,
-      artist: song.artist ?? '未知艺术家',
+      artist: _originalArtist!,
       album: song.album ?? '',
       artUri: artUri,
       duration: Duration(milliseconds: (song.duration * 1000).toInt()),
@@ -460,6 +466,32 @@ class SongloftAudioHandler extends BaseAudioHandler with SeekHandler {
 
     mediaItem.add(item);
     debugPrint('[AudioService] MediaItem added to stream');
+  }
+
+  /// 用当前歌词行替换 Now Playing 标题，原歌曲名和艺术家合并到副标题
+  void updateNowPlayingLyric(String lyricLine) {
+    final current = mediaItem.value;
+    if (current == null || _originalTitle == null) return;
+
+    if (lyricLine.isEmpty) {
+      restoreNowPlaying();
+      return;
+    }
+
+    final artist = _originalArtist?.isNotEmpty == true
+        ? '$_originalTitle - $_originalArtist'
+        : _originalTitle!;
+
+    mediaItem.add(current.copyWith(title: lyricLine, artist: artist));
+  }
+
+  /// 恢复 Now Playing 元数据为原始歌曲信息
+  void restoreNowPlaying() {
+    final current = mediaItem.value;
+    if (current == null || _originalTitle == null) return;
+    mediaItem.add(
+      current.copyWith(title: _originalTitle!, artist: _originalArtist),
+    );
   }
 
   /// 更新通知栏元数据的 duration（当获取到实际时长时调用）

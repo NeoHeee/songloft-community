@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/platform/live_activity_service.dart';
 import '../../../../core/storage/lyric_cache_service.dart';
 import '../../../../core/utils/url_helper.dart';
+import '../../../../main.dart';
 import '../../domain/lyric_parser.dart';
 import 'player_provider.dart';
 
@@ -83,6 +84,7 @@ class LyricNotifier extends Notifier<LyricState> {
     }
 
     _lastLoadedUrl = null;
+    Future.microtask(() => ref.read(audioHandlerProvider).restoreNowPlaying());
     return const LyricState();
   }
 
@@ -94,6 +96,9 @@ class LyricNotifier extends Notifier<LyricState> {
       LiveActivityService().updateLyric(
         state.currentLyricText,
         state.nextLyricText,
+      );
+      ref.read(audioHandlerProvider).updateNowPlayingLyric(
+        state.currentLyricText,
       );
     }
   }
@@ -129,6 +134,9 @@ class LyricNotifier extends Notifier<LyricState> {
         state.currentLyricText,
         state.nextLyricText,
       );
+      ref.read(audioHandlerProvider).updateNowPlayingLyric(
+        state.currentLyricText,
+      );
       return;
     }
 
@@ -155,6 +163,9 @@ class LyricNotifier extends Notifier<LyricState> {
       LiveActivityService().updateLyric(
         state.currentLyricText,
         state.nextLyricText,
+      );
+      ref.read(audioHandlerProvider).updateNowPlayingLyric(
+        state.currentLyricText,
       );
 
       if (lyricText.isNotEmpty) {
