@@ -11,7 +11,7 @@
   <strong>🎵 Songloft 跨平台音乐播放器 — 基于 Flutter 构建</strong>
 </p>
 
-Songloft 跨平台音乐播放器，基于 Flutter 构建，支持 iOS、Android、macOS、Windows、Linux、Web 六端。
+Songloft 跨平台音乐播放器，基于 Flutter 构建，支持 iOS、Android、macOS、Windows、Linux、Web 六端。支持 **Bundle 本地模式**：内嵌 Go 后端，无需部署服务器即可播放本地音乐。
 
 <p align="center">
   <a href="https://github.com/songloft-org/songloft-player">🏠 GitHub</a> •
@@ -49,6 +49,7 @@ https://github.com/songloft-org/songloft/issues/6
 ## 功能特性
 
 - **跨平台支持**: iOS、Android（手机/平板/TV）、macOS、Windows、Linux、Web
+- **Bundle 本地模式**: 内嵌 Go 后端，无需服务器，支持本地/远程双模式切换
 - **响应式布局**: 4 级断点自适应（Mobile < 600px, Tablet 600-900px, Desktop 900-1920px, TV 1920px+）
 - **自适应导航**: 手机底栏、平板侧栏、桌面侧边菜单、TV 顶部 Tab
 - **音乐播放**: 基于 just_audio，支持本地和网络歌曲，后台播放
@@ -114,14 +115,16 @@ lib/
 ├── config/          # 应用配置（API 地址、常量）
 ├── core/            # 核心层
 │   ├── audio/       # 音频播放服务
+│   ├── backend/     # Bundle 本地模式（嵌入后端抽象层）
 │   ├── network/     # HTTP 客户端、认证拦截器
 │   ├── router/      # GoRouter 路由配置
 │   ├── storage/     # 本地存储、安全存储
 │   ├── theme/       # 主题、响应式断点
 │   └── utils/       # 工具函数
 ├── features/        # 功能模块
-│   ├── auth/        # 认证（登录/登出/Token 管理）
+│   ├── auth/        # 认证（登录/登出/Token 管理/本地模式入口）
 │   ├── home/        # 首页
+│   ├── startup/     # 启动流程（本地/远程模式自动引导）
 │   ├── library/     # 歌曲库
 │   ├── player/      # 播放器（桌面/移动/TV/迷你）
 │   ├── playlist/    # 歌单管理
@@ -160,12 +163,35 @@ scripts/
 
 ## 部署模式
 
-| 模式 | 说明 |
-|------|------|
-| **standalone** | 前后端分离部署，显示 API 地址配置 UI，用户手动填写后端地址 |
-| **embedded** | 嵌入 Go 后端同域部署，自动使用当前域名，隐藏 API 地址 UI |
+| 模式 | 编译参数 | 说明 |
+|------|---------|------|
+| **standalone** | 默认（不传 `--dart-define`） | 前后端分离部署，显示 API 地址配置 UI，用户手动填写后端地址 |
+| **embedded** | `--dart-define=DEPLOY_MODE=embedded` | 嵌入 Go 后端同域部署，自动使用当前域名，隐藏 API 地址 UI |
+| **bundle** | `--dart-define=HAS_BACKEND=true` | 客户端内嵌 Go 后端，无需服务器，支持本地/远程双模式切换 |
 
 默认构建（不传 `--dart-define`）等同于 standalone 模式。
+
+### Bundle 本地模式
+
+Bundle 版将 Go 后端嵌入到客户端中，用户无需单独部署服务器：
+
+- **移动端（Android/iOS）**：Go 后端通过 gomobile 编译为原生库（`.aar` / `.xcframework`），Flutter 通过 MethodChannel 调用
+- **桌面端（macOS/Windows/Linux）**：Go 后端编译为 `songloft-server` 可执行文件，启动时作为子进程运行
+- **Web**：不支持 Bundle 模式
+
+构建步骤（以 Android 为例）：
+
+```bash
+# 1. 在父仓库编译 Go 后端为 Android .aar
+make build-go-mobile-android
+
+# 2. 构建 Flutter APK（启用 Bundle 模式）
+flutter build apk --dart-define=HAS_BACKEND=true
+```
+
+使用方式：首次启动在登录页点击「使用本地模式」→ 选择音乐目录 → 自动完成。可在设置页随时切换本地/远程模式。
+
+Bundle 版预编译安装包在 [songloft 主仓库 Releases](https://github.com/songloft-org/songloft/releases/latest) 下载（`songloft-bundled-*` 文件）。
 
 ## 版本发布
 
@@ -190,7 +216,9 @@ scripts/
 
 ## 后端
 
-需要配合 [Songloft 后端](https://github.com/songloft-org/songloft) 服务运行。默认连接 `http://localhost:58091`，可在登录页中修改 API 地址。
+**标准版**需要配合 [Songloft 后端](https://github.com/songloft-org/songloft) 服务运行。默认连接 `http://localhost:58091`，可在登录页中修改 API 地址。
+
+**Bundle 版**内嵌 Go 后端，无需单独部署服务器，启动后自动使用 admin/admin 登录。
 
 默认账号：admin / admin
 

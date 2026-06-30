@@ -53,11 +53,12 @@ routerProvider (redirect 守卫)
 
 启动流程（`StartupGate`）：
 
-1. 读取持久化的服务器列表
-2. 单服务器直接使用；多服务器并行探测可达性（最长 2.5s）
-3. 选优先级最高的成功项写入 `baseUrlProvider`；全失败则 fallback 到列表首项
+1. 读取持久化的 `RunMode`（local / remote）
+2. **本地模式（Bundle）**：申请存储权限 → 启动嵌入后端（`EmbeddedBackendService.start()`）→ 健康检查轮询（最多 10 次 × 300ms）→ 设置 `baseUrlProvider` 为 `127.0.0.1:<port>` → 自动使用 `admin/admin` 登录
+3. **远程模式**：读取持久化的服务器列表 → 单服务器直接使用；多服务器并行探测可达性（最长 2.5s）→ 选优先级最高的成功项写入 `baseUrlProvider`；全失败则 fallback 到列表首项
 4. 设置 `probeOutcomeProvider` 供首屏 SnackBar 提示
 5. embedded 模式跳过探测，直接使用 `Uri.base`
+6. `BackendLifecycle`（WidgetsBindingObserver）监听 App 生命周期，前台恢复时自动重启后端，detached 时停止
 
 ### baseUrl 动态切换
 

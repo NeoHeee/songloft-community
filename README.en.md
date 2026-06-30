@@ -11,7 +11,7 @@
   <strong>🎵 Songloft Player — A cross-platform music player built with Flutter</strong>
 </p>
 
-Songloft Player is a cross-platform music player built with Flutter, supporting iOS, Android, macOS, Windows, Linux, and Web.
+Songloft Player is a cross-platform music player built with Flutter, supporting iOS, Android, macOS, Windows, Linux, and Web. Supports **Bundle local mode**: embeds the Go backend directly into the client, no server deployment required.
 
 <p align="center">
   <a href="https://github.com/songloft-org/songloft-player">🏠 GitHub</a> •
@@ -49,6 +49,7 @@ Download the latest version from [GitHub Releases](https://github.com/songloft-o
 ## Features
 
 - **Cross-platform**: iOS, Android (phone/tablet/TV), macOS, Windows, Linux, Web
+- **Bundle local mode**: Embedded Go backend, no server needed, supports local/remote mode switching
 - **Responsive layout**: 4-level breakpoints (Mobile < 600px, Tablet 600-900px, Desktop 900-1920px, TV 1920px+)
 - **Adaptive navigation**: Bottom bar on mobile, sidebar on tablet, side menu on desktop, top tab on TV
 - **Music playback**: Powered by just_audio, supports local and network songs, background playback
@@ -114,14 +115,16 @@ lib/
 ├── config/          # App config (API URL, constants)
 ├── core/            # Core layer
 │   ├── audio/       # Audio playback service
+│   ├── backend/     # Bundle local mode (embedded backend abstraction)
 │   ├── network/     # HTTP client, auth interceptor
 │   ├── router/      # GoRouter configuration
 │   ├── storage/     # Local storage, secure storage
 │   ├── theme/       # Theme, responsive breakpoints
 │   └── utils/       # Utility functions
 ├── features/        # Feature modules
-│   ├── auth/        # Authentication (login/logout/token management)
+│   ├── auth/        # Authentication (login/logout/token management/local mode entry)
 │   ├── home/        # Home page
+│   ├── startup/     # Startup flow (local/remote mode auto-bootstrap)
 │   ├── library/     # Song library
 │   ├── player/      # Player (desktop/mobile/TV/mini)
 │   ├── playlist/    # Playlist management
@@ -160,12 +163,25 @@ scripts/
 
 ## Deploy Modes
 
-| Mode | Description |
-|------|-------------|
-| **standalone** | Separated frontend/backend, shows API URL config UI for user to fill in |
-| **embedded** | Embedded with Go backend on same domain, auto uses current domain, hides API URL UI |
+| Mode | Build Flag | Description |
+|------|-----------|-------------|
+| **standalone** | Default (no `--dart-define`) | Separated frontend/backend, shows API URL config UI for user to fill in |
+| **embedded** | `--dart-define=DEPLOY_MODE=embedded` | Embedded with Go backend on same domain, auto uses current domain, hides API URL UI |
+| **bundle** | `--dart-define=HAS_BACKEND=true` | Go backend embedded in client, no server needed, supports local/remote mode switching |
 
 Default build (without `--dart-define`) is equivalent to standalone mode.
+
+### Bundle Local Mode
+
+The bundle version embeds the Go backend into the client, so users don't need a separate server:
+
+- **Mobile (Android/iOS)**: Go backend compiled as native library (`.aar` / `.xcframework`) via gomobile, accessed through MethodChannel
+- **Desktop (macOS/Windows/Linux)**: Go backend compiled as `songloft-server` executable, launched as a subprocess
+- **Web**: Not supported for bundle mode
+
+Usage: On first launch, tap "Use Local Mode" on the login page → select music directory → done. Switch between local/remote mode anytime in settings.
+
+Pre-built bundle packages are available from [songloft main repo Releases](https://github.com/songloft-org/songloft/releases/latest) (`songloft-bundled-*` files).
 
 ## Release
 
@@ -190,7 +206,9 @@ The script will automatically:
 
 ## Backend
 
-Requires the [Songloft backend](https://github.com/songloft-org/songloft) service. Default connection: `http://localhost:58091`, configurable on the login page.
+**Standard version** requires the [Songloft backend](https://github.com/songloft-org/songloft) service. Default connection: `http://localhost:58091`, configurable on the login page.
+
+**Bundle version** embeds the Go backend, no separate server deployment needed. Auto-logs in with admin/admin.
 
 Default credentials: admin / admin
 
