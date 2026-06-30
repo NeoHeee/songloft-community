@@ -17,6 +17,7 @@ import 'popup_controls.dart';
 import 'progress_bar.dart';
 import '../utils/player_song_actions.dart';
 import 'vinyl_ring.dart';
+import '../../../dlna/presentation/widgets/cast_button.dart';
 import 'volume_control.dart';
 
 /// Desktop/Tablet 全屏播放器（左右分栏布局）
@@ -448,6 +449,12 @@ class _DesktopFullPlayerState extends ConsumerState<DesktopFullPlayer>
             playMode: state.playMode,
             onPlayModeChanged: notifier.setPlayMode,
           ),
+        ),
+        // 投屏
+        const SizedBox(
+          width: 48,
+          height: 48,
+          child: CastButton(iconSize: 24),
         ),
         // 音量
         SizedBox(

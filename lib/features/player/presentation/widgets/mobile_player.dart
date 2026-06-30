@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,6 +14,7 @@ import '../queue_page.dart';
 import 'lyrics_view.dart';
 import 'play_controls.dart';
 import 'popup_controls.dart';
+import '../../../dlna/presentation/widgets/cast_button.dart';
 import 'progress_bar.dart';
 import 'equalizer_panel.dart';
 import '../utils/player_song_actions.dart';
@@ -309,23 +311,11 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
                   ),
                 ),
                 const SizedBox(height: 16),
-                // 主控制按钮
-                PlayControls(
-                  isPlaying: state.isPlaying,
-                  hasPrev: state.hasPrev,
-                  hasNext: state.hasNext,
-                  isBuffering: state.isBuffering,
-                  onPlay: notifier.togglePlay,
-                  onPause: notifier.togglePlay,
-                  onPrev: notifier.playPrev,
-                  onNext: notifier.playNext,
-                  size: 76,
-                  showGlow: true,
-                  useRoundedRect: true,
-                ),
-                const SizedBox(height: 24),
-                // 底部工具栏
-                _buildBottomBar(context, state, notifier),
+                // 主控制行（播放模式 + 上一首/播放/下一首 + 收藏）
+                _buildControlsRow(context, state, notifier),
+                const SizedBox(height: 20),
+                // 工具行（投屏 + 音量 + 队列 + 更多）
+                _buildToolBar(context, state, notifier),
                 const SizedBox(height: AppSpacing.md),
               ],
             ),
@@ -399,15 +389,55 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
             const Spacer(),
           // 更多操作
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_horiz_rounded, color: Colors.white),
+            icon: Icon(
+              Icons.more_horiz_rounded,
+              color: state.sleepTimer != null
+                  ? Theme.of(context).colorScheme.primary
+                  : topBarColor,
+            ),
             onSelected: (value) {
-              if (value == 'delete') {
-                deleteCurrentSongFromPlayer(context, ref);
+              switch (value) {
+                case 'equalizer':
+                  showEqualizerSheet(context);
+                case 'sleep_timer':
+                  SleepTimerSheet.show(
+                    context,
+                    status: state.sleepTimer,
+                    isLive: state.currentSong?.isLive ?? false,
+                    onSetDuration: notifier.setSleepTimerByDuration,
+                    onSetAfterSongs: notifier.setSleepTimerAfterSongs,
+                    onCancel: notifier.cancelSleepTimer,
+                  );
+                case 'delete':
+                  deleteCurrentSongFromPlayer(context, ref);
               }
             },
             itemBuilder: (context) {
               final colorScheme = Theme.of(context).colorScheme;
+              final hasTimer = state.sleepTimer != null;
               return [
+                const PopupMenuItem(
+                  value: 'equalizer',
+                  child: ListTile(
+                    leading: Icon(Icons.equalizer_rounded),
+                    title: Text('均衡器'),
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'sleep_timer',
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.bedtime_outlined,
+                      color: hasTimer ? colorScheme.primary : null,
+                    ),
+                    title: Text(hasTimer ? '睡眠定时 (已开启)' : '睡眠定时'),
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                const PopupMenuDivider(),
                 PopupMenuItem(
                   value: 'delete',
                   child: ListTile(
@@ -473,7 +503,8 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
     );
   }
 
-  Widget _buildBottomBar(
+  /// Spotify 风格控制行：[播放模式] [上一首] [播放/暂停] [下一首] [收藏]
+  Widget _buildControlsRow(
     BuildContext context,
     PlayerState state,
     PlayerNotifier notifier,
@@ -481,16 +512,8 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // 收藏
-          SizedBox(
-            width: 48,
-            height: 48,
-            child: Center(
-              child: FavoriteButton(songId: state.currentSong!.id, songType: state.currentSong!.type, size: 24),
-            ),
-          ),
           // 播放模式
           SizedBox(
             width: 48,
@@ -500,50 +523,60 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
               onPlayModeChanged: notifier.setPlayMode,
             ),
           ),
-          // 均衡器
+          const SizedBox(width: 8),
+          // 主控制按钮
+          PlayControls(
+            isPlaying: state.isPlaying,
+            hasPrev: state.hasPrev,
+            hasNext: state.hasNext,
+            isBuffering: state.isBuffering,
+            onPlay: notifier.togglePlay,
+            onPause: notifier.togglePlay,
+            onPrev: notifier.playPrev,
+            onNext: notifier.playNext,
+            size: 76,
+            showGlow: true,
+            useRoundedRect: true,
+          ),
+          const SizedBox(width: 8),
+          // 收藏
           SizedBox(
             width: 48,
             height: 48,
-            child: IconButton(
-              onPressed: () => showEqualizerSheet(context),
-              icon: const Icon(Icons.equalizer_rounded, size: 20),
-              tooltip: '均衡器',
-              visualDensity: VisualDensity.compact,
+            child: Center(
+              child: FavoriteButton(
+                songId: state.currentSong!.id,
+                songType: state.currentSong!.type,
+                size: 24,
+              ),
             ),
           ),
-          // 音量
-          SizedBox(
-            width: 48,
-            height: 48,
-            child: PopupVolumeControl(
-              volume: state.volume,
-              onVolumeChanged: notifier.setVolume,
-            ),
+        ],
+      ),
+    );
+  }
+
+  /// Spotify 风格工具行：[投屏] [音量] [队列]（Web 无投屏时仅 [音量] [队列]）
+  Widget _buildToolBar(
+    BuildContext context,
+    PlayerState state,
+    PlayerNotifier notifier,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          if (!kIsWeb)
+            const CastButton(iconSize: 20),
+          PopupVolumeControl(
+            volume: state.volume,
+            onVolumeChanged: notifier.setVolume,
           ),
-          // 睡眠定时
-          SizedBox(
-            width: 48,
-            height: 48,
-            child: PopupSleepTimerControl(
-              status: state.sleepTimer,
-              isLive: state.currentSong?.isLive ?? false,
-              onSetDuration: notifier.setSleepTimerByDuration,
-              onSetAfterSongs: notifier.setSleepTimerAfterSongs,
-              onCancel: notifier.cancelSleepTimer,
-            ),
-          ),
-          // 播放列表 - 显示播放队列浮层（直接覆盖在播放器之上）
-          SizedBox(
-            width: 48,
-            height: 48,
-            child: IconButton(
-              onPressed: () {
-                // 直接在播放器之上显示队列浮层，无需先关闭播放器
-                QueueBottomSheet.show(context);
-              },
-              icon: const Icon(Icons.queue_music_rounded),
-              tooltip: '播放队列',
-            ),
+          IconButton(
+            onPressed: () => QueueBottomSheet.show(context),
+            icon: const Icon(Icons.queue_music_rounded, size: 20),
+            tooltip: '播放队列',
           ),
         ],
       ),

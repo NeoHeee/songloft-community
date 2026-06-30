@@ -12,6 +12,7 @@ import 'progress_bar.dart';
 import 'equalizer_panel.dart';
 import 'popup_controls.dart';
 import 'volume_control.dart';
+import '../../../dlna/presentation/widgets/cast_button.dart';
 
 /// 桌面端底部播放器栏
 class DesktopPlayer extends ConsumerWidget {
@@ -256,6 +257,8 @@ class DesktopPlayer extends ConsumerWidget {
           tooltip: '均衡器',
           visualDensity: VisualDensity.compact,
         ),
+        // 投屏
+        const CastButton(iconSize: 20, visualDensity: VisualDensity.compact),
         // 睡眠定时
         _buildSleepTimerButton(context, state, notifier, theme),
         // 歌词按钮

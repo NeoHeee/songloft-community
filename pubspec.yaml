@@ -57,6 +57,8 @@ dependencies:
   flutter_svg: ^2.3.0
   # HMAC-SHA256 签名（Tracely 监控 SDK）
   crypto: ^3.0.6
+  # DLNA 投屏
+  dlna_dart: ^0.1.1
 
 dependency_overrides:
   # smtc_windows 1.1.0 的 Rust codegen 使用 flutter_rust_bridge 2.11.1 编译，

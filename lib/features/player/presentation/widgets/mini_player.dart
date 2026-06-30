@@ -5,6 +5,7 @@ import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/utils/url_helper.dart';
 
 import '../providers/player_provider.dart';
+import '../../../dlna/presentation/providers/dlna_provider.dart';
 import 'mobile_player.dart';
 import 'play_controls.dart';
 import 'progress_bar.dart';
@@ -85,13 +86,28 @@ class MiniPlayer extends ConsumerWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 2),
-                            Text(
-                              song.artist ?? '未知艺术家',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            Row(
+                              children: [
+                                if (ref.watch(dlnaStateProvider.select((s) => s.isCasting)))
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 4),
+                                    child: Icon(
+                                      Icons.cast_connected,
+                                      size: 12,
+                                      color: theme.colorScheme.primary,
+                                    ),
+                                  ),
+                                Expanded(
+                                  child: Text(
+                                    song.artist ?? '未知艺术家',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
