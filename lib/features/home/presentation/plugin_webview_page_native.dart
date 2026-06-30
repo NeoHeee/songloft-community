@@ -140,14 +140,17 @@ class _PluginWebViewPageState extends ConsumerState<PluginWebViewPage>
             ),
           ],
         ),
-        body: Stack(
-          children: [
-            if (_errorMessage != null)
-              _buildErrorView(colorScheme)
-            else
-              _buildWebView(theme),
-            if (_isLoading) const Center(child: CircularProgressIndicator()),
-          ],
+        body: SafeArea(
+          top: false,
+          child: Stack(
+            children: [
+              if (_errorMessage != null)
+                _buildErrorView(colorScheme)
+              else
+                _buildWebView(theme),
+              if (_isLoading) const Center(child: CircularProgressIndicator()),
+            ],
+          ),
         ),
       ),
     );
