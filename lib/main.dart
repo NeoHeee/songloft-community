@@ -20,6 +20,7 @@ import 'config/app_config.dart';
 import 'core/audio/audio_service.dart';
 import 'core/audio/smtc_service.dart';
 import 'core/audio/songloft_just_audio_platform.dart';
+import 'core/backend/embedded_backend_service.dart';
 import 'core/env/tv_detector.dart';
 import 'core/storage/app_preferences.dart';
 import 'core/storage/secure_storage.dart';
@@ -305,9 +306,24 @@ void main(List<String> args) async {
   // 注入退出前清理回调：先释放音频资源，避免窗口销毁时 libmpv C++ 线程仍在运行导致 Fail Fast Exception
   if (!kIsWeb && Platform.isWindows) {
     WindowTrayManager().onBeforeExit = () async {
-      await smtcService?.dispose();
-      await audioHandler.stop();
-      await audioHandler.dispose();
+      Future<void> runCleanup(
+        String label,
+        Future<void> Function() cleanup,
+      ) async {
+        try {
+          await cleanup();
+        } catch (e, stackTrace) {
+          debugPrint('[Main] $label 清理失败，继续退出: $e');
+          debugPrint('[Main] Stack trace: $stackTrace');
+        }
+      }
+
+      await runCleanup('SMTC', () async {
+        await smtcService?.dispose();
+      });
+      await runCleanup('音频停止', audioHandler.stop);
+      await runCleanup('音频释放', audioHandler.dispose);
+      await runCleanup('内嵌后端停止', EmbeddedBackendService.stop);
     };
   }
 

@@ -53,6 +53,10 @@ class SongloftAudioHandler extends BaseAudioHandler with SeekHandler {
   late final Future<void> _initFuture;
 
   late final StreamSubscription<PlaybackState> _playbackEventSub;
+  late final StreamSubscription<PlaybackState> _playbackLogSub;
+  late final StreamSubscription<ja.ProcessingState> _processingStateSub;
+  StreamSubscription<AudioInterruptionEvent>? _interruptionSub;
+  bool _disposed = false;
 
   SongloftAudioHandler() {
     // 使用 listen + add 而非 pipe()：pipe() 内部调用 addStream 独占 sink，
@@ -64,7 +68,7 @@ class SongloftAudioHandler extends BaseAudioHandler with SeekHandler {
     debugPrint('[AudioService] ✓ playbackEventStream 已绑定');
 
     // 监听 playbackState 变化，用于排查通知栏问题
-    playbackState.listen((state) {
+    _playbackLogSub = playbackState.listen((state) {
       debugPrint(
         '[AudioService] 📢 playbackState 更新: playing=${state.playing}, '
         'processingState=${state.processingState}, '
@@ -74,8 +78,9 @@ class SongloftAudioHandler extends BaseAudioHandler with SeekHandler {
     });
 
     // 监听播放完成
-    _player.processingStateStream.listen(
+    _processingStateSub = _player.processingStateStream.listen(
       (state) {
+        if (_disposed) return;
         debugPrint('[AudioService] processingState 变化: $state');
         if (state == ja.ProcessingState.completed) {
           try {
@@ -109,7 +114,8 @@ class SongloftAudioHandler extends BaseAudioHandler with SeekHandler {
       await session.configure(const AudioSessionConfiguration.music());
       debugPrint('[AudioService] AudioSession configured');
       var wasPlayingBeforeInterruption = false;
-      session.interruptionEventStream.listen((event) {
+      _interruptionSub = session.interruptionEventStream.listen((event) {
+        if (_disposed) return;
         debugPrint(
           '[AudioService] Audio interruption: type=${event.type}, begin=${event.begin}',
         );
@@ -188,6 +194,7 @@ class SongloftAudioHandler extends BaseAudioHandler with SeekHandler {
 
   @override
   Future<void> stop() async {
+    if (_disposed) return;
     debugPrint('[AudioService] ⏹️ stop() 被调用');
     await _player.stop();
     return super.stop();
@@ -478,9 +485,10 @@ class SongloftAudioHandler extends BaseAudioHandler with SeekHandler {
       return;
     }
 
-    final artist = _originalArtist?.isNotEmpty == true
-        ? '$_originalTitle - $_originalArtist'
-        : _originalTitle!;
+    final artist =
+        _originalArtist?.isNotEmpty == true
+            ? '$_originalTitle - $_originalArtist'
+            : _originalTitle!;
 
     mediaItem.add(current.copyWith(title: lyricLine, artist: artist));
   }
@@ -550,6 +558,12 @@ class SongloftAudioHandler extends BaseAudioHandler with SeekHandler {
 
   /// 释放资源
   Future<void> dispose() async {
+    if (_disposed) return;
+    _disposed = true;
+
+    await _interruptionSub?.cancel();
+    await _processingStateSub.cancel();
+    await _playbackLogSub.cancel();
     await _playbackEventSub.cancel();
     await _player.dispose();
   }

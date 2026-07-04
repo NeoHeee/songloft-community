@@ -18,13 +18,16 @@ class WindowTrayManager with WindowListener, TrayListener {
   /// 退出前的清理回调（如释放音频资源），由 main.dart 注入
   Future<void> Function()? onBeforeExit;
 
+  bool _isExiting = false;
+  Future<void>? _exitFuture;
+
   static Future<void> setup() async {
     if (kIsWeb) return;
     // 目前根据 MVP 计划，仅在 Windows 下开启隐藏到托盘功能
     if (!Platform.isWindows) return;
 
     await windowManager.ensureInitialized();
-    
+
     // 拦截窗口关闭事件
     await windowManager.setPreventClose(true);
 
@@ -58,7 +61,8 @@ class WindowTrayManager with WindowListener, TrayListener {
     String getIconPath() {
       if (Platform.isWindows) {
         final exeDir = File(Platform.resolvedExecutable).parent.path;
-        final buildPath = '$exeDir\\data\\flutter_assets\\windows\\runner\\resources\\app_icon.ico';
+        final buildPath =
+            '$exeDir\\data\\flutter_assets\\windows\\runner\\resources\\app_icon.ico';
         if (File(buildPath).existsSync()) {
           return buildPath;
         }
@@ -70,23 +74,14 @@ class WindowTrayManager with WindowListener, TrayListener {
     await trayManager.setIcon(getIconPath());
 
     final menuItems = <MenuItem>[
-      MenuItem(
-        key: 'show_window',
-        label: '打开 Songloft',
-      ),
+      MenuItem(key: 'show_window', label: '打开 Songloft'),
     ];
     if (FileLogger.logDir != null) {
-      menuItems.add(MenuItem(
-        key: 'open_logs',
-        label: '打开日志目录',
-      ));
+      menuItems.add(MenuItem(key: 'open_logs', label: '打开日志目录'));
     }
     menuItems.addAll([
       MenuItem.separator(),
-      MenuItem(
-        key: 'exit_app',
-        label: '退出',
-      ),
+      MenuItem(key: 'exit_app', label: '退出'),
     ]);
     Menu menu = Menu(items: menuItems);
     await trayManager.setContextMenu(menu);
@@ -95,6 +90,8 @@ class WindowTrayManager with WindowListener, TrayListener {
 
   @override
   void onWindowClose() async {
+    if (_isExiting) return;
+
     // 点击 X 按钮时触发，将窗口隐藏而不是退出
     bool isPreventClose = await windowManager.isPreventClose();
     if (isPreventClose) {
@@ -123,17 +120,46 @@ class WindowTrayManager with WindowListener, TrayListener {
         Process.run('explorer', [dir]);
       }
     } else if (menuItem.key == 'exit_app') {
-      try {
-        await onBeforeExit?.call();
-      } catch (e) {
-        debugPrint('[WindowTrayManager] onBeforeExit error: $e');
-      }
+      await exitApp();
+    }
+  }
+
+  Future<void> exitApp() {
+    _exitFuture ??= _exitApp();
+    return _exitFuture!;
+  }
+
+  Future<void> _exitApp() async {
+    _isExiting = true;
+
+    try {
+      await onBeforeExit?.call();
+    } catch (e, stackTrace) {
+      debugPrint('[WindowTrayManager] onBeforeExit error: $e');
+      debugPrint('[WindowTrayManager] Stack trace: $stackTrace');
+    }
+
+    windowManager.removeListener(this);
+    trayManager.removeListener(this);
+
+    try {
+      await trayManager.destroy();
+    } catch (e) {
+      debugPrint('[WindowTrayManager] tray destroy error: $e');
+    }
+
+    try {
       await windowManager.setPreventClose(false);
       await windowManager.close();
+    } catch (e) {
+      debugPrint('[WindowTrayManager] window close error: $e');
+      await windowManager.destroy();
     }
   }
 
   Future<void> _restoreWindow() async {
+    if (_isExiting) return;
+
     await windowManager.show();
     await windowManager.focus();
     // hide/show 循环后 Flutter 引擎的 IME 上下文可能未正确恢复，

@@ -29,6 +29,7 @@ class SongloftMediaKitPlayer extends AudioPlayerPlatform {
   Completer<Duration?>? _loadCompleter;
   int _currentIndex = 0;
   Duration? _setPosition;
+  bool _released = false;
 
   Media? get _currentMedia {
     var medias = player.state.playlist.medias;
@@ -80,9 +81,10 @@ class SongloftMediaKitPlayer extends AudioPlayerPlatform {
             }
           }
         } else if (_processingState != ProcessingStateMessage.completed) {
-          _processingState = isBuffering
-              ? ProcessingStateMessage.buffering
-              : ProcessingStateMessage.ready;
+          _processingState =
+              isBuffering
+                  ? ProcessingStateMessage.buffering
+                  : ProcessingStateMessage.ready;
           if (_duration == null) _updateDuration(player.state.duration);
         }
         _errorCode = null;
@@ -104,7 +106,7 @@ class SongloftMediaKitPlayer extends AudioPlayerPlatform {
         _updatePlaybackEvent();
       }),
       player.stream.volume.listen((volume) {
-        _dataController.add(PlayerDataMessage(volume: volume / 100.0));
+        _addPlayerData(PlayerDataMessage(volume: volume / 100.0));
       }),
       player.stream.completed.listen((completed) {
         _bufferedPosition = _position = Duration.zero;
@@ -139,15 +141,15 @@ class SongloftMediaKitPlayer extends AudioPlayerPlatform {
         _updatePlaybackEvent();
       }),
       player.stream.playlistMode.listen((playlistMode) {
-        _dataController.add(
+        _addPlayerData(
           PlayerDataMessage(loopMode: _playlistModeToLoopMode(playlistMode)),
         );
       }),
       player.stream.pitch.listen((pitch) {
-        _dataController.add(PlayerDataMessage(pitch: pitch));
+        _addPlayerData(PlayerDataMessage(pitch: pitch));
       }),
       player.stream.rate.listen((rate) {
-        _dataController.add(PlayerDataMessage(speed: rate));
+        _addPlayerData(PlayerDataMessage(speed: rate));
       }),
       player.stream.log.listen((event) {
         // ignore: avoid_print
@@ -165,18 +167,27 @@ class SongloftMediaKitPlayer extends AudioPlayerPlatform {
   }
 
   void _updatePlaybackEvent() {
-    _eventController.add(PlaybackEventMessage(
-      processingState: _processingState,
-      updateTime: DateTime.now(),
-      updatePosition: _position,
-      bufferedPosition: _bufferedPosition,
-      duration: _duration,
-      icyMetadata: null,
-      currentIndex: _currentIndex,
-      androidAudioSessionId: null,
-      errorCode: _errorCode,
-      errorMessage: _errorMessage,
-    ));
+    if (_released || _eventController.isClosed) return;
+
+    _eventController.add(
+      PlaybackEventMessage(
+        processingState: _processingState,
+        updateTime: DateTime.now(),
+        updatePosition: _position,
+        bufferedPosition: _bufferedPosition,
+        duration: _duration,
+        icyMetadata: null,
+        currentIndex: _currentIndex,
+        androidAudioSessionId: null,
+        errorCode: _errorCode,
+        errorMessage: _errorMessage,
+      ),
+    );
+  }
+
+  void _addPlayerData(PlayerDataMessage message) {
+    if (_released || _dataController.isClosed) return;
+    _dataController.add(message);
   }
 
   @override
@@ -257,13 +268,16 @@ class SongloftMediaKitPlayer extends AudioPlayerPlatform {
 
   @override
   Future<SetShuffleModeResponse> setShuffleMode(
-      SetShuffleModeRequest request) async {
+    SetShuffleModeRequest request,
+  ) async {
     bool shuffling = request.shuffleMode != ShuffleModeMessage.none;
     await player.setShuffle(shuffling);
-    _dataController.add(PlayerDataMessage(
-      shuffleMode:
-          shuffling ? ShuffleModeMessage.all : ShuffleModeMessage.none,
-    ));
+    _addPlayerData(
+      PlayerDataMessage(
+        shuffleMode:
+            shuffling ? ShuffleModeMessage.all : ShuffleModeMessage.none,
+      ),
+    );
     return SetShuffleModeResponse();
   }
 
@@ -293,7 +307,8 @@ class SongloftMediaKitPlayer extends AudioPlayerPlatform {
 
   @override
   Future<ConcatenatingInsertAllResponse> concatenatingInsertAll(
-      ConcatenatingInsertAllRequest request) async {
+    ConcatenatingInsertAllRequest request,
+  ) async {
     for (final source in request.children) {
       await player.add(_convertAudioSource(source));
       final length = player.state.playlist.medias.length;
@@ -307,7 +322,8 @@ class SongloftMediaKitPlayer extends AudioPlayerPlatform {
 
   @override
   Future<ConcatenatingRemoveRangeResponse> concatenatingRemoveRange(
-      ConcatenatingRemoveRangeRequest request) async {
+    ConcatenatingRemoveRangeRequest request,
+  ) async {
     for (var i = request.startIndex; i < request.endIndex; i++) {
       await player.remove(request.startIndex);
     }
@@ -316,23 +332,33 @@ class SongloftMediaKitPlayer extends AudioPlayerPlatform {
 
   @override
   Future<ConcatenatingMoveResponse> concatenatingMove(
-      ConcatenatingMoveRequest request) =>
-      player
-          .move(
-            request.currentIndex,
-            request.currentIndex > request.newIndex
-                ? request.newIndex
-                : request.newIndex + 1,
-          )
-          .then((_) => ConcatenatingMoveResponse());
+    ConcatenatingMoveRequest request,
+  ) => player
+      .move(
+        request.currentIndex,
+        request.currentIndex > request.newIndex
+            ? request.newIndex
+            : request.newIndex + 1,
+      )
+      .then((_) => ConcatenatingMoveResponse());
 
   Future<void> release() async {
+    if (_released) return;
+    _released = true;
     _mediaOpened = false;
-    await player.dispose();
+
+    if (_loadCompleter?.isCompleted == false) {
+      _loadCompleter?.complete(null);
+    }
+
     for (final sub in _streamSubscriptions) {
-      unawaited(sub.cancel());
+      await sub.cancel();
     }
     _streamSubscriptions.clear();
+
+    await player.dispose();
+    await _eventController.close();
+    await _dataController.close();
   }
 
   Future<void> _setMpvProperty(String key, dynamic value) async {
@@ -348,19 +374,25 @@ class SongloftMediaKitPlayer extends AudioPlayerPlatform {
         LoopModeMessage.all => PlaylistMode.loop,
       };
 
-  LoopModeMessage _playlistModeToLoopMode(PlaylistMode mode) =>
-      switch (mode) {
-        PlaylistMode.none => LoopModeMessage.off,
-        PlaylistMode.single => LoopModeMessage.one,
-        PlaylistMode.loop => LoopModeMessage.all,
-      };
+  LoopModeMessage _playlistModeToLoopMode(PlaylistMode mode) => switch (mode) {
+    PlaylistMode.none => LoopModeMessage.off,
+    PlaylistMode.single => LoopModeMessage.one,
+    PlaylistMode.loop => LoopModeMessage.all,
+  };
 
   Media _convertAudioSource(AudioSourceMessage source) => switch (source) {
-    UriAudioSourceMessage(:final uri, :final headers) =>
-        Media(uri, httpHeaders: headers),
-    ClippingAudioSourceMessage(:final child, :final start, :final end) =>
-        Media(child.uri, start: start, end: end),
-    _ => throw UnsupportedError(
-        '${source.runtimeType} is currently not supported'),
+    UriAudioSourceMessage(:final uri, :final headers) => Media(
+      uri,
+      httpHeaders: headers,
+    ),
+    ClippingAudioSourceMessage(:final child, :final start, :final end) => Media(
+      child.uri,
+      start: start,
+      end: end,
+    ),
+    _ =>
+      throw UnsupportedError(
+        '${source.runtimeType} is currently not supported',
+      ),
   };
 }
