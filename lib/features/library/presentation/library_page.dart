@@ -274,6 +274,10 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                 _navigateToAddSong(context, AppConstants.songTypeRemote);
               case 'add_radio':
                 _navigateToAddSong(context, AppConstants.songTypeRadio);
+              case 'toggle_hidden':
+                ref
+                    .read(songsListProvider.notifier)
+                    .setShowHidden(!state.showHidden);
               case 'clean':
                 _showCleanConfirmDialog(context);
             }
@@ -293,6 +297,20 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                   child: ListTile(
                     leading: Icon(Icons.radio),
                     title: Text('添加电台'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'toggle_hidden',
+                  child: ListTile(
+                    leading: Icon(
+                      state.showHidden
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
+                    title: Text(
+                      state.showHidden ? '隐藏已隐藏歌曲' : '显示隐藏歌曲',
+                    ),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),

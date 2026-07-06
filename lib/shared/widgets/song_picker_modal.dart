@@ -148,6 +148,9 @@ class _SongPickerModalState extends ConsumerState<SongPickerModal> {
         type: _resolvedType(),
         keyword: keyword.isNotEmpty ? keyword : null,
         pathPrefix: _pathPrefix.isNotEmpty ? _pathPrefix : null,
+        // 选歌器是「加歌到歌单」的管理入口，需显示全部歌（含隐藏歌单里的歌），
+        // 否则会出现「歌在库里却加不进歌单」的困惑。
+        excludePlaylistLabels: 'none',
         limit: _pageSize,
         offset: _currentPage * _pageSize,
       );
@@ -333,11 +336,12 @@ class _SongPickerModalState extends ConsumerState<SongPickerModal> {
       final repository = ref.read(songsRepositoryProvider);
       final keyword = _searchController.text.trim();
 
-      // 服务端按 type/keyword/path_prefix 收敛
+      // 服务端按 type/keyword/path_prefix 收敛；与 _loadSongs 一致显示全部歌
       final ids = await repository.getSongIds(
         type: _resolvedType(),
         keyword: keyword.isNotEmpty ? keyword : null,
         pathPrefix: _pathPrefix.isNotEmpty ? _pathPrefix : null,
+        excludePlaylistLabels: 'none',
       );
 
       // 客户端再剔除 excludeIds 与 excludeType

@@ -17,10 +17,13 @@ class SongsApi {
   /// [offset] 偏移量，默认 0
   /// [sort] 排序字段（可选，如 added_at/title/file_modified_at）
   /// [order] 排序方向（可选，asc/desc）
+  /// [excludePlaylistLabels] 排除属于这些 label 歌单的歌曲（可选）。
+  ///   不传（null）→ 后端默认排除隐藏歌单（hidden）；传 'none' → 显示全部
   Future<SongListResponse> getSongs({
     String? type,
     String? keyword,
     String? pathPrefix,
+    String? excludePlaylistLabels,
     int limit = 20,
     int offset = 0,
     String? sort,
@@ -35,6 +38,9 @@ class SongsApi {
     }
     if (pathPrefix != null && pathPrefix.isNotEmpty) {
       queryParams['path_prefix'] = pathPrefix;
+    }
+    if (excludePlaylistLabels != null && excludePlaylistLabels.isNotEmpty) {
+      queryParams['exclude_playlist_labels'] = excludePlaylistLabels;
     }
     if (sort != null && sort.isNotEmpty) {
       queryParams['sort'] = sort;
@@ -56,6 +62,7 @@ class SongsApi {
     String? type,
     String? keyword,
     String? pathPrefix,
+    String? excludePlaylistLabels,
     String? sort,
     String? order,
   }) async {
@@ -68,6 +75,9 @@ class SongsApi {
     }
     if (pathPrefix != null && pathPrefix.isNotEmpty) {
       queryParams['path_prefix'] = pathPrefix;
+    }
+    if (excludePlaylistLabels != null && excludePlaylistLabels.isNotEmpty) {
+      queryParams['exclude_playlist_labels'] = excludePlaylistLabels;
     }
     if (sort != null && sort.isNotEmpty) {
       queryParams['sort'] = sort;

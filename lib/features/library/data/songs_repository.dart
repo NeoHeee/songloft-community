@@ -14,6 +14,7 @@ class SongsRepository {
     String? type,
     String? keyword,
     String? pathPrefix,
+    String? excludePlaylistLabels,
     int limit = 20,
     int offset = 0,
     String? sort,
@@ -24,6 +25,7 @@ class SongsRepository {
         type: type,
         keyword: keyword,
         pathPrefix: pathPrefix,
+        excludePlaylistLabels: excludePlaylistLabels,
         limit: limit,
         offset: offset,
         sort: sort,
@@ -39,6 +41,7 @@ class SongsRepository {
     String? type,
     String? keyword,
     String? pathPrefix,
+    String? excludePlaylistLabels,
     String? sort,
     String? order,
   }) async {
@@ -47,6 +50,7 @@ class SongsRepository {
         type: type,
         keyword: keyword,
         pathPrefix: pathPrefix,
+        excludePlaylistLabels: excludePlaylistLabels,
         sort: sort,
         order: order,
       );

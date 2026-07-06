@@ -35,6 +35,9 @@ class SongsListState {
   final String sort;
   final String order;
 
+  /// 排除属于这些 label 歌单的歌曲：null → 后端默认排除隐藏歌单；'none' → 显示全部
+  final String? excludePlaylistLabels;
+
   const SongsListState({
     this.songs = const [],
     this.total = 0,
@@ -50,7 +53,11 @@ class SongsListState {
     this.isSelectingAll = false,
     this.sort = 'added_at',
     this.order = 'desc',
+    this.excludePlaylistLabels,
   });
+
+  /// 库页面是否处于「显示隐藏歌曲」状态
+  bool get showHidden => excludePlaylistLabels == 'none';
 
   SongsListState copyWith({
     List<Song>? songs,
@@ -67,8 +74,10 @@ class SongsListState {
     bool? isSelectingAll,
     String? sort,
     String? order,
+    String? excludePlaylistLabels,
     bool clearError = false,
     bool clearType = false,
+    bool clearExcludePlaylistLabels = false,
   }) {
     return SongsListState(
       songs: songs ?? this.songs,
@@ -85,6 +94,10 @@ class SongsListState {
       isSelectingAll: isSelectingAll ?? this.isSelectingAll,
       sort: sort ?? this.sort,
       order: order ?? this.order,
+      excludePlaylistLabels:
+          clearExcludePlaylistLabels
+              ? null
+              : (excludePlaylistLabels ?? this.excludePlaylistLabels),
     );
   }
 }
@@ -123,6 +136,7 @@ class SongsListNotifier extends Notifier<SongsListState> {
       final response = await _repository.getSongs(
         type: effectiveType,
         keyword: keyword ?? state.keyword,
+        excludePlaylistLabels: state.excludePlaylistLabels,
         limit: _pageSize,
         offset: page * _pageSize,
         sort: state.sort,
@@ -152,6 +166,7 @@ class SongsListNotifier extends Notifier<SongsListState> {
       final response = await _repository.getSongs(
         type: state.type,
         keyword: state.keyword,
+        excludePlaylistLabels: state.excludePlaylistLabels,
         limit: _pageSize,
         offset: nextPage * _pageSize,
         sort: state.sort,
@@ -184,6 +199,17 @@ class SongsListNotifier extends Notifier<SongsListState> {
   Future<void> setSort(String sort, String order) async {
     if (state.sort == sort && state.order == order) return;
     state = state.copyWith(sort: sort, order: order);
+    await loadSongs(page: 0, keyword: state.keyword, type: state.type);
+  }
+
+  /// 切换是否显示隐藏歌单里的歌曲。
+  /// show=true → 传 'none' 显示全部；show=false → 恢复默认（后端排除隐藏歌单）
+  Future<void> setShowHidden(bool show) async {
+    if (state.showHidden == show) return;
+    state = state.copyWith(
+      excludePlaylistLabels: show ? 'none' : null,
+      clearExcludePlaylistLabels: !show,
+    );
     await loadSongs(page: 0, keyword: state.keyword, type: state.type);
   }
 
@@ -240,6 +266,7 @@ class SongsListNotifier extends Notifier<SongsListState> {
       final ids = await _repository.getSongIds(
         type: state.type,
         keyword: state.keyword.isNotEmpty ? state.keyword : null,
+        excludePlaylistLabels: state.excludePlaylistLabels,
         sort: state.sort,
         order: state.order,
       );
