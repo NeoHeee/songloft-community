@@ -35,7 +35,11 @@ class DesktopBackendService {
     return _findServerBinary() != null;
   }
 
-  /// 启动 Go 后端子进程，返回监听端口
+  /// 启动 Go 后端子进程，返回实际监听端口。
+  ///
+  /// 默认 [port] = 0：传 `-port 0` 让后端由系统自动分配空闲端口，避免固定端口
+  /// （如 58091）被占用时启动失败。真实端口从后端 stdout 打印的
+  /// `http://localhost:PORT/` 一行解析，解析到后 [start] 才返回。
   static Future<int> start({
     required String dataDir,
     required String musicDir,
@@ -48,37 +52,58 @@ class DesktopBackendService {
       throw StateError('Go backend binary not found');
     }
 
-    final usePort = port > 0 ? port : 58091;
     final dbPath = '$dataDir${Platform.pathSeparator}songloft.db';
 
-    _process = await Process.start(binary, [
-      '-port', '$usePort',
+    final process = await Process.start(binary, [
+      '-port', '${port > 0 ? port : 0}',
       '-db', dbPath,
       '-username', 'admin',
       '-password', 'admin',
     ]);
+    _process = process;
+    _port = 0;
 
-    _port = usePort;
+    final portReady = Completer<int>();
 
-    _process!.stdout.transform(utf8.decoder).transform(const LineSplitter()).listen((line) {
+    process.stdout.transform(utf8.decoder).transform(const LineSplitter()).listen((line) {
       debugPrint('[GoBackend] $line');
       final match = RegExp(r'http://localhost:(\d+)').firstMatch(line);
       if (match != null) {
         _port = int.parse(match.group(1)!);
+        if (!portReady.isCompleted) portReady.complete(_port);
       }
     });
 
-    _process!.stderr.transform(utf8.decoder).transform(const LineSplitter()).listen((line) {
+    process.stderr.transform(utf8.decoder).transform(const LineSplitter()).listen((line) {
       debugPrint('[GoBackend:err] $line');
     });
 
-    _process!.exitCode.then((code) {
+    process.exitCode.then((code) {
       debugPrint('[GoBackend] 进程退出, code=$code');
-      _process = null;
-      _port = 0;
+      if (identical(_process, process)) {
+        _process = null;
+        _port = 0;
+      }
+      if (!portReady.isCompleted) {
+        portReady.completeError(
+          StateError('Go backend exited before reporting port (code=$code)'),
+        );
+      }
     });
 
-    debugPrint('[DesktopBackend] 后端已启动, port=$_port, pid=${_process!.pid}');
+    try {
+      _port = await portReady.future.timeout(const Duration(seconds: 15));
+    } catch (e) {
+      // 未能拿到端口：确保清理子进程，避免残留
+      process.kill(ProcessSignal.sigkill);
+      if (identical(_process, process)) {
+        _process = null;
+        _port = 0;
+      }
+      rethrow;
+    }
+
+    debugPrint('[DesktopBackend] 后端已启动, port=$_port, pid=${process.pid}');
     return _port;
   }
 
