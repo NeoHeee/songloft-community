@@ -71,7 +71,10 @@ class _StartupGateState extends ConsumerState<StartupGate>
       await ref.read(localMusicDirProvider.notifier).ensureLoaded();
       final runMode = ref.read(runModeProvider);
 
-      if (runMode == RunMode.local && !kIsWeb) {
+      // 仅在打包了内嵌后端的构建里才走本地模式；非 bundled 客户端即便
+      // 残留了 run_mode=local（如同容器装过 bundled 版）也一律回退远程，
+      // 与 backend_lifecycle / servers_page 的 hasEmbeddedBackend 守卫保持一致。
+      if (runMode == RunMode.local && !kIsWeb && AppConfig.hasEmbeddedBackend) {
         await _bootstrapLocal();
       } else {
         await _bootstrapRemote();
