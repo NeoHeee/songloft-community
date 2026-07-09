@@ -38,35 +38,53 @@ jobs:
           marker = "          python - <<'PY'\n"
           start = text.index(marker) + len(marker)
           end = text.index("\n          PY\n", start)
-          raw_script = dedent(text[start:end])
+          lines = dedent(text[start:end]).splitlines()
 
-          normalized = []
-          restore_two_spaces = False
-          for line in raw_script.splitlines():
-              if restore_two_spaces:
-                  if '"""' in line:
-                      restore_two_spaces = False
-                  elif line:
-                      line = '  ' + line
-              else:
-                  marker_index = line.find('"""')
-                  if marker_index >= 0:
-                      after = line[marker_index + 3:]
-                      if after.startswith('  ') and '"""' not in after:
-                          restore_two_spaces = True
-              normalized.append(line)
+          def leading_spaces(value: str) -> int:
+              return len(value) - len(value.lstrip(' '))
 
-          script = '\n'.join(normalized) + '\n'
-          script = script.replace(
-              "                  slivers: [\n            // 类型筛选",
-              "                  slivers: [\n                    // 类型筛选",
-          )
-          script = script.replace(
-              "                  slivers: [\n            SliverToBoxAdapter(child: _buildSearchBar()),\n\n            // 类型筛选",
-              "                  slivers: [\n                    SliverToBoxAdapter(child: _buildSearchBar()),\n\n                    // 类型筛选",
-          )
+          index = 0
+          while index < len(lines):
+              line = lines[index]
+              marker_index = line.find('"""')
+              if marker_index < 0:
+                  index += 1
+                  continue
+
+              first_content = line[marker_index + 3:]
+              if not first_content or '"""' in first_content:
+                  index += 1
+                  continue
+
+              close_index = index + 1
+              while close_index < len(lines) and '"""' not in lines[close_index]:
+                  close_index += 1
+              if close_index >= len(lines):
+                  raise SystemExit(f'Unclosed triple-quoted block at patch line {index + 1}')
+
+              content_indices = [
+                  current
+                  for current in range(index + 1, close_index)
+                  if lines[current].strip()
+              ]
+              if content_indices:
+                  base_indent = leading_spaces(first_content)
+                  first_code = first_content.strip()
+                  nested = first_code.endswith(('{', '[', '('))
+                  target_minimum = base_indent + (2 if nested else 0)
+                  current_minimum = min(
+                      leading_spaces(lines[current]) for current in content_indices
+                  )
+                  delta = max(0, target_minimum - current_minimum)
+                  if delta:
+                      for current in content_indices:
+                          lines[current] = (' ' * delta) + lines[current]
+
+              index = close_index + 1
+
+          script = '\n'.join(lines) + '\n'
           Path('/tmp/apply-followup.py').write_text(script, encoding='utf-8')
-          print(f'Extracted and normalized {len(normalized)} patch lines')
+          print(f'Extracted and normalized {len(lines)} patch lines')
           PY
           python /tmp/apply-followup.py
 
