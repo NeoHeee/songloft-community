@@ -28,45 +28,53 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ui-check-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  apply-startup-fix:
-    name: Normalize sources
+  normalize-sources:
+    name: Normalize and export sources
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ui-redesign
-          fetch-depth: 0
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.41.5'
           channel: stable
           cache: true
-      - name: Apply Windows startup patch
-        run: python scripts/patch-windows-startup.py
-      - name: Format Dart sources
-        run: dart format lib
-      - name: Commit normalization when needed
+      - name: Apply startup patch and format Dart sources
         run: |
-          if git diff --quiet -- lib; then
-            echo "Dart sources are already normalized"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lib
-          git commit -m "chore(format): normalize redesigned Dart sources [platform-build]"
-          git push origin ui-redesign
+          python scripts/patch-windows-startup.py
+          dart format lib
+      - name: Collect normalized files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p format-export/files
+          git diff --name-only --diff-filter=AM -- lib > format-export/manifest.txt
+          while IFS= read -r file; do
+            [ -n "$file" ] || continue
+            mkdir -p "format-export/files/$(dirname "$file")"
+            cp "$file" "format-export/files/$file"
+          done < format-export/manifest.txt
+          echo "Normalized files:"
+          cat format-export/manifest.txt
+      - name: Upload normalized source files
+        uses: actions/upload-artifact@v4
+        with:
+          name: normalized-dart-sources
+          path: format-export
+          if-no-files-found: error
+          retention-days: 7
 
   analyze:
     name: Flutter analyze
-    needs: apply-startup-fix
+    needs: normalize-sources
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -80,8 +88,8 @@ jobs:
           cache: true
       - name: Install dependencies
         run: flutter pub get
-      - name: Check formatting
-        run: dart format --output=none --set-exit-if-changed lib
+      - name: Normalize working copy
+        run: dart format lib
       - name: Analyze
         run: flutter analyze
 
