@@ -46,7 +46,7 @@ jobs:
               if restore_two_spaces:
                   if '"""' in line:
                       restore_two_spaces = False
-                  else:
+                  elif line:
                       line = '  ' + line
               else:
                   marker_index = line.find('"""')
