@@ -1,4 +1,4 @@
-name: Apply playlist and mobile navigation follow-up from PR
+name: Export playlist and mobile navigation follow-up
 
 on:
   push:
@@ -13,10 +13,10 @@ on:
       - '.github/workflows/kick-playlist-mobile-nav-followup.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply-followup:
+  export-followup:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -47,23 +47,15 @@ jobs:
             lib/shared/layouts/active_destinations.dart \
             lib/shared/layouts/adaptive_scaffold.dart
 
-      - name: Commit Dart follow-up
-        working-directory: source
-        shell: bash
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            lib/features/playlist/presentation/playlists_page.dart \
-            lib/features/playlist/presentation/providers/playlist_provider.dart \
-            lib/features/jsplugin/presentation/widgets/plugin_icon.dart \
-            lib/shared/layouts/active_destinations.dart \
-            lib/shared/layouts/adaptive_scaffold.dart
-          if git diff --cached --quiet; then
-            echo "No follow-up changes were needed"
-            exit 0
-          fi
-          git commit -m "feat(ui): add playlist search and compact mobile navigation [platform-build]"
-          git push origin ui-redesign
-
-# workflow and helper cleanup is handled through the repository API
+      - name: Upload formatted source files
+        uses: actions/upload-artifact@v4
+        with:
+          name: playlist-mobile-nav-followup-sources
+          path: |
+            source/lib/features/playlist/presentation/playlists_page.dart
+            source/lib/features/playlist/presentation/providers/playlist_provider.dart
+            source/lib/features/jsplugin/presentation/widgets/plugin_icon.dart
+            source/lib/shared/layouts/active_destinations.dart
+            source/lib/shared/layouts/adaptive_scaffold.dart
+          if-no-files-found: error
+          retention-days: 7
