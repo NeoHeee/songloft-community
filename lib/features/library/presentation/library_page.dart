@@ -33,7 +33,6 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    // 初始加载
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(songsListProvider.notifier).loadSongs();
     });
@@ -48,6 +47,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   }
 
   void _onScroll() {
+    if (!_scrollController.hasClients) return;
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       ref.read(songsListProvider.notifier).loadMore();
@@ -55,6 +55,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   }
 
   void _onSearchChanged(String value) {
+    setState(() {});
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 300), () {
       ref.read(songsListProvider.notifier).search(value);
@@ -66,6 +67,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         .read(playerStateProvider.notifier)
         .playAllSongs(keyword: state.keyword, type: state.type);
     if (!mounted) return;
+
     if (total < 0) {
       ResponsiveSnackBar.showError(context, message: '播放失败');
     } else if (total == 0) {
@@ -78,15 +80,12 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(songsListProvider);
-    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: _buildAppBar(context, state),
       body: Column(
         children: [
-          // 搜索栏
-          _buildSearchBar(context),
-          // 类型筛选栏
+          if (!state.isSelectionMode) _buildLibraryHeader(context, state),
           SongFilterBar(
             currentType: state.type,
             onTypeChanged: (type) {
@@ -94,36 +93,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
             },
             songCount: state.total,
           ),
-          // 错误提示
-          if (state.error != null)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(8),
-              color: colorScheme.errorContainer,
-              child: Row(
-                children: [
-                  Icon(Icons.error, color: colorScheme.onErrorContainer),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      state.error!,
-                      style: TextStyle(color: colorScheme.onErrorContainer),
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.close,
-                      color: colorScheme.onErrorContainer,
-                    ),
-                    tooltip: '关闭提示',
-                    onPressed: () {
-                      ref.read(songsListProvider.notifier).clearError();
-                    },
-                  ),
-                ],
-              ),
-            ),
-          // 歌曲列表
+          if (state.error != null) _buildErrorBanner(state.error!),
           Expanded(child: _buildSongList(context, state)),
         ],
       ),
@@ -131,86 +101,229 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context, SongsListState state) {
-    if (state.isSelectionMode) {
+    if (!state.isSelectionMode) {
       return AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          tooltip: '退出多选',
-          onPressed: () {
-            ref.read(songsListProvider.notifier).toggleSelectMode();
-          },
-        ),
-        title: Text('已选择 ${state.selectedSongIds.length} 首'),
+        title: const Text('歌曲库'),
         actions: [
-          TextButton.icon(
-            icon: const Icon(Icons.playlist_add),
-            label: const Text('添加到歌单'),
-            onPressed:
-                state.selectedSongIds.isEmpty
-                    ? null
-                    : () => _showAddToPlaylistDialog(
-                      context,
-                      state.selectedSongIds.toList(),
-                    ),
-          ),
-          TextButton.icon(
-            icon: Icon(
-              Icons.delete,
-              color:
-                  state.selectedSongIds.isEmpty
-                      ? null
-                      : Theme.of(context).colorScheme.error,
-            ),
-            label: Text(
-              '删除(${state.selectedSongIds.length})',
-              style: TextStyle(
-                color:
-                    state.selectedSongIds.isEmpty
-                        ? null
-                        : Theme.of(context).colorScheme.error,
-              ),
-            ),
-            onPressed:
-                state.selectedSongIds.isEmpty
-                    ? null
-                    : () => _showBatchDeleteConfirmDialog(context),
-          ),
-          TextButton(
-            onPressed: state.isSelectingAll
-                ? null
-                : () {
-                    ref.read(songsListProvider.notifier).toggleSelectAll();
-                  },
-            child: state.isSelectingAll
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Text(
-                    (state.total > 0 &&
-                            state.selectedSongIds.length >= state.total)
-                        ? '取消全选'
-                        : '全选',
-                  ),
+          IconButton(
+            icon: const Icon(Icons.checklist_rounded),
+            tooltip: '多选',
+            onPressed: () {
+              ref.read(songsListProvider.notifier).toggleSelectMode();
+            },
           ),
         ],
       );
     }
 
+    final colorScheme = Theme.of(context).colorScheme;
     return AppBar(
-      title: const Text('歌曲库'),
+      leading: IconButton(
+        icon: const Icon(Icons.close_rounded),
+        tooltip: '退出多选',
+        onPressed: () {
+          ref.read(songsListProvider.notifier).toggleSelectMode();
+        },
+      ),
+      title: Text('已选择 ${state.selectedSongIds.length} 首'),
       actions: [
-        // 播放全部
         IconButton(
-          icon: const Icon(Icons.play_circle_outline),
-          tooltip: '播放全部',
-          onPressed: state.songs.isEmpty ? null : () => _playAll(state),
+          icon: const Icon(Icons.playlist_add_rounded),
+          tooltip: '添加到歌单',
+          onPressed: state.selectedSongIds.isEmpty
+              ? null
+              : () => _showAddToPlaylistDialog(
+                    context,
+                    state.selectedSongIds.toList(),
+                  ),
         ),
-        // 排序
+        IconButton(
+          icon: Icon(Icons.delete_outline_rounded, color: colorScheme.error),
+          tooltip: '批量删除',
+          onPressed: state.selectedSongIds.isEmpty
+              ? null
+              : () => _showBatchDeleteConfirmDialog(context),
+        ),
+        TextButton(
+          onPressed: state.isSelectingAll
+              ? null
+              : () {
+                  ref.read(songsListProvider.notifier).toggleSelectAll();
+                },
+          child: state.isSelectingAll
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(
+                  state.total > 0 &&
+                          state.selectedSongIds.length >= state.total
+                      ? '取消全选'
+                      : '全选',
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLibraryHeader(BuildContext context, SongsListState state) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final horizontalPadding = context.responsive<double>(
+      mobile: 12,
+      tablet: 18,
+      desktop: 24,
+    );
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 0),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.24),
+              ),
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 720;
+                final searchField = _buildSearchField(context);
+                final actions = _buildHeaderActions(context, state);
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                colorScheme.primaryContainer,
+                                colorScheme.tertiaryContainer,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Icon(
+                            Icons.library_music_rounded,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '整理你的音乐世界',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                state.keyword.isEmpty
+                                    ? '共 ${state.total} 首歌曲，可搜索、筛选或直接播放'
+                                    : '正在搜索“${state.keyword}”，找到 ${state.total} 首',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    if (compact) ...[
+                      searchField,
+                      const SizedBox(height: 10),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: actions,
+                      ),
+                    ] else
+                      Row(
+                        children: [
+                          Expanded(child: searchField),
+                          const SizedBox(width: 12),
+                          actions,
+                        ],
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchField(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return TextField(
+      controller: _searchController,
+      decoration: InputDecoration(
+        hintText: '搜索歌曲、艺术家或专辑',
+        prefixIcon: const Icon(Icons.search_rounded),
+        suffixIcon: _searchController.text.isEmpty
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.close_rounded),
+                tooltip: '清除搜索',
+                onPressed: () {
+                  _searchController.clear();
+                  setState(() {});
+                  ref.read(songsListProvider.notifier).search('');
+                },
+              ),
+        filled: true,
+        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.58),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.18),
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+      ),
+      onChanged: _onSearchChanged,
+    );
+  }
+
+  Widget _buildHeaderActions(BuildContext context, SongsListState state) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        FilledButton.icon(
+          onPressed: state.songs.isEmpty ? null : () => _playAll(state),
+          icon: const Icon(Icons.play_arrow_rounded),
+          label: const Text('播放全部'),
+        ),
+        const SizedBox(width: 8),
         PopupMenuButton<String>(
-          icon: const Icon(Icons.sort),
           tooltip: '排序',
+          icon: const Icon(Icons.swap_vert_rounded),
           onSelected: (value) {
             final (sort, order) = switch (value) {
               'added_at' => ('added_at', 'desc'),
@@ -222,52 +335,42 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
             };
             ref.read(songsListProvider.notifier).setSort(sort, order);
           },
-          itemBuilder:
-              (context) => [
-                _buildLibrarySortItem(
-                  value: 'added_at',
-                  icon: Icons.schedule,
-                  title: '最近加入',
-                  isSelected: state.sort == 'added_at',
-                ),
-                _buildLibrarySortItem(
-                  value: 'file_modified_at',
-                  icon: Icons.insert_drive_file_outlined,
-                  title: '文件时间',
-                  isSelected: state.sort == 'file_modified_at',
-                ),
-                _buildLibrarySortItem(
-                  value: 'title',
-                  icon: Icons.sort_by_alpha,
-                  title: '标题',
-                  isSelected: state.sort == 'title',
-                ),
-                _buildLibrarySortItem(
-                  value: 'artist',
-                  icon: Icons.person,
-                  title: '艺术家',
-                  isSelected: state.sort == 'artist',
-                ),
-                _buildLibrarySortItem(
-                  value: 'duration',
-                  icon: Icons.timer,
-                  title: '时长',
-                  isSelected: state.sort == 'duration',
-                ),
-              ],
+          itemBuilder: (context) => [
+            _buildLibrarySortItem(
+              value: 'added_at',
+              icon: Icons.schedule_rounded,
+              title: '最近加入',
+              isSelected: state.sort == 'added_at',
+            ),
+            _buildLibrarySortItem(
+              value: 'file_modified_at',
+              icon: Icons.insert_drive_file_outlined,
+              title: '文件时间',
+              isSelected: state.sort == 'file_modified_at',
+            ),
+            _buildLibrarySortItem(
+              value: 'title',
+              icon: Icons.sort_by_alpha_rounded,
+              title: '标题',
+              isSelected: state.sort == 'title',
+            ),
+            _buildLibrarySortItem(
+              value: 'artist',
+              icon: Icons.person_rounded,
+              title: '艺术家',
+              isSelected: state.sort == 'artist',
+            ),
+            _buildLibrarySortItem(
+              value: 'duration',
+              icon: Icons.timer_outlined,
+              title: '时长',
+              isSelected: state.sort == 'duration',
+            ),
+          ],
         ),
-        // 多选按钮
-        IconButton(
-          icon: const Icon(Icons.checklist),
-          tooltip: '多选',
-          onPressed: () {
-            ref.read(songsListProvider.notifier).toggleSelectMode();
-          },
-        ),
-        // 更多菜单
         PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert),
-          tooltip: '更多',
+          tooltip: '更多操作',
+          icon: const Icon(Icons.add_rounded),
           onSelected: (value) {
             switch (value) {
               case 'add_remote':
@@ -282,47 +385,46 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                 _showCleanConfirmDialog(context);
             }
           },
-          itemBuilder:
-              (context) => [
-                const PopupMenuItem(
-                  value: 'add_remote',
-                  child: ListTile(
-                    leading: Icon(Icons.cloud),
-                    title: Text('添加网络歌曲'),
-                    contentPadding: EdgeInsets.zero,
-                  ),
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'add_remote',
+              child: ListTile(
+                leading: Icon(Icons.cloud_rounded),
+                title: Text('添加网络歌曲'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'add_radio',
+              child: ListTile(
+                leading: Icon(Icons.radio_rounded),
+                title: Text('添加电台'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+            PopupMenuItem(
+              value: 'toggle_hidden',
+              child: ListTile(
+                leading: Icon(
+                  state.showHidden
+                      ? Icons.visibility_off_rounded
+                      : Icons.visibility_rounded,
                 ),
-                const PopupMenuItem(
-                  value: 'add_radio',
-                  child: ListTile(
-                    leading: Icon(Icons.radio),
-                    title: Text('添加电台'),
-                    contentPadding: EdgeInsets.zero,
-                  ),
+                title: Text(
+                  state.showHidden ? '隐藏已隐藏歌曲' : '显示隐藏歌曲',
                 ),
-                PopupMenuItem(
-                  value: 'toggle_hidden',
-                  child: ListTile(
-                    leading: Icon(
-                      state.showHidden
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                    ),
-                    title: Text(
-                      state.showHidden ? '隐藏已隐藏歌曲' : '显示隐藏歌曲',
-                    ),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'clean',
-                  child: ListTile(
-                    leading: Icon(Icons.cleaning_services),
-                    title: Text('清理无效歌曲'),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-              ],
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'clean',
+              child: ListTile(
+                leading: Icon(Icons.cleaning_services_rounded),
+                title: Text('清理无效歌曲'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -334,51 +436,49 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     required String title,
     required bool isSelected,
   }) {
-    final color =
-        isSelected ? Theme.of(context).colorScheme.primary : null;
+    final color = isSelected ? Theme.of(context).colorScheme.primary : null;
     return PopupMenuItem<String>(
       value: value,
       child: ListTile(
         leading: Icon(icon, color: color),
         title: Text(title, style: TextStyle(color: color)),
-        trailing: isSelected ? Icon(Icons.check, color: color) : null,
-        dense: true,
+        trailing: isSelected ? Icon(Icons.check_rounded, color: color) : null,
         contentPadding: EdgeInsets.zero,
       ),
     );
   }
 
-  Widget _buildSearchBar(BuildContext context) {
-    final horizontalPadding = context.responsive<double>(
-      mobile: AppSpacing.md,
-      tablet: AppSpacing.lg,
-      desktop: AppSpacing.xl,
-    );
+  Widget _buildErrorBanner(String message) {
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 0),
-      child: TextField(
-        controller: _searchController,
-        decoration: InputDecoration(
-          hintText: '搜索歌曲...',
-          prefixIcon: const Icon(Icons.search),
-          suffixIcon:
-              _searchController.text.isNotEmpty
-                  ? IconButton(
-                    icon: const Icon(Icons.clear),
-                    tooltip: '清除搜索',
-                    onPressed: () {
-                      _searchController.clear();
-                      ref.read(songsListProvider.notifier).search('');
-                    },
-                  )
-                  : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.xl),
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+      child: Material(
+        color: colorScheme.errorContainer,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 6, 8),
+          child: Row(
+            children: [
+              Icon(Icons.error_outline_rounded, color: colorScheme.error),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  message,
+                  style: TextStyle(color: colorScheme.onErrorContainer),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close_rounded),
+                tooltip: '关闭提示',
+                color: colorScheme.onErrorContainer,
+                onPressed: () {
+                  ref.read(songsListProvider.notifier).clearError();
+                },
+              ),
+            ],
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
         ),
-        onChanged: _onSearchChanged,
       ),
     );
   }
@@ -404,13 +504,11 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         padding: EdgeInsets.symmetric(horizontal: contentPadding),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // 使用实际可用宽度判断，避免在窄容器中溢出
             if (context.isMobile ||
                 constraints.maxWidth < ResponsiveBreakpoints.tablet) {
               return _buildMobileList(context, state);
-            } else {
-              return _buildDesktopList(context, state);
             }
+            return _buildDesktopList(context, state);
           },
         ),
       ),
@@ -422,7 +520,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
 
     return ListView.builder(
       controller: _scrollController,
-      padding: const EdgeInsets.only(bottom: 80),
+      padding: const EdgeInsets.only(top: 2, bottom: 90),
       itemCount: state.songs.length + (state.isLoadingMore ? 1 : 0),
       itemBuilder: (context, index) {
         if (index >= state.songs.length) {
@@ -450,10 +548,9 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
             ref.read(songsListProvider.notifier).toggleSongSelection(song.id);
           },
           onDelete: () => _showDeleteConfirmDialog(context, song.id),
-          onEdit:
-              song.type != AppConstants.songTypeLocal
-                  ? () => _navigateToEditSong(context, song)
-                  : null,
+          onEdit: song.type != AppConstants.songTypeLocal
+              ? () => _navigateToEditSong(context, song)
+              : null,
           onAddToPlaylist: () => _showAddToPlaylistDialog(context, [song.id]),
         );
       },
@@ -461,194 +558,211 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   }
 
   Widget _buildDesktopList(BuildContext context, SongsListState state) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final currentSong = ref.watch(currentSongProvider);
 
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1200),
         child: LayoutBuilder(
-      builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 700;
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 700;
 
-        return Column(
-          children: [
-            // 表头
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerLow,
-                border: Border(
-                  bottom: BorderSide(color: colorScheme.outlineVariant),
+            return Column(
+              children: [
+                Container(
+                  margin: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(
+                      color: colorScheme.outlineVariant.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      if (state.isSelectionMode)
+                        const SizedBox(width: 48)
+                      else
+                        SizedBox(
+                          width: 40,
+                          child: Text(
+                            '#',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      const SizedBox(width: 64),
+                      _headerLabel(theme, colorScheme, '标题', flex: 3),
+                      const SizedBox(width: 16),
+                      _headerLabel(theme, colorScheme, '艺术家', flex: 2),
+                      if (!isNarrow) ...[
+                        const SizedBox(width: 16),
+                        _headerLabel(theme, colorScheme, '专辑', flex: 2),
+                      ],
+                      const SizedBox(width: 16),
+                      SizedBox(
+                        width: 60,
+                        child: Text(
+                          '类型',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      SizedBox(
+                        width: 60,
+                        child: Text(
+                          '时长',
+                          textAlign: TextAlign.right,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 148),
+                    ],
+                  ),
                 ),
-              ),
-              child: Row(
-                children: [
-                  if (state.isSelectionMode)
-                    const SizedBox(width: 48)
-                  else
-                    SizedBox(
-                      width: 40,
-                      child: Text(
-                        '#',
-                        style: textTheme.titleSmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  const SizedBox(width: 64), // 封面空间 (12+40+12 匹配数据行)
-                  Expanded(
-                    flex: 3,
-                    child: Text(
-                      '标题',
-                      style: textTheme.titleSmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      '艺术家',
-                      style: textTheme.titleSmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  if (!isNarrow) ...[
-                    const SizedBox(width: 16),
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        '专辑',
-                        style: textTheme.titleSmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(width: 16),
-                  SizedBox(
-                    width: 60,
-                    child: Text(
-                      '类型',
-                      style: textTheme.titleSmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  SizedBox(
-                    width: 60,
-                    child: Text(
-                      '时长',
-                      style: textTheme.titleSmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      textAlign: TextAlign.right,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const SizedBox(width: 140), // 操作按钮空间
-                ],
-              ),
-            ),
-            // 列表
-            Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.only(bottom: 80),
-                itemCount: state.songs.length + (state.isLoadingMore ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index >= state.songs.length) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: CircularProgressIndicator(),
-                      ),
-                    );
-                  }
+                Expanded(
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.only(bottom: 90),
+                    itemCount:
+                        state.songs.length + (state.isLoadingMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index >= state.songs.length) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      }
 
-                  final song = state.songs[index];
-                  return SongListTile(
-                    song: song,
-                    index: index,
-                    isSelected: state.selectedSongIds.contains(song.id),
-                    isSelectionMode: state.isSelectionMode,
-                    isNarrow: isNarrow,
-                    isCurrentSong: currentSong?.id == song.id,
-                    onTap: () => _onSongTap(song, index),
-                    onLongPress: () {
-                      ref
-                          .read(songsListProvider.notifier)
-                          .toggleSelectMode();
-                      ref
-                          .read(songsListProvider.notifier)
-                          .toggleSongSelection(song.id);
-                    },
-                    onSelect: () {
-                      ref
-                          .read(songsListProvider.notifier)
-                          .toggleSongSelection(song.id);
-                    },
-                    onDelete: () => _showDeleteConfirmDialog(context, song.id),
-                    onEdit:
-                        song.type != AppConstants.songTypeLocal
+                      final song = state.songs[index];
+                      return SongListTile(
+                        song: song,
+                        index: index,
+                        isSelected: state.selectedSongIds.contains(song.id),
+                        isSelectionMode: state.isSelectionMode,
+                        isNarrow: isNarrow,
+                        isCurrentSong: currentSong?.id == song.id,
+                        onTap: () => _onSongTap(song, index),
+                        onLongPress: () {
+                          ref
+                              .read(songsListProvider.notifier)
+                              .toggleSelectMode();
+                          ref
+                              .read(songsListProvider.notifier)
+                              .toggleSongSelection(song.id);
+                        },
+                        onSelect: () {
+                          ref
+                              .read(songsListProvider.notifier)
+                              .toggleSongSelection(song.id);
+                        },
+                        onDelete: () =>
+                            _showDeleteConfirmDialog(context, song.id),
+                        onEdit: song.type != AppConstants.songTypeLocal
                             ? () => _navigateToEditSong(context, song)
                             : null,
-                    onAddToPlaylist:
-                        () => _showAddToPlaylistDialog(context, [song.id]),
-                  );
-                },
-              ),
-            ),
-          ],
-        );
-      },
-    ),
+                        onAddToPlaylist: () =>
+                            _showAddToPlaylistDialog(context, [song.id]),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _headerLabel(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    String label, {
+    required int flex,
+  }) {
+    return Expanded(
+      flex: flex,
+      child: Text(
+        label,
+        style: theme.textTheme.labelLarge?.copyWith(
+          color: colorScheme.onSurfaceVariant,
+        ),
       ),
     );
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final state = ref.watch(songsListProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isSearch = state.keyword.isNotEmpty;
 
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 96,
-            height: 96,
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest,
-              borderRadius: AppRadius.xlAll,
-            ),
-            child: Icon(
-              state.keyword.isNotEmpty ? Icons.search_off : Icons.library_music,
-              size: 48,
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-            ),
+      child: Container(
+        margin: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 32),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.22),
           ),
-          const SizedBox(height: 24),
-          Text(
-            state.keyword.isNotEmpty ? '未找到匹配的歌曲' : '歌曲库为空',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 86,
+              height: 86,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    colorScheme.primaryContainer,
+                    colorScheme.tertiaryContainer,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: Icon(
+                isSearch ? Icons.search_off_rounded : Icons.library_music_rounded,
+                size: 42,
+                color: colorScheme.primary,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            state.keyword.isNotEmpty ? '尝试其他关键词' : '添加一些歌曲开始吧',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+            const SizedBox(height: 20),
+            Text(
+              isSearch ? '没有找到匹配的歌曲' : '歌曲库还是空的',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 7),
+            Text(
+              isSearch ? '换一个关键词，或者调整上方筛选条件' : '添加网络歌曲、电台，或扫描本地音乐开始使用',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -667,17 +781,25 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     }
   }
 
-  void _navigateToAddSong(BuildContext context, String songType) async {
+  Future<void> _navigateToAddSong(
+    BuildContext context,
+    String songType,
+  ) async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: (context) => SongEditPage(songType: songType)),
+      MaterialPageRoute(
+        builder: (context) => SongEditPage(songType: songType),
+      ),
     );
     if (result == true) {
       ref.read(songsListProvider.notifier).refresh();
     }
   }
 
-  void _navigateToEditSong(BuildContext context, dynamic song) async {
+  Future<void> _navigateToEditSong(
+    BuildContext context,
+    Song song,
+  ) async {
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
@@ -689,7 +811,10 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     }
   }
 
-  Future<void> _showDeleteConfirmDialog(BuildContext context, int songId) async {
+  Future<void> _showDeleteConfirmDialog(
+    BuildContext context,
+    int songId,
+  ) async {
     final result = await DeleteSongDialog.show(
       context,
       title: '确认删除',
@@ -705,31 +830,30 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   void _showCleanConfirmDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('清理歌曲'),
-            content: const Text('将清理无效的歌曲记录（如文件已删除的本地歌曲）。'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('取消'),
-              ),
-              TextButton(
-                onPressed: () async {
-                  Navigator.pop(context);
-                  final cleaned =
-                      await ref.read(songsListProvider.notifier).cleanSongs();
-                  if (context.mounted) {
-                    ResponsiveSnackBar.show(
-                      context,
-                      message: '已清理 $cleaned 首无效歌曲',
-                    );
-                  }
-                },
-                child: const Text('清理'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text('清理歌曲'),
+        content: const Text('将清理无效的歌曲记录（如文件已删除的本地歌曲）。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
           ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final cleaned =
+                  await ref.read(songsListProvider.notifier).cleanSongs();
+              if (context.mounted) {
+                ResponsiveSnackBar.show(
+                  context,
+                  message: '已清理 $cleaned 首无效歌曲',
+                );
+              }
+            },
+            child: const Text('清理'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -750,7 +874,10 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
           .batchDeleteSongs(deleteFiles: result.deleteFiles);
       if (context.mounted) {
         if (deleted > 0) {
-          ResponsiveSnackBar.showSuccess(context, message: '已删除 $deleted 首歌曲');
+          ResponsiveSnackBar.showSuccess(
+            context,
+            message: '已删除 $deleted 首歌曲',
+          );
         } else {
           ResponsiveSnackBar.showError(context, message: '删除失败');
         }
