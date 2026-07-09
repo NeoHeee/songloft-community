@@ -6,6 +6,11 @@ on:
       - ui-redesign
     paths:
       - '.github/workflows/apply-windows-startup-fix.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/apply-windows-startup-fix.yml'
 
 permissions:
   contents: write
