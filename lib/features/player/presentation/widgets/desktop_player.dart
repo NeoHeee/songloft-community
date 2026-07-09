@@ -214,7 +214,6 @@ class DesktopPlayer extends ConsumerWidget {
               Formatters.formatDuration(state.currentTime.inSeconds.toDouble()),
               style: theme.textTheme.labelSmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
-                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
             Text(
@@ -227,7 +226,6 @@ class DesktopPlayer extends ConsumerWidget {
               Formatters.formatDuration(state.duration.inSeconds.toDouble()),
               style: theme.textTheme.labelSmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
-                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
           ],
@@ -247,7 +245,7 @@ class DesktopPlayer extends ConsumerWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildPlayModeButton(context, state, notifier, theme),
+        _buildPlayModeButton(state, notifier),
         Flexible(
           child: ResponsiveVolumeControl(
             volume: state.volume,
@@ -261,7 +259,7 @@ class DesktopPlayer extends ConsumerWidget {
           visualDensity: VisualDensity.compact,
         ),
         const CastButton(iconSize: 20, visualDensity: VisualDensity.compact),
-        _buildSleepTimerButton(context, state, notifier, theme),
+        _buildSleepTimerButton(state, notifier),
         _buildLyricsButton(context, state, theme),
         IconButton(
           onPressed: notifier.togglePlaylistDrawer,
@@ -277,24 +275,14 @@ class DesktopPlayer extends ConsumerWidget {
     );
   }
 
-  Widget _buildPlayModeButton(
-    BuildContext context,
-    PlayerState state,
-    PlayerNotifier notifier,
-    ThemeData theme,
-  ) {
+  Widget _buildPlayModeButton(PlayerState state, PlayerNotifier notifier) {
     return PopupPlayModeControl(
       playMode: state.playMode,
       onPlayModeChanged: notifier.setPlayMode,
     );
   }
 
-  Widget _buildSleepTimerButton(
-    BuildContext context,
-    PlayerState state,
-    PlayerNotifier notifier,
-    ThemeData theme,
-  ) {
+  Widget _buildSleepTimerButton(PlayerState state, PlayerNotifier notifier) {
     return PopupSleepTimerControl(
       status: state.sleepTimer,
       isLive: state.currentSong?.isLive ?? false,
