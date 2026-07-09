@@ -10,7 +10,6 @@ on:
       - 'web/**'
       - 'android/**'
       - 'windows/**'
-      - 'scripts/patch-windows-startup.py'
       - 'pubspec.yaml'
       - '.github/workflows/ui-redesign-check.yml'
   pull_request:
@@ -22,115 +21,20 @@ on:
       - 'web/**'
       - 'android/**'
       - 'windows/**'
-      - 'scripts/patch-windows-startup.py'
       - 'pubspec.yaml'
       - '.github/workflows/ui-redesign-check.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ui-check-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  normalize-sources:
-    name: Normalize and export sources
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ui-redesign
-          fetch-depth: 0
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.41.5'
-          channel: stable
-          cache: true
-      - name: Apply analyzer lint fixes
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          replacements = {
-              'lib/core/storage/app_preferences.dart': [
-                  (
-                      "    if (id == null)\n      return _prefs.remove(_sourcePlaylistIdKey).then((_) => true);",
-                      "    if (id == null) {\n      return _prefs.remove(_sourcePlaylistIdKey).then((_) => true);\n    }",
-                  ),
-              ],
-              'lib/core/utils/formatters.dart': [
-                  (
-                      "    if (bytes < 1024) return '$bytes B';\n    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';\n    if (bytes < 1024 * 1024 * 1024)\n      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';",
-                      "    if (bytes < 1024) {\n      return '$bytes B';\n    }\n    if (bytes < 1024 * 1024) {\n      return '${(bytes / 1024).toStringAsFixed(1)} KB';\n    }\n    if (bytes < 1024 * 1024 * 1024) {\n      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';\n    }",
-                  ),
-              ],
-              'lib/features/settings/data/scan_api.dart': [
-                  (
-                      "    if (fileSize < 1024) return '$fileSize B';\n    if (fileSize < 1024 * 1024)\n      return '${(fileSize / 1024).toStringAsFixed(1)} KB';",
-                      "    if (fileSize < 1024) {\n      return '$fileSize B';\n    }\n    if (fileSize < 1024 * 1024) {\n      return '${(fileSize / 1024).toStringAsFixed(1)} KB';\n    }",
-                  ),
-              ],
-              'lib/features/settings/presentation/duplicate_check_page.dart': [
-                  (
-                      "                    if (v != null)\n                      setState(() => _selectedKeep[groupIndex] = v);",
-                      "                    if (v != null) {\n                      setState(() => _selectedKeep[groupIndex] = v);\n                    }",
-                  ),
-              ],
-          }
-
-          for filename, changes in replacements.items():
-              path = Path(filename)
-              text = path.read_text(encoding='utf-8')
-              for old, new in changes:
-                  if old not in text:
-                      raise SystemExit(f'Expected lint target not found in {filename}')
-                  text = text.replace(old, new, 1)
-              path.write_text(text, encoding='utf-8')
-          PY
-      - name: Apply startup patch and format Dart sources
-        run: |
-          python scripts/patch-windows-startup.py
-          dart format lib
-      - name: Collect normalized files
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p format-export/files
-          git diff --name-only --diff-filter=AM -- lib > format-export/manifest.txt
-          while IFS= read -r file; do
-            [ -n "$file" ] || continue
-            mkdir -p "format-export/files/$(dirname "$file")"
-            cp "$file" "format-export/files/$file"
-          done < format-export/manifest.txt
-          echo "Normalized files:"
-          cat format-export/manifest.txt
-      - name: Upload normalized source files
-        uses: actions/upload-artifact@v4
-        with:
-          name: normalized-dart-sources
-          path: format-export
-          if-no-files-found: error
-          retention-days: 7
-      - name: Commit normalized sources on branch push
-        if: github.event_name == 'push'
-        shell: bash
-        run: |
-          if git diff --quiet -- lib; then
-            echo "No source changes to commit"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lib
-          git commit -m "fix(lint): normalize control-flow blocks [platform-build]"
-          git push origin ui-redesign
-
   analyze:
     name: Flutter analyze
-    needs: normalize-sources
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -144,67 +48,10 @@ jobs:
           cache: true
       - name: Install dependencies
         run: flutter pub get
-      - name: Apply analyzer lint fixes
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          replacements = {
-              'lib/core/storage/app_preferences.dart': [
-                  (
-                      "    if (id == null)\n      return _prefs.remove(_sourcePlaylistIdKey).then((_) => true);",
-                      "    if (id == null) {\n      return _prefs.remove(_sourcePlaylistIdKey).then((_) => true);\n    }",
-                  ),
-              ],
-              'lib/core/utils/formatters.dart': [
-                  (
-                      "    if (bytes < 1024) return '$bytes B';\n    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';\n    if (bytes < 1024 * 1024 * 1024)\n      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';",
-                      "    if (bytes < 1024) {\n      return '$bytes B';\n    }\n    if (bytes < 1024 * 1024) {\n      return '${(bytes / 1024).toStringAsFixed(1)} KB';\n    }\n    if (bytes < 1024 * 1024 * 1024) {\n      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';\n    }",
-                  ),
-              ],
-              'lib/features/settings/data/scan_api.dart': [
-                  (
-                      "    if (fileSize < 1024) return '$fileSize B';\n    if (fileSize < 1024 * 1024)\n      return '${(fileSize / 1024).toStringAsFixed(1)} KB';",
-                      "    if (fileSize < 1024) {\n      return '$fileSize B';\n    }\n    if (fileSize < 1024 * 1024) {\n      return '${(fileSize / 1024).toStringAsFixed(1)} KB';\n    }",
-                  ),
-              ],
-              'lib/features/settings/presentation/duplicate_check_page.dart': [
-                  (
-                      "                    if (v != null)\n                      setState(() => _selectedKeep[groupIndex] = v);",
-                      "                    if (v != null) {\n                      setState(() => _selectedKeep[groupIndex] = v);\n                    }",
-                  ),
-              ],
-          }
-
-          for filename, changes in replacements.items():
-              path = Path(filename)
-              text = path.read_text(encoding='utf-8')
-              for old, new in changes:
-                  if old not in text:
-                      raise SystemExit(f'Expected lint target not found in {filename}')
-                  text = text.replace(old, new, 1)
-              path.write_text(text, encoding='utf-8')
-          PY
-      - name: Normalize working copy
-        run: dart format lib
-      - name: Analyze and capture diagnostics
-        id: analyze
-        shell: bash
-        run: |
-          set +e
-          flutter analyze > flutter-analyze.log 2>&1
-          status=$?
-          cat flutter-analyze.log
-          exit "$status"
-      - name: Upload analyzer diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: flutter-analyze-diagnostics
-          path: flutter-analyze.log
-          if-no-files-found: error
-          retention-days: 7
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed lib
+      - name: Analyze
+        run: flutter analyze
 
   build-web:
     name: Build Flutter Web
