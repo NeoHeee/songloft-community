@@ -25,15 +25,10 @@ jobs:
           ref: ui-redesign
           fetch-depth: 0
 
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.41.5'
-          channel: stable
-          cache: true
-
       - name: Extract and apply prepared patch
         shell: bash
         run: |
+          set -euxo pipefail
           python - <<'PY'
           from pathlib import Path
           from textwrap import dedent
@@ -45,8 +40,15 @@ jobs:
           end = text.index("\n          PY\n", start)
           script = dedent(text[start:end])
           Path('/tmp/apply-followup.py').write_text(script, encoding='utf-8')
+          print(f'Extracted {len(script.splitlines())} patch lines')
           PY
           python /tmp/apply-followup.py
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
 
       - name: Format updated Dart sources
         run: |
