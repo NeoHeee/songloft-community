@@ -123,11 +123,12 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
         (isPluginTab || isSettings) ? null : _buildBottomPlayer(context);
     final playlistDrawer =
         showPlaylistDrawer ? const PlaylistDrawer() : null;
-    final onDestinationSelected = (int index) {
+
+    void onDestinationSelected(int index) {
       if (index >= 0 && index < activeDest.indexToRoute.length) {
         context.go(activeDest.indexToRoute[index]);
       }
-    };
+    }
 
     final screenType = context.screenType;
     if (screenType == ScreenType.desktop || screenType == ScreenType.tablet) {
