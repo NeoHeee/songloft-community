@@ -49,9 +49,17 @@ const _windowsMpvTeardownGracePeriod = Duration(seconds: 6);
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Windows 原生窗口会在完整初始化前显示。先提交可见首帧，
+  // 避免桌面插件或凭据初始化缓慢时呈现纯白窗口。
+  runApp(const _NativeBootstrapApp());
+
   // 初始化文件日志并拦截 debugPrint，使所有日志同时写入控制台和文件。
   // 必须在所有 debugPrint 调用之前完成，确保捕获完整的启动日志。
-  await FileLogger.init();
+  try {
+    await FileLogger.init().timeout(const Duration(seconds: 3));
+  } catch (_) {
+    // 日志初始化失败不能阻止应用继续启动。
+  }
   final originalDebugPrint = debugPrint;
   debugPrint = (String? message, {int? wrapWidth}) {
     originalDebugPrint(message, wrapWidth: wrapWidth);
@@ -129,7 +137,10 @@ void main(List<String> args) async {
     debugPrint('[Main] Stack trace: $stackTrace');
   }
 
-  AppConfig.isTvMode = await TvDetector.isTv();
+  AppConfig.isTvMode = await TvDetector.isTv().timeout(
+    const Duration(seconds: 3),
+    onTimeout: () => false,
+  );
 
   if (AppConfig.isEmbedded) {
     // 嵌入模式：Flutter Web 嵌入 Go 后端，直接使用当前页面的 origin 作为后端 API 地址
@@ -138,10 +149,9 @@ void main(List<String> args) async {
     // 检测 <base href> 中的 sub-path（由 Go 服务端运行时注入）
     final uriBasePath = Uri.base.path;
     if (uriBasePath.length > 1) {
-      final trimmed =
-          uriBasePath.endsWith('/')
-              ? uriBasePath.substring(0, uriBasePath.length - 1)
-              : uriBasePath;
+      final trimmed = uriBasePath.endsWith('/')
+          ? uriBasePath.substring(0, uriBasePath.length - 1)
+          : uriBasePath;
       AppConfig.basePath = trimmed;
       AppConfig.apiPrefix = '$trimmed/api/v1';
     }
@@ -150,8 +160,10 @@ void main(List<String> args) async {
     // 实际探测在 StartupGate 内异步执行，避免阻塞 main 让 Splash 立即可见。
     // 偏好存储初始化失败时不阻塞启动流程，后续使用默认配置。
     try {
-      final prefs = await AppPreferences.create();
-      await prefs.migrateLegacyApiBaseUrl();
+      final prefs = await AppPreferences.create().timeout(
+        const Duration(seconds: 5),
+      );
+      await prefs.migrateLegacyApiBaseUrl().timeout(const Duration(seconds: 5));
     } catch (e) {
       debugPrint('[Main] SharedPreferences 初始化失败，使用默认配置: $e');
     }
@@ -216,7 +228,9 @@ void main(List<String> args) async {
   // 解决 Windows 等平台上封面图和音乐 URL 中 access_token= 为空导致 401 的竞态问题
   // （checkAuth() 使用 Future.microtask 异步执行，比 UI 首帧渲染更晚填充缓存）
   try {
-    await SecureStorageService().getAccessToken();
+    await SecureStorageService().getAccessToken().timeout(
+      const Duration(seconds: 5),
+    );
     debugPrint(
       '[Main] 预加载 token 完成: cachedAccessToken is ${SecureStorageService.cachedAccessToken != null ? "set" : "null"}',
     );
@@ -349,6 +363,73 @@ void main(List<String> args) async {
   WindowTrayManager.fixInitialSurfaceSize();
 }
 
+class _NativeBootstrapApp extends StatelessWidget {
+  const _NativeBootstrapApp();
+
+  @override
+  Widget build(BuildContext context) {
+    const seed = Color(0xFF6750A4);
+    return MaterialApp(
+      title: 'Songloft',
+      debugShowCheckedModeBanner: false,
+      themeMode: ThemeMode.system,
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: seed),
+      ),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: seed,
+          brightness: Brightness.dark,
+        ),
+      ),
+      home: const Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _StartupMark(),
+              SizedBox(height: 24),
+              SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(strokeWidth: 2.6),
+              ),
+              SizedBox(height: 18),
+              Text('正在启动 Songloft…'),
+              SizedBox(height: 6),
+              Text('正在初始化音频与桌面服务'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StartupMark extends StatelessWidget {
+  const _StartupMark();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      width: 76,
+      height: 76,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [colors.primaryContainer, colors.tertiaryContainer],
+        ),
+        borderRadius: BorderRadius.circular(25),
+      ),
+      child: Icon(Icons.graphic_eq_rounded, size: 40, color: colors.primary),
+    );
+  }
+}
+
 String _generateUserId() {
   final random = Random.secure();
   final bytes = List<int>.generate(16, (_) => random.nextInt(256));
@@ -399,10 +480,9 @@ class SongloftApp extends ConsumerWidget {
         final screenType = _getScreenType(width);
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return Theme(
-          data:
-              isDark
-                  ? AppTheme.darkTheme(screenType: screenType)
-                  : AppTheme.lightTheme(screenType: screenType),
+          data: isDark
+              ? AppTheme.darkTheme(screenType: screenType)
+              : AppTheme.lightTheme(screenType: screenType),
           child: child!,
         );
       },
