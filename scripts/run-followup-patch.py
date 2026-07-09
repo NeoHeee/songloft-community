@@ -73,6 +73,28 @@ script = script.replace(
     "                            _changeSelectedType(selected.first);\n"
     "                          },",
 )
+script = script.replace(
+    "            selectedIcon: PluginNavIcon(\n"
+    "                iconUrl: plugin.iconUrl,\n"
+    "                fallbackIcon: const Icon(Icons.extension_rounded),\n"
+    "              ),",
+    "            selectedIcon: PluginNavIcon(\n"
+    "              iconUrl: plugin.iconUrl,\n"
+    "              fallbackIcon: const Icon(Icons.extension_rounded),\n"
+    "            ),",
+)
+script = script.replace(
+    "            selectedIcon: PluginNavIcon(\n"
+    "                iconUrl: plugin.iconUrl,\n"
+    "                fallbackIcon: const Icon(Icons.extension_rounded),\n"
+    "                selected: true,\n"
+    "              ),",
+    "            selectedIcon: PluginNavIcon(\n"
+    "              iconUrl: plugin.iconUrl,\n"
+    "              fallbackIcon: const Icon(Icons.extension_rounded),\n"
+    "              selected: true,\n"
+    "            ),",
+)
 
 compiled = compile(script, "<playlist-mobile-nav-followup>", "exec")
 exec(compiled, {"__name__": "__main__"})
