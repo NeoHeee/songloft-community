@@ -47,18 +47,19 @@ jobs:
             lib/shared/layouts/active_destinations.dart \
             lib/shared/layouts/adaptive_scaffold.dart
 
-      - name: Commit follow-up and remove one-shot helpers
+      - name: Commit functional follow-up
         working-directory: source
         shell: bash
         run: |
-          rm -f \
-            scripts/run-followup-patch.py \
-            .github/followup-patch-error.log \
-            .github/workflows/apply-playlist-mobile-nav-followup.yml \
-            .github/workflows/kick-playlist-mobile-nav-followup.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
+          git add \
+            lib/features/playlist/presentation/playlists_page.dart \
+            lib/features/playlist/presentation/providers/playlist_provider.dart \
+            lib/features/jsplugin/presentation/widgets/plugin_icon.dart \
+            lib/shared/layouts/active_destinations.dart \
+            lib/shared/layouts/adaptive_scaffold.dart \
+            .github/workflows/ui-redesign-check.yml
           if git diff --cached --quiet; then
             echo "No follow-up changes were needed"
             exit 0
@@ -66,4 +67,4 @@ jobs:
           git commit -m "feat(ui): add playlist search and compact mobile navigation [platform-build]"
           git push origin ui-redesign
 
-# rerun after active destination alignment fix
+# temporary helpers are removed separately after this commit succeeds
