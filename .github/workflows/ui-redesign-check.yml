@@ -13,6 +13,18 @@ on:
       - 'scripts/patch-windows-startup.py'
       - 'pubspec.yaml'
       - '.github/workflows/ui-redesign-check.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'web/**'
+      - 'android/**'
+      - 'windows/**'
+      - 'scripts/patch-windows-startup.py'
+      - 'pubspec.yaml'
+      - '.github/workflows/ui-redesign-check.yml'
   workflow_dispatch:
 
 permissions:
@@ -31,10 +43,13 @@ jobs:
         with:
           ref: ui-redesign
           fetch-depth: 0
-
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
       - name: Apply source patch
         run: python scripts/patch-windows-startup.py
-
       - name: Format and commit when needed
         run: |
           dart format lib/main.dart
@@ -66,7 +81,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Check formatting
-        run: dart format --output=none lib
+        run: dart format --output=none --set-exit-if-changed lib
       - name: Analyze
         run: flutter analyze
 
@@ -96,11 +111,42 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  build-android:
+    name: Build Android preview APKs
+    needs: analyze
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
+      contains(github.event.head_commit.message, '[platform-build]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui-redesign
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build release APKs
+        run: flutter build apk --release --split-per-abi
+      - name: Upload Android clients
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-android-preview
+          path: build/app/outputs/flutter-apk/*-release.apk
+          retention-days: 14
+          if-no-files-found: error
+
   build-windows:
     name: Build complete Windows x64 bundle
     needs: analyze
     if: >-
       github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
       contains(github.event.head_commit.message, '[platform-build]')
     runs-on: windows-latest
     timeout-minutes: 60
@@ -109,7 +155,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ui-redesign
-
       - name: Checkout Songloft backend
         uses: actions/checkout@v4
         with:
@@ -118,22 +163,18 @@ jobs:
           path: _server
           submodules: recursive
           fetch-depth: 1
-
       - uses: actions/setup-go@v5
         with:
           go-version: '1.26.x'
           cache: true
           cache-dependency-path: _server/go.sum
-
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.41.5'
           channel: stable
           cache: true
-
       - name: Install dependencies
         run: flutter pub get
-
       - name: Build bundled Go backend
         working-directory: _server
         shell: pwsh
@@ -141,16 +182,13 @@ jobs:
           $env:CGO_ENABLED = '0'
           $env:GOAMD64 = 'v1'
           go build -tags lite -o "$env:GITHUB_WORKSPACE\windows\runner\songloft-server.exe" .
-
       - name: Build Windows release
         run: >-
           flutter build windows --release
           --dart-define=HAS_BACKEND=true
-
       - name: Package portable client
         shell: pwsh
         run: Compress-Archive -Path 'build\windows\x64\runner\Release\*' -DestinationPath 'songloft-windows-x64.zip'
-
       - name: Upload Windows client
         uses: actions/upload-artifact@v4
         with:
