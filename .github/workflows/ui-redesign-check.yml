@@ -39,5 +39,22 @@ jobs:
         run: flutter pub get
       - name: Report formatting differences
         run: dart format --output=none lib
-      - name: Analyze
-        run: flutter analyze
+      - name: Analyze and capture report
+        id: analyze
+        shell: bash
+        run: |
+          set +e
+          flutter analyze 2>&1 | tee analyze.log
+          status=${PIPESTATUS[0]}
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Upload analyze report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-analyze-report
+          path: analyze.log
+          if-no-files-found: error
+      - name: Fail when analyze reports issues
+        if: steps.analyze.outputs.status != '0'
+        run: exit 1
