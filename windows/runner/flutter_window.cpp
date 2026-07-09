@@ -27,7 +27,10 @@ bool FlutterWindow::OnCreate() {
   RegisterPlugins(flutter_controller_->engine());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
-  flutter_controller_->engine()->SetNextFrameCallback([&]() {
+  // Explicitly capture the window instance. The callback may run after
+  // OnCreate returns, so avoiding a broad reference capture makes the startup
+  // lifetime unambiguous on slower Windows machines.
+  flutter_controller_->engine()->SetNextFrameCallback([this]() {
     this->Show();
   });
 
