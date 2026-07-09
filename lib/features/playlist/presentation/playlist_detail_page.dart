@@ -963,6 +963,7 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
       await ref
           .read(playlistSongsProvider(_playlistIdInt).notifier)
           .resetFilter();
+      if (!mounted) return;
       ResponsiveSnackBar.showSuccess(context, message: '歌曲顺序已保存');
     } else {
       ResponsiveSnackBar.showError(context, message: '排序保存失败');
@@ -1046,6 +1047,7 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
       await ref
           .read(playlistSongsProvider(_playlistIdInt).notifier)
           .resetFilter();
+      if (!mounted) return;
       ResponsiveSnackBar.showSuccess(context, message: successMessage);
     } else {
       ResponsiveSnackBar.showError(context, message: '排序失败');
