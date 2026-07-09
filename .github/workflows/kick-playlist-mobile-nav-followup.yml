@@ -57,6 +57,14 @@ jobs:
               normalized.append(line)
 
           script = '\n'.join(normalized) + '\n'
+          script = script.replace(
+              "                  slivers: [\n            // 类型筛选",
+              "                  slivers: [\n                    // 类型筛选",
+          )
+          script = script.replace(
+              "                  slivers: [\n            SliverToBoxAdapter(child: _buildSearchBar()),\n\n            // 类型筛选",
+              "                  slivers: [\n                    SliverToBoxAdapter(child: _buildSearchBar()),\n\n                    // 类型筛选",
+          )
           Path('/tmp/apply-followup.py').write_text(script, encoding='utf-8')
           print(f'Extracted and normalized {len(normalized)} patch lines')
           PY
