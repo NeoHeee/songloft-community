@@ -47,7 +47,7 @@ jobs:
             lib/shared/layouts/active_destinations.dart \
             lib/shared/layouts/adaptive_scaffold.dart
 
-      - name: Commit functional follow-up
+      - name: Commit Dart follow-up
         working-directory: source
         shell: bash
         run: |
@@ -58,8 +58,7 @@ jobs:
             lib/features/playlist/presentation/providers/playlist_provider.dart \
             lib/features/jsplugin/presentation/widgets/plugin_icon.dart \
             lib/shared/layouts/active_destinations.dart \
-            lib/shared/layouts/adaptive_scaffold.dart \
-            .github/workflows/ui-redesign-check.yml
+            lib/shared/layouts/adaptive_scaffold.dart
           if git diff --cached --quiet; then
             echo "No follow-up changes were needed"
             exit 0
@@ -67,4 +66,4 @@ jobs:
           git commit -m "feat(ui): add playlist search and compact mobile navigation [platform-build]"
           git push origin ui-redesign
 
-# temporary helpers are removed separately after this commit succeeds
+# workflow and helper cleanup is handled through the repository API
