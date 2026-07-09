@@ -19,7 +19,7 @@ jobs:
           ref: ui-redesign
           fetch-depth: 0
 
-      - name: Patch startup experience
+      - name: Patch Windows startup
         shell: python
         run: |
           from pathlib import Path
@@ -28,51 +28,55 @@ jobs:
           text = path.read_text(encoding='utf-8')
 
           text = text.replace(
-              "import 'dart:io' show Platform;",
-              "import 'dart:io' show Platform, Process;",
+              '  WidgetsFlutterBinding.ensureInitialized();\n',
+              '  WidgetsFlutterBinding.ensureInitialized();\n\n'
+              '  // Windows 原生窗口可能在完整初始化前先显示。立即提交可见首帧，\n'
+              '  // 避免单实例、托盘、凭据或音频插件初始化缓慢时出现纯白窗口。\n'
+              '  runApp(const _NativeBootstrapApp());\n',
               1,
           )
 
           text = text.replace(
-              "  await FileLogger.init();",
-              "  try {\n    await FileLogger.init().timeout(const Duration(seconds: 3));\n  } catch (_) {\n    // 日志初始化失败不能阻止首帧显示。\n  }",
-              1,
-          )
-
-          marker = "  PlatformDispatcher.instance.onError = (error, stack) {\n"
-          start = text.index(marker)
-          end_marker = "    return true;\n  };"
-          end = text.index(end_marker, start) + len(end_marker)
-          bootstrap = "\n\n  // 立即提交一个可见首帧。Windows 原生窗口会等待首帧后才显示，\n  // 因此后续插件或音频初始化即使缓慢，也不会再呈现纯白窗口。\n  runApp(const _NativeBootstrapApp());\n\n  try {"
-          text = text[:end] + bootstrap + text[end:]
-
-          text = text.replace(
-              "  AppConfig.isTvMode = await TvDetector.isTv();",
-              "  AppConfig.isTvMode = await TvDetector.isTv().timeout(\n    const Duration(seconds: 3),\n    onTimeout: () => false,\n  );",
+              '  await FileLogger.init();',
+              '  try {\n'
+              '    await FileLogger.init().timeout(const Duration(seconds: 3));\n'
+              '  } catch (_) {\n'
+              '    // 日志初始化失败不能阻止应用继续启动。\n'
+              '  }',
               1,
           )
 
           text = text.replace(
-              "      final prefs = await AppPreferences.create();\n      await prefs.migrateLegacyApiBaseUrl();",
-              "      final prefs = await AppPreferences.create().timeout(\n        const Duration(seconds: 5),\n      );\n      await prefs.migrateLegacyApiBaseUrl().timeout(\n        const Duration(seconds: 5),\n      );",
+              '  AppConfig.isTvMode = await TvDetector.isTv();',
+              '  AppConfig.isTvMode = await TvDetector.isTv().timeout(\n'
+              '    const Duration(seconds: 3),\n'
+              '    onTimeout: () => false,\n'
+              '  );',
               1,
           )
 
           text = text.replace(
-              "    await SecureStorageService().getAccessToken();",
-              "    await SecureStorageService().getAccessToken().timeout(\n      const Duration(seconds: 5),\n    );",
+              '      final prefs = await AppPreferences.create();\n'
+              '      await prefs.migrateLegacyApiBaseUrl();',
+              '      final prefs = await AppPreferences.create().timeout(\n'
+              '        const Duration(seconds: 5),\n'
+              '      );\n'
+              '      await prefs.migrateLegacyApiBaseUrl().timeout(\n'
+              '        const Duration(seconds: 5),\n'
+              '      );',
               1,
           )
 
-          tail = "  WindowTrayManager.fixInitialSurfaceSize();\n}\n\nString _generateUserId()"
-          replacement = """  WindowTrayManager.fixInitialSurfaceSize();
-  } catch (error, stackTrace) {
-    debugPrint('[Main] 启动失败: $error');
-    debugPrint('[Main] Stack trace: $stackTrace');
-    await FileLogger.flush();
-    runApp(_StartupFailureApp(error: error.toString()));
-  }
-}
+          text = text.replace(
+              '    await SecureStorageService().getAccessToken();',
+              '    await SecureStorageService().getAccessToken().timeout(\n'
+              '      const Duration(seconds: 5),\n'
+              '    );',
+              1,
+          )
+
+          marker = '\nString _generateUserId() {'
+          widget = r'''
 
 class _NativeBootstrapApp extends StatelessWidget {
   const _NativeBootstrapApp();
@@ -139,90 +143,18 @@ class _StartupMark extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(25),
       ),
-      child: Icon(Icons.graphic_eq_rounded, size: 40, color: colors.primary),
-    );
-  }
-}
-
-class _StartupFailureApp extends StatelessWidget {
-  final String error;
-
-  const _StartupFailureApp({required this.error});
-
-  @override
-  Widget build(BuildContext context) {
-    const seed = Color(0xFF6750A4);
-    return MaterialApp(
-      title: 'Songloft 启动失败',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: seed),
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: seed,
-          brightness: Brightness.dark,
-        ),
-      ),
-      themeMode: ThemeMode.system,
-      home: Scaffold(
-        body: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 620),
-            child: Padding(
-              padding: const EdgeInsets.all(28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.error_outline_rounded, size: 64),
-                  const SizedBox(height: 18),
-                  const Text(
-                    'Songloft 启动失败',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('程序没有继续停留在白屏。下面的信息可用于定位问题。'),
-                  const SizedBox(height: 16),
-                  Container(
-                    width: double.infinity,
-                    constraints: const BoxConstraints(maxHeight: 180),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.06),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: SingleChildScrollView(
-                      child: SelectableText(error),
-                    ),
-                  ),
-                  if (FileLogger.logDir != null) ...[
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: () {
-                        if (Platform.isWindows) {
-                          Process.run('explorer', [FileLogger.logDir!]);
-                        }
-                      },
-                      icon: const Icon(Icons.folder_open_rounded),
-                      label: const Text('打开日志目录'),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
+      child: Icon(
+        Icons.graphic_eq_rounded,
+        size: 40,
+        color: colors.primary,
       ),
     );
   }
 }
-
-String _generateUserId()"""
-          if tail not in text:
-              raise SystemExit('Could not find main() tail marker')
-          text = text.replace(tail, replacement, 1)
+'''
+          if marker not in text:
+              raise SystemExit('main.dart insertion marker not found')
+          text = text.replace(marker, widget + marker, 1)
 
           path.write_text(text, encoding='utf-8')
           Path('.github/workflows/apply-windows-startup-fix.yml').unlink()
@@ -233,5 +165,5 @@ String _generateUserId()"""
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add lib/main.dart .github/workflows/apply-windows-startup-fix.yml
-          git commit -m "fix(windows): show startup UI and surface initialization errors"
+          git commit -m "fix(windows): show startup screen before plugin initialization"
           git push origin ui-redesign
