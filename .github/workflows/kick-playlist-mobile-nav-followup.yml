@@ -1,4 +1,4 @@
-name: Kick playlist and mobile navigation follow-up
+name: Apply playlist and mobile navigation follow-up from PR
 
 on:
   push:
@@ -6,27 +6,69 @@ on:
       - ui-redesign
     paths:
       - '.github/workflows/kick-playlist-mobile-nav-followup.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/kick-playlist-mobile-nav-followup.yml'
 
 permissions:
   contents: write
 
 jobs:
-  kick:
+  apply-followup:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ui-redesign
           fetch-depth: 0
-      - name: Trigger follow-up workflow
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+
+      - name: Extract and apply prepared patch
         shell: bash
         run: |
-          printf '\n# triggered by one-shot launcher\n' >> .github/workflows/apply-playlist-mobile-nav-followup.yml
-          rm -f .github/workflows/kick-playlist-mobile-nav-followup.yml
+          python - <<'PY'
+          from pathlib import Path
+          from textwrap import dedent
+
+          workflow = Path('.github/workflows/apply-playlist-mobile-nav-followup.yml')
+          text = workflow.read_text(encoding='utf-8')
+          marker = "          python - <<'PY'\n"
+          start = text.index(marker) + len(marker)
+          end = text.index("\n          PY\n", start)
+          script = dedent(text[start:end])
+          Path('/tmp/apply-followup.py').write_text(script, encoding='utf-8')
+          PY
+          python /tmp/apply-followup.py
+
+      - name: Format updated Dart sources
+        run: |
+          dart format \
+            lib/features/playlist/presentation/playlists_page.dart \
+            lib/features/playlist/presentation/providers/playlist_provider.dart \
+            lib/features/jsplugin/presentation/widgets/plugin_icon.dart \
+            lib/shared/layouts/active_destinations.dart \
+            lib/shared/layouts/adaptive_scaffold.dart
+
+      - name: Commit follow-up and remove one-shot workflows
+        shell: bash
+        run: |
+          rm -f \
+            .github/workflows/apply-playlist-mobile-nav-followup.yml \
+            .github/workflows/kick-playlist-mobile-nav-followup.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .github/workflows/apply-playlist-mobile-nav-followup.yml .github/workflows/kick-playlist-mobile-nav-followup.yml
-          git commit -m "chore(ci): trigger playlist and mobile navigation follow-up"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No follow-up changes were needed"
+            exit 0
+          fi
+          git commit -m "feat(ui): add playlist search and compact mobile navigation [platform-build]"
           git push origin ui-redesign
-
-# second commit intentionally activates this one-shot workflow
