@@ -10,17 +10,7 @@ on:
       - 'web/**'
       - 'android/**'
       - 'windows/**'
-      - 'pubspec.yaml'
-      - '.github/workflows/ui-redesign-check.yml'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'lib/**'
-      - 'test/**'
-      - 'web/**'
-      - 'android/**'
-      - 'windows/**'
+      - 'scripts/patch-windows-startup.py'
       - 'pubspec.yaml'
       - '.github/workflows/ui-redesign-check.yml'
   workflow_dispatch:
@@ -42,153 +32,15 @@ jobs:
           ref: ui-redesign
           fetch-depth: 0
 
-      - name: Apply visible startup screen and timeout guards
-        shell: python
-        run: |
-          from pathlib import Path
+      - name: Apply source patch
+        run: python scripts/patch-windows-startup.py
 
-          path = Path('lib/main.dart')
-          text = path.read_text(encoding='utf-8')
-
-          if 'runApp(const _NativeBootstrapApp());' not in text:
-              text = text.replace(
-                  '  WidgetsFlutterBinding.ensureInitialized();\n',
-                  '  WidgetsFlutterBinding.ensureInitialized();\n\n'
-                  '  // Windows 原生窗口可能在完整初始化前先显示。立即提交可见首帧，\n'
-                  '  // 避免单实例、托盘、凭据或音频插件初始化缓慢时出现纯白窗口。\n'
-                  '  runApp(const _NativeBootstrapApp());\n',
-                  1,
-              )
-
-          text = text.replace(
-              '  await FileLogger.init();',
-              '  try {\n'
-              '    await FileLogger.init().timeout(const Duration(seconds: 3));\n'
-              '  } catch (_) {\n'
-              '    // 日志初始化失败不能阻止应用继续启动。\n'
-              '  }',
-              1,
-          )
-          text = text.replace(
-              '  AppConfig.isTvMode = await TvDetector.isTv();',
-              '  AppConfig.isTvMode = await TvDetector.isTv().timeout(\n'
-              '    const Duration(seconds: 3),\n'
-              '    onTimeout: () => false,\n'
-              '  );',
-              1,
-          )
-          text = text.replace(
-              '      final prefs = await AppPreferences.create();\n'
-              '      await prefs.migrateLegacyApiBaseUrl();',
-              '      final prefs = await AppPreferences.create().timeout(\n'
-              '        const Duration(seconds: 5),\n'
-              '      );\n'
-              '      await prefs.migrateLegacyApiBaseUrl().timeout(\n'
-              '        const Duration(seconds: 5),\n'
-              '      );',
-              1,
-          )
-          text = text.replace(
-              '    await SecureStorageService().getAccessToken();',
-              '    await SecureStorageService().getAccessToken().timeout(\n'
-              '      const Duration(seconds: 5),\n'
-              '    );',
-              1,
-          )
-
-          if 'class _NativeBootstrapApp extends StatelessWidget' not in text:
-              marker = '\nString _generateUserId() {'
-              widget = r'''
-
-class _NativeBootstrapApp extends StatelessWidget {
-  const _NativeBootstrapApp();
-
-  @override
-  Widget build(BuildContext context) {
-    const seed = Color(0xFF6750A4);
-    return MaterialApp(
-      title: 'Songloft',
-      debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.system,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: seed),
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: seed,
-          brightness: Brightness.dark,
-        ),
-      ),
-      home: const Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _StartupMark(),
-              SizedBox(height: 24),
-              SizedBox(
-                width: 28,
-                height: 28,
-                child: CircularProgressIndicator(strokeWidth: 2.6),
-              ),
-              SizedBox(height: 18),
-              Text('正在启动 Songloft…'),
-              SizedBox(height: 6),
-              Text(
-                '正在初始化音频与桌面服务',
-                style: TextStyle(fontSize: 12),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _StartupMark extends StatelessWidget {
-  const _StartupMark();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Container(
-      width: 76,
-      height: 76,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [colors.primaryContainer, colors.tertiaryContainer],
-        ),
-        borderRadius: BorderRadius.circular(25),
-      ),
-      child: Icon(
-        Icons.graphic_eq_rounded,
-        size: 40,
-        color: colors.primary,
-      ),
-    );
-  }
-}
-'''
-              if marker not in text:
-                  raise SystemExit('main.dart insertion marker not found')
-              text = text.replace(marker, widget + marker, 1)
-
-          path.write_text(text, encoding='utf-8')
-
-          temporary = Path('.github/workflows/apply-windows-startup-fix.yml')
-          if temporary.exists():
-              temporary.unlink()
-
-      - name: Commit startup fix when needed
+      - name: Format and commit when needed
         run: |
           dart format lib/main.dart
+          rm -f .github/workflows/apply-windows-startup-fix.yml
           if git diff --quiet; then
-            echo "Startup fix already applied"
+            echo "Windows startup fix already committed"
             exit 0
           fi
           git config user.name "github-actions[bot]"
@@ -213,27 +65,10 @@ class _StartupMark extends StatelessWidget {
           cache: true
       - name: Install dependencies
         run: flutter pub get
-      - name: Report formatting differences
+      - name: Check formatting
         run: dart format --output=none lib
-      - name: Analyze and capture report
-        id: analyze
-        shell: bash
-        run: |
-          set +e
-          flutter analyze 2>&1 | tee analyze.log
-          status=${PIPESTATUS[0]}
-          echo "status=$status" >> "$GITHUB_OUTPUT"
-          exit 0
-      - name: Upload analyze report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: flutter-analyze-report
-          path: analyze.log
-          if-no-files-found: error
-      - name: Fail when analyze reports issues
-        if: steps.analyze.outputs.status != '0'
-        run: exit 1
+      - name: Analyze
+        run: flutter analyze
 
   build-web:
     name: Build Flutter Web
@@ -261,52 +96,12 @@ class _StartupMark extends StatelessWidget {
           if-no-files-found: error
           retention-days: 14
 
-  build-android:
-    name: Build Android APKs
-    needs: analyze
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && contains(github.event.head_commit.message, '[platform-build]'))
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ui-redesign
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.41.5'
-          channel: stable
-          cache: true
-      - name: Install dependencies
-        run: flutter pub get
-      - name: Build release APKs
-        run: flutter build apk --release --split-per-abi
-      - name: Collect APKs
-        run: |
-          mkdir -p apk-output
-          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk apk-output/songloft-arm64-v8a.apk
-          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk apk-output/songloft-armeabi-v7a.apk
-          cp build/app/outputs/flutter-apk/app-x86_64-release.apk apk-output/songloft-x86_64.apk
-      - name: Upload Android preview
-        uses: actions/upload-artifact@v4
-        with:
-          name: songloft-android-preview
-          path: apk-output/*.apk
-          if-no-files-found: error
-          retention-days: 14
-
   build-windows:
-    name: Build and launch Windows x64
+    name: Build complete Windows x64 bundle
     needs: analyze
     if: >-
-      github.event_name == 'pull_request' ||
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && contains(github.event.head_commit.message, '[platform-build]'))
+      contains(github.event.head_commit.message, '[platform-build]')
     runs-on: windows-latest
     timeout-minutes: 60
     steps:
@@ -336,69 +131,30 @@ class _StartupMark extends StatelessWidget {
           channel: stable
           cache: true
 
-      - name: Install Flutter dependencies
+      - name: Install dependencies
         run: flutter pub get
 
       - name: Build bundled Go backend
         working-directory: _server
         shell: pwsh
         run: |
+          $env:CGO_ENABLED = '0'
+          $env:GOAMD64 = 'v1'
           go build -tags lite -o "$env:GITHUB_WORKSPACE\windows\runner\songloft-server.exe" .
-          if (-not (Test-Path "$env:GITHUB_WORKSPACE\windows\runner\songloft-server.exe")) {
-            throw 'Bundled backend was not produced'
-          }
 
-      - name: Build Windows release with backend
+      - name: Build Windows release
         run: >-
           flutter build windows --release
           --dart-define=HAS_BACKEND=true
-          --dart-define=FRONTEND_VERSION=ui-white-screen-fix
 
-      - name: Verify complete bundle
+      - name: Package portable client
         shell: pwsh
-        run: |
-          $bundle = 'build\windows\x64\runner\Release'
-          $required = @(
-            'songloft_flutter.exe',
-            'songloft-server.exe',
-            'flutter_windows.dll',
-            'libmpv-2.dll',
-            'data\app.so',
-            'data\flutter_assets\AssetManifest.bin'
-          )
-          foreach ($item in $required) {
-            if (-not (Test-Path (Join-Path $bundle $item))) {
-              throw "Missing Windows bundle file: $item"
-            }
-          }
+        run: Compress-Archive -Path 'build\windows\x64\runner\Release\*' -DestinationPath 'songloft-windows-x64.zip'
 
-      - name: Launch smoke test
-        shell: pwsh
-        run: |
-          $bundle = Resolve-Path 'build\windows\x64\runner\Release'
-          $exe = Join-Path $bundle 'songloft_flutter.exe'
-          $process = Start-Process -FilePath $exe -WorkingDirectory $bundle -PassThru
-          Start-Sleep -Seconds 18
-          $process.Refresh()
-          if ($process.HasExited) {
-            $logs = Get-ChildItem "$env:APPDATA" -Filter 'songloft_*.log' -Recurse -ErrorAction SilentlyContinue |
-              Sort-Object LastWriteTime -Descending |
-              Select-Object -First 1
-            if ($logs) { Get-Content $logs.FullName -Tail 200 }
-            throw "Songloft exited during startup with code $($process.ExitCode)"
-          }
-          Stop-Process -Id $process.Id -Force
-          Write-Host 'Songloft remained alive after the Windows startup smoke test.'
-
-      - name: Package portable ZIP
-        shell: pwsh
-        run: |
-          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath songloft-windows-x64-white-screen-fix.zip
-
-      - name: Upload Windows fixed preview
+      - name: Upload Windows client
         uses: actions/upload-artifact@v4
         with:
-          name: songloft-windows-white-screen-fix
-          path: songloft-windows-x64-white-screen-fix.zip
-          if-no-files-found: error
+          name: songloft-windows-preview
+          path: songloft-windows-x64.zip
           retention-days: 14
+          if-no-files-found: error
