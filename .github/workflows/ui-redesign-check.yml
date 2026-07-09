@@ -7,6 +7,7 @@ on:
     paths:
       - 'lib/**'
       - 'test/**'
+      - 'web/**'
       - 'pubspec.yaml'
       - '.github/workflows/ui-redesign-check.yml'
   pull_request:
@@ -15,6 +16,7 @@ on:
     paths:
       - 'lib/**'
       - 'test/**'
+      - 'web/**'
       - 'pubspec.yaml'
       - '.github/workflows/ui-redesign-check.yml'
   workflow_dispatch:
@@ -58,3 +60,27 @@ jobs:
       - name: Fail when analyze reports issues
         if: steps.analyze.outputs.status != '0'
         run: exit 1
+
+  build-web:
+    name: Build Flutter Web
+    needs: analyze
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build release web app
+        run: flutter build web --release --base-href /
+      - name: Upload web preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-web-preview
+          path: build/web
+          if-no-files-found: error
+          retention-days: 14
