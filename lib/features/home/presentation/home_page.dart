@@ -24,8 +24,10 @@ class HomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final playlistsAsync = ref.watch(playlistListProvider(null));
-    final normalPlaylistsAsync = ref.watch(playlistListProvider('normal'));
-    final radioPlaylistsAsync = ref.watch(playlistListProvider('radio'));
+    final normalAsync = ref.watch(playlistListProvider('normal'));
+    final radioAsync = ref.watch(playlistListProvider('radio'));
+    final normalCount = normalAsync.value?.totalCount ?? 0;
+    final radioCount = radioAsync.value?.totalCount ?? 0;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -39,20 +41,16 @@ class HomePage extends ConsumerWidget {
           slivers: [
             SliverToBoxAdapter(
               child: _DashboardHeader(
-                normalCount: normalPlaylistsAsync.value?.totalCount ?? 0,
-                radioCount: radioPlaylistsAsync.value?.totalCount ?? 0,
+                normalCount: normalCount,
+                radioCount: radioCount,
               ),
             ),
             SliverToBoxAdapter(
               child: playlistsAsync.when(
-                data: (state) => _buildContent(
-                  context,
-                  ref,
-                  state.items,
-                  normalTotalCount:
-                      normalPlaylistsAsync.value?.totalCount ?? 0,
-                  radioTotalCount:
-                      radioPlaylistsAsync.value?.totalCount ?? 0,
+                data: (state) => _DashboardContent(
+                  playlists: state.items,
+                  normalCount: normalCount,
+                  radioCount: radioCount,
                 ),
                 loading: () => const _LoadingContent(),
                 error: (error, stack) => _ErrorContent(
@@ -66,31 +64,31 @@ class HomePage extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Widget _buildContent(
-    BuildContext context,
-    WidgetRef ref,
-    List<Playlist> playlists, {
-    required int normalTotalCount,
-    required int radioTotalCount,
-  }) {
+class _DashboardContent extends ConsumerWidget {
+  final List<Playlist> playlists;
+  final int normalCount;
+  final int radioCount;
+
+  const _DashboardContent({
+    required this.playlists,
+    required this.normalCount,
+    required this.radioCount,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final currentPlaylistId = ref.watch(sourcePlaylistIdProvider);
     final isPlaying = ref.watch(isPlayingProvider);
-    final normalPlaylists = playlists.where((p) => p.type == 'normal').toList();
-    final radioPlaylists = playlists.where((p) => p.type == 'radio').toList();
-    final isWide = context.isWideScreen;
+    final normal = playlists.where((p) => p.type == 'normal').toList();
+    final radios = playlists.where((p) => p.type == 'radio').toList();
 
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1380),
         child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: context.responsive<double>(
-              mobile: AppSpacing.md,
-              tablet: AppSpacing.lg,
-              desktop: 28,
-            ),
-          ),
+          padding: EdgeInsets.symmetric(horizontal: _pagePadding(context)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -109,60 +107,30 @@ class HomePage extends ConsumerWidget {
                   ),
                 )
               else ...[
-                if (normalPlaylists.isNotEmpty) ...[
-                  SectionHeader(
+                if (normal.isNotEmpty) ...[
+                  _PlaylistSection(
                     title: '为你准备的歌单',
-                    actionText: '查看全部',
-                    onAction: () => context.go(AppRoutes.playlists),
+                    playlists: normal,
+                    currentPlaylistId: currentPlaylistId,
+                    isPlaying: isPlaying,
+                    onViewAll: () => context.go(AppRoutes.playlists),
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  if (isWide)
-                    _PlaylistGrid(
-                      playlists: normalPlaylists,
-                      currentPlaylistId: currentPlaylistId,
-                      isPlaying: isPlaying,
-                    )
-                  else
-                    PlaylistCarousel(
-                      playlists: normalPlaylists,
-                      currentPlaylistId: currentPlaylistId,
-                      isPlaying: isPlaying,
-                      onPlaylistTap: (playlist) {
-                        context.push('/playlists/${playlist.id}');
-                      },
-                    ),
                   const SizedBox(height: 34),
                 ],
-                if (radioPlaylists.isNotEmpty) ...[
-                  const SectionHeader(
+                if (radios.isNotEmpty) ...[
+                  _PlaylistSection(
                     title: '私人电台',
                     icon: Icons.radio_rounded,
+                    playlists: radios,
+                    currentPlaylistId: currentPlaylistId,
+                    isPlaying: isPlaying,
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  if (isWide)
-                    _PlaylistGrid(
-                      playlists: radioPlaylists,
-                      currentPlaylistId: currentPlaylistId,
-                      isPlaying: isPlaying,
-                    )
-                  else
-                    PlaylistCarousel(
-                      playlists: radioPlaylists,
-                      currentPlaylistId: currentPlaylistId,
-                      isPlaying: isPlaying,
-                      onPlaylistTap: (playlist) {
-                        context.push('/playlists/${playlist.id}');
-                      },
-                    ),
                   const SizedBox(height: 34),
                 ],
               ],
               const JSPluginGrid(),
               const SizedBox(height: 28),
-              StatsStrip(
-                normalCount: normalTotalCount,
-                radioCount: radioTotalCount,
-              ),
+              StatsStrip(normalCount: normalCount, radioCount: radioCount),
               SizedBox(height: MediaQuery.of(context).padding.bottom + 120),
             ],
           ),
@@ -192,17 +160,9 @@ class _DashboardHeader extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 1380),
         child: Padding(
           padding: EdgeInsets.fromLTRB(
-            context.responsive<double>(
-              mobile: AppSpacing.md,
-              tablet: AppSpacing.lg,
-              desktop: 28,
-            ),
+            _pagePadding(context),
             context.responsive<double>(mobile: 18, tablet: 24, desktop: 28),
-            context.responsive<double>(
-              mobile: AppSpacing.md,
-              tablet: AppSpacing.lg,
-              desktop: 28,
-            ),
+            _pagePadding(context),
             0,
           ),
           child: Container(
@@ -230,20 +190,9 @@ class _DashboardHeader extends StatelessWidget {
             child: Stack(
               children: [
                 Positioned(
-                  right: -34,
-                  top: -46,
-                  child: _GlowCircle(
-                    size: isWide ? 220 : 150,
-                    opacity: 0.12,
-                  ),
-                ),
-                Positioned(
-                  right: isWide ? 130 : 10,
-                  bottom: -70,
-                  child: _GlowCircle(
-                    size: isWide ? 180 : 120,
-                    opacity: 0.09,
-                  ),
+                  right: -35,
+                  top: -55,
+                  child: _GlowCircle(size: isWide ? 230 : 155),
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,7 +230,7 @@ class _DashboardHeader extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      _getGreeting(),
+                      _greeting(),
                       style: theme.textTheme.displaySmall?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
@@ -297,22 +246,22 @@ class _DashboardHeader extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 26),
+                    const SizedBox(height: 24),
                     Wrap(
                       spacing: 10,
                       runSpacing: 10,
                       children: [
-                        _HeroMetric(
+                        _Metric(
                           icon: Icons.queue_music_rounded,
                           value: '$normalCount',
                           label: '歌单',
                         ),
-                        _HeroMetric(
+                        _Metric(
                           icon: Icons.radio_rounded,
                           value: '$radioCount',
                           label: '电台',
                         ),
-                        const _HeroMetric(
+                        const _Metric(
                           icon: Icons.cloud_done_rounded,
                           value: '在线',
                           label: '音乐库',
@@ -329,7 +278,7 @@ class _DashboardHeader extends StatelessWidget {
     );
   }
 
-  String _getGreeting() {
+  String _greeting() {
     final hour = DateTime.now().hour;
     if (hour < 6) return '夜深了，放点轻松的';
     if (hour < 12) return '早上好，今天听什么？';
@@ -341,9 +290,8 @@ class _DashboardHeader extends StatelessWidget {
 
 class _GlowCircle extends StatelessWidget {
   final double size;
-  final double opacity;
 
-  const _GlowCircle({required this.size, required this.opacity});
+  const _GlowCircle({required this.size});
 
   @override
   Widget build(BuildContext context) {
@@ -352,18 +300,18 @@ class _GlowCircle extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.white.withValues(alpha: opacity),
+        color: Colors.white.withValues(alpha: 0.1),
       ),
     );
   }
 }
 
-class _HeroMetric extends StatelessWidget {
+class _Metric extends StatelessWidget {
   final IconData icon;
   final String value;
   final String label;
 
-  const _HeroMetric({
+  const _Metric({
     required this.icon,
     required this.value,
     required this.label,
@@ -408,45 +356,44 @@ class _QuickActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final actions = [
+      _ActionData(
+        icon: Icons.library_music_rounded,
+        title: '浏览歌曲库',
+        subtitle: '查找全部歌曲',
+        onTap: () => context.go(AppRoutes.library),
+      ),
+      _ActionData(
+        icon: Icons.queue_music_rounded,
+        title: '管理歌单',
+        subtitle: '整理你的收藏',
+        onTap: () => context.go(AppRoutes.playlists),
+      ),
+      _ActionData(
+        icon: Icons.extension_rounded,
+        title: '发现插件',
+        subtitle: '扩展更多能力',
+        onTap: () => context.push(AppRoutes.pluginRegistry),
+      ),
+    ];
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 720;
-        final actions = [
-          _QuickActionData(
-            icon: Icons.library_music_rounded,
-            title: '浏览歌曲库',
-            subtitle: '查找全部歌曲',
-            onTap: () => context.go(AppRoutes.library),
-          ),
-          _QuickActionData(
-            icon: Icons.queue_music_rounded,
-            title: '管理歌单',
-            subtitle: '整理你的收藏',
-            onTap: () => context.go(AppRoutes.playlists),
-          ),
-          _QuickActionData(
-            icon: Icons.extension_rounded,
-            title: '发现插件',
-            subtitle: '扩展更多能力',
-            onTap: () => context.push(AppRoutes.pluginRegistry),
-          ),
-        ];
-
         if (compact) {
           return Column(
             children: [
               for (var i = 0; i < actions.length; i++) ...[
-                _QuickActionCard(data: actions[i]),
+                _ActionCard(data: actions[i]),
                 if (i != actions.length - 1) const SizedBox(height: 10),
               ],
             ],
           );
         }
-
         return Row(
           children: [
             for (var i = 0; i < actions.length; i++) ...[
-              Expanded(child: _QuickActionCard(data: actions[i])),
+              Expanded(child: _ActionCard(data: actions[i])),
               if (i != actions.length - 1) const SizedBox(width: 12),
             ],
           ],
@@ -456,13 +403,13 @@ class _QuickActions extends StatelessWidget {
   }
 }
 
-class _QuickActionData {
+class _ActionData {
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
 
-  const _QuickActionData({
+  const _ActionData({
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -470,10 +417,10 @@ class _QuickActionData {
   });
 }
 
-class _QuickActionCard extends StatelessWidget {
-  final _QuickActionData data;
+class _ActionCard extends StatelessWidget {
+  final _ActionData data;
 
-  const _QuickActionCard({required this.data});
+  const _ActionCard({required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -513,7 +460,7 @@ class _QuickActionCard extends StatelessWidget {
                     Text(
                       data.title,
                       style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w750,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -539,6 +486,55 @@ class _QuickActionCard extends StatelessWidget {
   }
 }
 
+class _PlaylistSection extends StatelessWidget {
+  final String title;
+  final IconData? icon;
+  final List<Playlist> playlists;
+  final int? currentPlaylistId;
+  final bool isPlaying;
+  final VoidCallback? onViewAll;
+
+  const _PlaylistSection({
+    required this.title,
+    this.icon,
+    required this.playlists,
+    required this.currentPlaylistId,
+    required this.isPlaying,
+    this.onViewAll,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          title: title,
+          icon: icon,
+          actionText: onViewAll == null ? null : '查看全部',
+          onAction: onViewAll,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        if (context.isWideScreen)
+          _PlaylistGrid(
+            playlists: playlists,
+            currentPlaylistId: currentPlaylistId,
+            isPlaying: isPlaying,
+          )
+        else
+          PlaylistCarousel(
+            playlists: playlists,
+            currentPlaylistId: currentPlaylistId,
+            isPlaying: isPlaying,
+            onPlaylistTap: (playlist) {
+              context.push('/playlists/${playlist.id}');
+            },
+          ),
+      ],
+    );
+  }
+}
+
 class _PlaylistGrid extends StatelessWidget {
   final List<Playlist> playlists;
   final int? currentPlaylistId;
@@ -546,55 +542,49 @@ class _PlaylistGrid extends StatelessWidget {
 
   const _PlaylistGrid({
     required this.playlists,
-    this.currentPlaylistId,
-    this.isPlaying = false,
+    required this.currentPlaylistId,
+    required this.isPlaying,
   });
 
   @override
   Widget build(BuildContext context) {
-    final crossAxisCount = context.responsive<int>(
-      mobile: 2,
-      tablet: 3,
-      desktop: 4,
-    );
+    final columns = context.responsive<int>(mobile: 2, tablet: 3, desktop: 4);
+    final itemCount = playlists.length > columns * 2
+        ? columns * 2
+        : playlists.length;
 
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
+      itemCount: itemCount,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
+        crossAxisCount: columns,
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
         childAspectRatio: 0.78,
       ),
-      itemCount: playlists.length > crossAxisCount * 2
-          ? crossAxisCount * 2
-          : playlists.length,
       itemBuilder: (context, index) {
         final playlist = playlists[index];
-        final isCurrent = playlist.id == currentPlaylistId;
-        return _GridPlaylistCard(
+        final current = playlist.id == currentPlaylistId;
+        return _PlaylistCard(
           playlist: playlist,
-          isCurrent: isCurrent,
-          isPlaying: isPlaying && isCurrent,
-          onTap: () => context.push('/playlists/${playlist.id}'),
+          isCurrent: current,
+          isPlaying: current && isPlaying,
         );
       },
     );
   }
 }
 
-class _GridPlaylistCard extends StatelessWidget {
+class _PlaylistCard extends StatelessWidget {
   final Playlist playlist;
   final bool isCurrent;
   final bool isPlaying;
-  final VoidCallback onTap;
 
-  const _GridPlaylistCard({
+  const _PlaylistCard({
     required this.playlist,
     required this.isCurrent,
     required this.isPlaying,
-    required this.onTap,
   });
 
   @override
@@ -602,119 +592,111 @@ class _GridPlaylistCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Semantics(
-      button: true,
-      label: '打开歌单 ${playlist.name}',
-      child: Material(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(22),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(11),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
-                        color: colorScheme.surfaceContainerHighest,
-                        border: isCurrent
-                            ? Border.all(color: colorScheme.primary, width: 2)
-                            : null,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.12),
-                            blurRadius: 16,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          playlist.coverImageUrl != null
-                              ? _buildNetworkImage(
-                                  playlist.coverImageUrl!,
-                                  colorScheme,
-                                )
-                              : _buildPlaceholder(colorScheme),
-                          Positioned(
-                            right: 10,
-                            bottom: 10,
-                            child: AnimatedOpacity(
-                              opacity: isCurrent ? 1 : 0.88,
-                              duration: const Duration(milliseconds: 180),
-                              child: Container(
-                                width: 42,
-                                height: 42,
-                                decoration: BoxDecoration(
-                                  color: isCurrent
-                                      ? colorScheme.primary
-                                      : Colors.black.withValues(alpha: 0.62),
-                                  shape: BoxShape.circle,
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Colors.black26,
-                                      blurRadius: 10,
-                                      offset: Offset(0, 4),
-                                    ),
-                                  ],
+    return Material(
+      color: colorScheme.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(22),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.push('/playlists/${playlist.id}'),
+        child: Padding(
+          padding: const EdgeInsets.all(11),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(18),
+                      color: colorScheme.surfaceContainerHighest,
+                      border: isCurrent
+                          ? Border.all(color: colorScheme.primary, width: 2)
+                          : null,
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (playlist.coverImageUrl != null)
+                          CachedNetworkImage(
+                            imageUrl: UrlHelper.buildCoverUrl(
+                              playlist.coverImageUrl!,
+                            ),
+                            fit: BoxFit.cover,
+                            placeholder: (_, _) => _CoverPlaceholder(
+                              colorScheme: colorScheme,
+                            ),
+                            errorWidget: (_, _, _) => _CoverPlaceholder(
+                              colorScheme: colorScheme,
+                            ),
+                          )
+                        else
+                          _CoverPlaceholder(colorScheme: colorScheme),
+                        Positioned(
+                          right: 10,
+                          bottom: 10,
+                          child: Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: isCurrent
+                                  ? colorScheme.primary
+                                  : Colors.black.withValues(alpha: 0.62),
+                              shape: BoxShape.circle,
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 10,
+                                  offset: Offset(0, 4),
                                 ),
-                                child: Icon(
-                                  isPlaying
-                                      ? Icons.equalizer_rounded
-                                      : Icons.play_arrow_rounded,
-                                  color: Colors.white,
-                                ),
-                              ),
+                              ],
+                            ),
+                            child: Icon(
+                              isPlaying
+                                  ? Icons.equalizer_rounded
+                                  : Icons.play_arrow_rounded,
+                              color: Colors.white,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 11),
-                Text(
-                  playlist.name,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w750,
-                    color: isCurrent ? colorScheme.primary : null,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 11),
+              Text(
+                playlist.name,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: isCurrent ? colorScheme.primary : null,
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  '${playlist.songCount} 首歌曲',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 3),
+              Text(
+                '${playlist.songCount} 首歌曲',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildNetworkImage(String coverUrl, ColorScheme colorScheme) {
-    return CachedNetworkImage(
-      imageUrl: UrlHelper.buildCoverUrl(coverUrl),
-      fit: BoxFit.cover,
-      placeholder: (context, url) => _buildPlaceholder(colorScheme),
-      errorWidget: (context, url, error) => _buildPlaceholder(colorScheme),
-    );
-  }
+class _CoverPlaceholder extends StatelessWidget {
+  final ColorScheme colorScheme;
 
-  Widget _buildPlaceholder(ColorScheme colorScheme) {
+  const _CoverPlaceholder({required this.colorScheme});
+
+  @override
+  Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -747,12 +729,13 @@ class _LoadingContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SkeletonLoader(
-            height: 86,
-            borderRadius: BorderRadius.circular(22),
-          ),
+          SkeletonLoader(height: 86, borderRadius: BorderRadius.circular(22)),
           const SizedBox(height: 28),
-          SkeletonLoader(height: 22, width: 160, borderRadius: AppRadius.smAll),
+          SkeletonLoader(
+            height: 22,
+            width: 160,
+            borderRadius: AppRadius.smAll,
+          ),
           const SizedBox(height: 16),
           SizedBox(
             height: 210,
@@ -819,4 +802,12 @@ class _ErrorContent extends StatelessWidget {
       ),
     );
   }
+}
+
+double _pagePadding(BuildContext context) {
+  return context.responsive<double>(
+    mobile: AppSpacing.md,
+    tablet: AppSpacing.lg,
+    desktop: 28,
+  );
 }
