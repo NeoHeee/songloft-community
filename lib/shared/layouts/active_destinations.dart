@@ -27,60 +27,72 @@ class ActiveDestinations {
     final destinations = <NavDestination>[];
     final indexToRoute = <String>[];
 
-    destinations.add(const NavDestination(
-      label: '首页',
-      icon: Icon(Icons.home_outlined),
-      selectedIcon: Icon(Icons.home),
-    ));
+    destinations.add(
+      const NavDestination(
+        label: '首页',
+        icon: Icon(Icons.home_outlined),
+        selectedIcon: Icon(Icons.home_rounded),
+      ),
+    );
     indexToRoute.add(AppRoutes.home);
 
     if (config.showLibrary) {
-      destinations.add(const NavDestination(
-        label: '歌曲库',
-        icon: Icon(Icons.library_music_outlined),
-        selectedIcon: Icon(Icons.library_music),
-      ));
+      destinations.add(
+        const NavDestination(
+          label: '歌曲库',
+          icon: Icon(Icons.library_music_outlined),
+          selectedIcon: Icon(Icons.library_music_rounded),
+        ),
+      );
       indexToRoute.add(AppRoutes.library);
     }
 
     if (config.showPlaylists) {
-      destinations.add(const NavDestination(
-        label: '歌单',
-        icon: Icon(Icons.queue_music_outlined),
-        selectedIcon: Icon(Icons.queue_music),
-      ));
+      destinations.add(
+        const NavDestination(
+          label: '歌单',
+          icon: Icon(Icons.queue_music_outlined),
+          selectedIcon: Icon(Icons.queue_music_rounded),
+        ),
+      );
       indexToRoute.add(AppRoutes.playlists);
     }
 
     for (final pt in config.pluginTabs) {
-      final plugin = plugins.where(
-        (p) =>
-            p.entryPath == pt.entryPath &&
-            p.isActive &&
-            p.entryPath != null &&
-            p.entryPath!.isNotEmpty,
-      ).firstOrNull;
+      final plugin = plugins
+          .where(
+            (p) =>
+                p.entryPath == pt.entryPath &&
+                p.isActive &&
+                p.entryPath != null &&
+                p.entryPath!.isNotEmpty,
+          )
+          .firstOrNull;
       if (plugin != null) {
-        destinations.add(NavDestination(
-          label: plugin.displayName,
-          icon: PluginNavIcon(
-            iconUrl: plugin.iconUrl,
-            fallbackIcon: const Icon(Icons.extension_outlined),
+        destinations.add(
+          NavDestination(
+            label: plugin.displayName,
+            icon: PluginNavIcon(
+              iconUrl: plugin.iconUrl,
+              fallbackIcon: const Icon(Icons.extension_outlined),
+            ),
+            selectedIcon: PluginNavIcon(
+              iconUrl: plugin.iconUrl,
+              fallbackIcon: const Icon(Icons.extension_rounded),
+            ),
           ),
-          selectedIcon: PluginNavIcon(
-            iconUrl: plugin.iconUrl,
-            fallbackIcon: const Icon(Icons.extension),
-          ),
-        ));
+        );
         indexToRoute.add('/plugin-tab/${pt.entryPath}');
       }
     }
 
-    destinations.add(const NavDestination(
-      label: '设置',
-      icon: Icon(Icons.settings_outlined),
-      selectedIcon: Icon(Icons.settings),
-    ));
+    destinations.add(
+      const NavDestination(
+        label: '设置',
+        icon: Icon(Icons.settings_outlined),
+        selectedIcon: Icon(Icons.settings_rounded),
+      ),
+    );
     indexToRoute.add(AppRoutes.settings);
 
     final routeToIndex = <String, int>{};
