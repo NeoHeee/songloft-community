@@ -1,11 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/utils/url_helper.dart';
 import '../../domain/playlist.dart';
 
-/// 歌单列表项组件（列表视图）
+/// 新版歌单列表项组件
 class PlaylistListItem extends StatelessWidget {
   final Playlist playlist;
   final VoidCallback? onTap;
@@ -38,171 +37,134 @@ class PlaylistListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final highlighted =
+        (isSelectionMode && isSelected) || isCurrentPlaylist;
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      shape:
-          (isSelectionMode && isSelected) || isCurrentPlaylist
-              ? RoundedRectangleBorder(
-                borderRadius: AppRadius.mdAll,
-                side: BorderSide(color: colorScheme.primary, width: 2),
-              )
-              : RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
-      child: InkWell(
-        onTap: isSelectionMode ? onSelect : onTap,
-        onLongPress: isSelectionMode ? null : onLongPress,
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Row(
-            children: [
-              // 多选模式下显示 Checkbox
-              if (isSelectionMode)
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: Checkbox(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: highlighted
+            ? colorScheme.primaryContainer.withValues(alpha: 0.5)
+            : colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: isSelectionMode ? onSelect : onTap,
+          onLongPress: isSelectionMode ? null : onLongPress,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.fromLTRB(10, 9, 8, 9),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: highlighted
+                    ? colorScheme.primary.withValues(alpha: 0.55)
+                    : colorScheme.outlineVariant.withValues(alpha: 0.22),
+                width: highlighted ? 1.5 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                if (isSelectionMode) ...[
+                  Checkbox(
                     value: isSelected,
                     onChanged: (_) => onSelect?.call(),
                   ),
+                  const SizedBox(width: 4),
+                ],
+                _Cover(
+                  playlist: playlist,
+                  isCurrentPlaylist: isCurrentPlaylist,
+                  isPlaying: isPlaying,
                 ),
-              // 左侧：方形封面 56x56
-              ClipRRect(
-                borderRadius: AppRadius.smAll,
-                child: SizedBox(
-                  width: 56,
-                  height: 56,
-                  child: Stack(
-                    fit: StackFit.expand,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      playlist.coverImageUrl != null
-                          ? ExcludeSemantics(
-                            child: CachedNetworkImage(
-                              imageUrl: UrlHelper.buildCoverUrl(
-                                playlist.coverImageUrl!,
-                              ),
-                              fit: BoxFit.cover,
-                              placeholder:
-                                  (context, url) =>
-                                      _buildPlaceholder(colorScheme),
-                              errorWidget:
-                                  (context, url, error) =>
-                                      _buildPlaceholder(colorScheme),
-                            ),
-                          )
-                          : _buildPlaceholder(colorScheme),
-                      if (isCurrentPlaylist && isPlaying)
-                        Container(
-                          color: Colors.black54,
-                          child: Center(
-                            child: Icon(
-                              Icons.equalizer_rounded,
-                              size: 24,
-                              color: colorScheme.primary,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-
-              // 中间：歌单信息（Expanded）
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // 第一行：歌单名称 + 电台标签
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            playlist.name,
-                            style: textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: isCurrentPlaylist
-                                  ? colorScheme.primary
-                                  : null,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (playlist.type == 'radio') ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: colorScheme.secondary,
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                            ),
+                      Row(
+                        children: [
+                          Flexible(
                             child: Text(
-                              '电台',
-                              style: textTheme.labelSmall?.copyWith(
-                                color: colorScheme.onSecondary,
-                                fontSize: 10,
+                              playlist.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                color: isCurrentPlaylist
+                                    ? colorScheme.primary
+                                    : colorScheme.onSurface,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ),
+                          if (playlist.type == 'radio') ...[
+                            const SizedBox(width: 8),
+                            _TypeBadge(
+                              icon: Icons.radio_rounded,
+                              label: '电台',
+                              background: colorScheme.tertiaryContainer,
+                              foreground: colorScheme.onTertiaryContainer,
+                            ),
+                          ],
+                          if (playlist.isHidden) ...[
+                            const SizedBox(width: 6),
+                            _TypeBadge(
+                              icon: Icons.visibility_off_rounded,
+                              label: '隐藏',
+                              background: colorScheme.errorContainer,
+                              foreground: colorScheme.onErrorContainer,
+                            ),
+                          ],
                         ],
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        _subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      if (playlist.labels.isNotEmpty) ...[
+                        const SizedBox(height: 7),
+                        Wrap(
+                          spacing: 5,
+                          runSpacing: 4,
+                          children: playlist.labels
+                              .take(3)
+                              .map((label) => _LabelChip(label: label))
+                              .toList(),
+                        ),
                       ],
-                    ),
-                    const SizedBox(height: 2),
-
-                    // 第二行：歌曲数量 · 描述
-                    Text(
-                      _buildSubtitle(),
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-
-                    // 第三行：标签（可选）
-                    if (playlist.labels.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Wrap(
-                        spacing: 4,
-                        runSpacing: 2,
-                        children:
-                            playlist.labels.map((label) {
-                              return _buildLabel(context, label);
-                            }).toList(),
-                      ),
                     ],
-                  ],
-                ),
-              ),
-
-              // 右侧：操作按钮（多选模式下隐藏）
-              if (!isSelectionMode) ...[
-                if (onPlayAll != null)
-                  IconButton(
-                    onPressed: onPlayAll,
-                    icon: const Icon(Icons.play_arrow),
-                    tooltip: '播放全部',
                   ),
-                IconButton(
-                  onPressed: _showMoreMenu(context),
-                  icon: const Icon(Icons.more_vert),
-                  tooltip: '更多操作',
                 ),
+                if (!isSelectionMode) ...[
+                  if (onPlayAll != null)
+                    _RoundActionButton(
+                      tooltip: '播放全部',
+                      icon: isCurrentPlaylist && isPlaying
+                          ? Icons.equalizer_rounded
+                          : Icons.play_arrow_rounded,
+                      selected: isCurrentPlaylist,
+                      onPressed: onPlayAll,
+                    ),
+                  const SizedBox(width: 4),
+                  _buildMoreButton(context),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  /// 构建副标题：歌曲数量 · 描述
-  String _buildSubtitle() {
+  String get _subtitle {
     final parts = <String>['${playlist.songCount} 首歌曲'];
     if (playlist.description?.isNotEmpty == true) {
       parts.add(playlist.description!);
@@ -210,126 +172,265 @@ class PlaylistListItem extends StatelessWidget {
     return parts.join(' · ');
   }
 
-  Widget _buildPlaceholder(ColorScheme colorScheme) {
+  Widget _buildMoreButton(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_horiz_rounded),
+      tooltip: '更多操作',
+      onSelected: (value) {
+        switch (value) {
+          case 'edit':
+            onEdit?.call();
+            break;
+          case 'toggle_visibility':
+            onToggleVisibility?.call();
+            break;
+          case 'delete':
+            onDelete?.call();
+            break;
+        }
+      },
+      itemBuilder: (context) => [
+        if (onEdit != null)
+          const PopupMenuItem(
+            value: 'edit',
+            child: ListTile(
+              leading: Icon(Icons.edit_rounded),
+              title: Text('编辑'),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+        if (onToggleVisibility != null && !playlist.isBuiltIn)
+          PopupMenuItem(
+            value: 'toggle_visibility',
+            child: ListTile(
+              leading: Icon(
+                playlist.isHidden
+                    ? Icons.visibility_rounded
+                    : Icons.visibility_off_rounded,
+              ),
+              title: Text(playlist.isHidden ? '取消隐藏' : '隐藏歌单'),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+        if (onDelete != null && !playlist.isBuiltIn)
+          PopupMenuItem(
+            value: 'delete',
+            child: ListTile(
+              leading: Icon(
+                Icons.delete_outline_rounded,
+                color: colorScheme.error,
+              ),
+              title: Text(
+                '删除',
+                style: TextStyle(color: colorScheme.error),
+              ),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _Cover extends StatelessWidget {
+  final Playlist playlist;
+  final bool isCurrentPlaylist;
+  final bool isPlaying;
+
+  const _Cover({
+    required this.playlist,
+    required this.isCurrentPlaylist,
+    required this.isPlaying,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
-      color: colorScheme.surfaceContainerHighest,
-      child: Center(
-        child: Icon(
-          playlist.type == 'radio' ? Icons.radio : Icons.queue_music,
-          size: 24,
-          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-        ),
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(17),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (playlist.coverImageUrl != null)
+            ExcludeSemantics(
+              child: CachedNetworkImage(
+                imageUrl: UrlHelper.buildCoverUrl(playlist.coverImageUrl!),
+                fit: BoxFit.cover,
+                placeholder: (_, _) => _CoverPlaceholder(
+                  isRadio: playlist.type == 'radio',
+                ),
+                errorWidget: (_, _, _) => _CoverPlaceholder(
+                  isRadio: playlist.type == 'radio',
+                ),
+              ),
+            )
+          else
+            _CoverPlaceholder(isRadio: playlist.type == 'radio'),
+          if (isCurrentPlaylist && isPlaying)
+            Container(
+              color: Colors.black.withValues(alpha: 0.45),
+              child: Icon(
+                Icons.equalizer_rounded,
+                size: 27,
+                color: colorScheme.primary,
+              ),
+            ),
+        ],
       ),
     );
   }
+}
 
-  Widget _buildLabel(BuildContext context, String label) {
+class _CoverPlaceholder extends StatelessWidget {
+  final bool isRadio;
+
+  const _CoverPlaceholder({required this.isRadio});
+
+  @override
+  Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
 
-    String displayLabel;
-    Color backgroundColor;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colorScheme.primaryContainer,
+            colorScheme.tertiaryContainer,
+          ],
+        ),
+      ),
+      child: Icon(
+        isRadio ? Icons.radio_rounded : Icons.graphic_eq_rounded,
+        size: 30,
+        color: colorScheme.onPrimaryContainer.withValues(alpha: 0.72),
+      ),
+    );
+  }
+}
 
-    switch (label) {
-      case 'built_in':
-        displayLabel = '内置';
-        backgroundColor = colorScheme.primaryContainer;
-        break;
-      case 'auto_created':
-        displayLabel = '自动';
-        backgroundColor = colorScheme.secondaryContainer;
-        break;
-      case 'hidden':
-        displayLabel = '已隐藏';
-        backgroundColor = colorScheme.errorContainer;
-        break;
-      default:
-        displayLabel = label;
-        backgroundColor = colorScheme.tertiaryContainer;
-    }
+class _RoundActionButton extends StatelessWidget {
+  final String tooltip;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback? onPressed;
+
+  const _RoundActionButton({
+    required this.tooltip,
+    required this.icon,
+    required this.selected,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return IconButton(
+      onPressed: onPressed,
+      tooltip: tooltip,
+      style: IconButton.styleFrom(
+        backgroundColor: selected
+            ? colorScheme.primary
+            : colorScheme.primaryContainer.withValues(alpha: 0.62),
+        foregroundColor:
+            selected ? colorScheme.onPrimary : colorScheme.primary,
+      ),
+      icon: Icon(icon),
+    );
+  }
+}
+
+class _TypeBadge extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color background;
+  final Color foreground;
+
+  const _TypeBadge({
+    required this.icon,
+    required this.label,
+    required this.background,
+    required this.foreground,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: foreground),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: foreground,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LabelChip extends StatelessWidget {
+  final String label;
+
+  const _LabelChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final displayLabel = switch (label) {
+      'built_in' => '内置',
+      'auto_created' => '自动',
+      'hidden' => '已隐藏',
+      _ => label,
+    };
+    final background = switch (label) {
+      'built_in' => colorScheme.primaryContainer,
+      'auto_created' => colorScheme.secondaryContainer,
+      'hidden' => colorScheme.errorContainer,
+      _ => colorScheme.tertiaryContainer,
+    };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(4),
+        color: background,
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         displayLabel,
-        style: textTheme.labelSmall?.copyWith(
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
           color: colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
-  }
-
-  /// 更多按钮点击显示菜单
-  VoidCallback? _showMoreMenu(BuildContext context) {
-    if (onEdit == null && onDelete == null) return null;
-
-    return () {
-      final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
-      if (renderBox == null) return;
-
-      final position = renderBox.localToGlobal(Offset.zero);
-      final size = renderBox.size;
-
-      showMenu(
-        context: context,
-        position: RelativeRect.fromLTRB(
-          position.dx + size.width - 48,
-          position.dy + size.height,
-          position.dx + size.width,
-          position.dy + size.height,
-        ),
-        items: _buildMenuItems(context),
-      );
-    };
-  }
-
-  /// 构建菜单项
-  List<PopupMenuEntry<void>> _buildMenuItems(BuildContext context) {
-    return [
-      if (onEdit != null)
-        PopupMenuItem(
-          onTap: onEdit,
-          child: const ListTile(
-            leading: Icon(Icons.edit),
-            title: Text('编辑'),
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-          ),
-        ),
-      if (onToggleVisibility != null && !playlist.isBuiltIn)
-        PopupMenuItem(
-          onTap: onToggleVisibility,
-          child: ListTile(
-            leading: Icon(
-              playlist.isHidden
-                  ? Icons.visibility
-                  : Icons.visibility_off,
-            ),
-            title: Text(playlist.isHidden ? '取消隐藏' : '隐藏歌单'),
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-          ),
-        ),
-      if (onDelete != null && !playlist.isBuiltIn)
-        PopupMenuItem(
-          onTap: onDelete,
-          child: ListTile(
-            leading: Icon(
-              Icons.delete,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            title: Text(
-              '删除',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-          ),
-        ),
-    ];
   }
 }
