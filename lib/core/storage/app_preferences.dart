@@ -246,8 +246,9 @@ class AppPreferences {
   }
 
   Future<bool> setSourcePlaylistId(int? id) {
-    if (id == null)
+    if (id == null) {
       return _prefs.remove(_sourcePlaylistIdKey).then((_) => true);
+    }
     return _prefs.setInt(_sourcePlaylistIdKey, id);
   }
 
