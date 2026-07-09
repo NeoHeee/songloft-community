@@ -69,7 +69,8 @@ class RedesignedDesktopShell extends StatelessWidget {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(26),
                               child: ColoredBox(
-                                color: colorScheme.surface.withValues(alpha: 0.72),
+                                color:
+                                    colorScheme.surface.withValues(alpha: 0.72),
                                 child: body,
                               ),
                             ),
@@ -138,7 +139,12 @@ class _Sidebar extends StatelessWidget {
         children: [
           _BrandHeader(compact: compact),
           Padding(
-            padding: EdgeInsets.fromLTRB(compact ? 10 : 16, 8, compact ? 10 : 16, 8),
+            padding: EdgeInsets.fromLTRB(
+              compact ? 10 : 16,
+              8,
+              compact ? 10 : 16,
+              8,
+            ),
             child: Divider(
               color: colorScheme.outlineVariant.withValues(alpha: 0.28),
             ),
@@ -194,7 +200,12 @@ class _BrandHeader extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(compact ? 17 : 20, 22, compact ? 17 : 20, 8),
+      padding: EdgeInsets.fromLTRB(
+        compact ? 17 : 20,
+        22,
+        compact ? 17 : 20,
+        8,
+      ),
       child: Row(
         mainAxisAlignment:
             compact ? MainAxisAlignment.center : MainAxisAlignment.start,
@@ -217,7 +228,11 @@ class _BrandHeader extends StatelessWidget {
                 ),
               ],
             ),
-            child: const Icon(Icons.graphic_eq_rounded, color: Colors.white, size: 28),
+            child: const Icon(
+              Icons.graphic_eq_rounded,
+              color: Colors.white,
+              size: 28,
+            ),
           ),
           if (!compact) ...[
             const SizedBox(width: 13),
@@ -265,71 +280,71 @@ class _SidebarItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final foreground =
-        selected ? colorScheme.onPrimaryContainer : colorScheme.onSurfaceVariant;
+    final foreground = selected
+        ? colorScheme.onPrimaryContainer
+        : colorScheme.onSurfaceVariant;
 
-    return Tooltip(
-      message: compact ? destination.label : '',
-      child: Material(
-        color: selected
-            ? colorScheme.primaryContainer.withValues(alpha: 0.78)
-            : Colors.transparent,
+    final item = Material(
+      color: selected
+          ? colorScheme.primaryContainer.withValues(alpha: 0.78)
+          : Colors.transparent,
+      borderRadius: BorderRadius.circular(17),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(17),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(17),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            height: 54,
-            padding: EdgeInsets.symmetric(horizontal: compact ? 0 : 14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(17),
-              border: selected
-                  ? Border.all(
-                      color: colorScheme.primary.withValues(alpha: 0.18),
-                    )
-                  : null,
-            ),
-            child: Row(
-              mainAxisAlignment:
-                  compact ? MainAxisAlignment.center : MainAxisAlignment.start,
-              children: [
-                IconTheme(
-                  data: IconThemeData(
-                    color: foreground,
-                    size: 24,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          height: 54,
+          padding: EdgeInsets.symmetric(horizontal: compact ? 0 : 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(17),
+            border: selected
+                ? Border.all(
+                    color: colorScheme.primary.withValues(alpha: 0.18),
+                  )
+                : null,
+          ),
+          child: Row(
+            mainAxisAlignment:
+                compact ? MainAxisAlignment.center : MainAxisAlignment.start,
+            children: [
+              IconTheme(
+                data: IconThemeData(color: foreground, size: 24),
+                child: selected ? destination.selectedIcon : destination.icon,
+              ),
+              if (!compact) ...[
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Text(
+                    destination.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: foreground,
+                      fontWeight:
+                          selected ? FontWeight.w700 : FontWeight.w600,
+                    ),
                   ),
-                  child: selected ? destination.selectedIcon : destination.icon,
                 ),
-                if (!compact) ...[
-                  const SizedBox(width: 13),
-                  Expanded(
-                    child: Text(
-                      destination.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: foreground,
-                        fontWeight: selected ? FontWeight.w750 : FontWeight.w600,
-                      ),
+                if (selected)
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary,
+                      shape: BoxShape.circle,
                     ),
                   ),
-                  if (selected)
-                    Container(
-                      width: 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color: colorScheme.primary,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                ],
               ],
-            ),
+            ],
           ),
         ),
       ),
     );
+
+    return compact
+        ? Tooltip(message: destination.label, child: item)
+        : item;
   }
 }
 
