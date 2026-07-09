@@ -1,12 +1,18 @@
 {
     "name": "Songloft",
     "short_name": "Songloft",
-    "start_url": ".",
-    "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
     "description": "Songloft - 跨平台音乐播放器",
-    "orientation": "portrait-primary",
+    "lang": "zh-CN",
+    "start_url": ".",
+    "scope": ".",
+    "display": "standalone",
+    "background_color": "#F7F4FF",
+    "theme_color": "#6750A4",
+    "orientation": "any",
+    "categories": [
+        "music",
+        "entertainment"
+    ],
     "prefer_related_applications": false,
     "icons": [
         {
