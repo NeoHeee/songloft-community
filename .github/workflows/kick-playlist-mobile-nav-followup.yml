@@ -38,9 +38,27 @@ jobs:
           marker = "          python - <<'PY'\n"
           start = text.index(marker) + len(marker)
           end = text.index("\n          PY\n", start)
-          script = dedent(text[start:end])
+          raw_script = dedent(text[start:end])
+
+          normalized = []
+          restore_two_spaces = False
+          for line in raw_script.splitlines():
+              if restore_two_spaces:
+                  if '"""' in line:
+                      restore_two_spaces = False
+                  else:
+                      line = '  ' + line
+              else:
+                  marker_index = line.find('"""')
+                  if marker_index >= 0:
+                      after = line[marker_index + 3:]
+                      if after.startswith('  ') and '"""' not in after:
+                          restore_two_spaces = True
+              normalized.append(line)
+
+          script = '\n'.join(normalized) + '\n'
           Path('/tmp/apply-followup.py').write_text(script, encoding='utf-8')
-          print(f'Extracted {len(script.splitlines())} patch lines')
+          print(f'Extracted and normalized {len(normalized)} patch lines')
           PY
           python /tmp/apply-followup.py
 
