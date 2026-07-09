@@ -20,10 +20,7 @@ class ActiveDestinations {
     required this.indexToRoute,
   });
 
-  factory ActiveDestinations.compute(
-    TabConfig config,
-    List<JSPlugin> plugins,
-  ) {
+  factory ActiveDestinations.compute(TabConfig config, List<JSPlugin> plugins) {
     final destinations = <NavDestination>[];
     final indexToRoute = <String>[];
 
@@ -79,6 +76,7 @@ class ActiveDestinations {
             selectedIcon: PluginNavIcon(
               iconUrl: plugin.iconUrl,
               fallbackIcon: const Icon(Icons.extension_rounded),
+              selected: true,
             ),
           ),
         );
