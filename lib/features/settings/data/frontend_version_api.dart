@@ -192,10 +192,14 @@ class FrontendVersionApi {
     if (latest == 'dev') return false;
 
     // 简单的版本号比较（语义化版本）
-    final currentParts =
-        current.split('.').map((e) => int.tryParse(e) ?? 0).toList();
-    final latestParts =
-        latest.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+    final currentParts = current
+        .split('.')
+        .map((e) => int.tryParse(e) ?? 0)
+        .toList();
+    final latestParts = latest
+        .split('.')
+        .map((e) => int.tryParse(e) ?? 0)
+        .toList();
 
     // 补齐长度
     while (currentParts.length < 3) {

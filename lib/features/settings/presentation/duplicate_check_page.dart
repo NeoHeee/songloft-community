@@ -163,10 +163,7 @@ class _DuplicateCheckPageState extends ConsumerState<DuplicateCheckPage> {
       final dio = ref.read(dioProvider);
       await dio.post(
         '${AppConfig.apiPrefix}/songs/batch-delete',
-        data: {
-          'ids': toDelete.map((s) => s.id).toList(),
-          'delete_files': true,
-        },
+        data: {'ids': toDelete.map((s) => s.id).toList(), 'delete_files': true},
       );
       if (!mounted) return;
       ResponsiveSnackBar.show(context, message: '已删除 ${toDelete.length} 首重复歌曲');
@@ -198,13 +195,13 @@ class _DuplicateCheckPageState extends ConsumerState<DuplicateCheckPage> {
       final dio = ref.read(dioProvider);
       await dio.post(
         '${AppConfig.apiPrefix}/songs/batch-delete',
-        data: {
-          'ids': allToDelete,
-          'delete_files': true,
-        },
+        data: {'ids': allToDelete, 'delete_files': true},
       );
       if (!mounted) return;
-      ResponsiveSnackBar.show(context, message: '已删除 ${allToDelete.length} 首重复歌曲');
+      ResponsiveSnackBar.show(
+        context,
+        message: '已删除 ${allToDelete.length} 首重复歌曲',
+      );
       _loadDuplicates();
     } catch (e) {
       if (!mounted) return;
@@ -268,7 +265,10 @@ class _DuplicateCheckPageState extends ConsumerState<DuplicateCheckPage> {
             Icon(Icons.error_outline, color: colorScheme.error),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(_error!, style: TextStyle(color: colorScheme.onErrorContainer)),
+              child: Text(
+                _error!,
+                style: TextStyle(color: colorScheme.onErrorContainer),
+              ),
             ),
             IconButton(
               icon: const Icon(Icons.close),
@@ -311,7 +311,11 @@ class _DuplicateCheckPageState extends ConsumerState<DuplicateCheckPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.bar_chart, size: 20, color: colorScheme.primary),
+                      Icon(
+                        Icons.bar_chart,
+                        size: 20,
+                        color: colorScheme.primary,
+                      ),
                       const SizedBox(width: 8),
                       Text('指纹统计', style: theme.textTheme.titleSmall),
                     ],
@@ -334,7 +338,10 @@ class _DuplicateCheckPageState extends ConsumerState<DuplicateCheckPage> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.warning_amber, color: colorScheme.onSecondaryContainer),
+                  Icon(
+                    Icons.warning_amber,
+                    color: colorScheme.onSecondaryContainer,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -380,9 +387,12 @@ class _DuplicateCheckPageState extends ConsumerState<DuplicateCheckPage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: Theme.of(context).textTheme.bodyMedium),
-          Text(value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w500,
-          )),
+          Text(
+            value,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+          ),
         ],
       ),
     );
@@ -464,16 +474,13 @@ class _DuplicateCheckPageState extends ConsumerState<DuplicateCheckPage> {
         const SizedBox(height: 32),
         Icon(Icons.check_circle_outline, size: 64, color: colorScheme.primary),
         const SizedBox(height: 16),
-        Text(
-          '未发现重复歌曲',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        Text('未发现重复歌曲', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
         Text(
           '音乐库很干净！',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 24),
         OutlinedButton.icon(
@@ -542,7 +549,8 @@ class _DuplicateCheckPageState extends ConsumerState<DuplicateCheckPage> {
     int count = 0;
     for (int i = 0; i < _duplicates!.groups.length; i++) {
       if (_ignoredGroups.contains(i)) continue;
-      final keepId = _selectedKeep[i] ?? _recommendedSongId(_duplicates!.groups[i]);
+      final keepId =
+          _selectedKeep[i] ?? _recommendedSongId(_duplicates!.groups[i]);
       count += _duplicates!.groups[i].songs.where((s) => s.id != keepId).length;
     }
     return count;
@@ -602,7 +610,8 @@ class _DuplicateCheckPageState extends ConsumerState<DuplicateCheckPage> {
                 RadioGroup<int>(
                   groupValue: keepId,
                   onChanged: (v) {
-                    if (v != null) setState(() => _selectedKeep[groupIndex] = v);
+                    if (v != null)
+                      setState(() => _selectedKeep[groupIndex] = v);
                   },
                   child: Column(
                     children: [
@@ -633,7 +642,12 @@ class _DuplicateCheckPageState extends ConsumerState<DuplicateCheckPage> {
     );
   }
 
-  Widget _buildSongTile(int groupIndex, DuplicateSong song, int keepId, int recommendedId) {
+  Widget _buildSongTile(
+    int groupIndex,
+    DuplicateSong song,
+    int keepId,
+    int recommendedId,
+  ) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isSelected = song.id == keepId;
@@ -646,9 +660,7 @@ class _DuplicateCheckPageState extends ConsumerState<DuplicateCheckPage> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Radio<int>(
-              value: song.id,
-            ),
+            Radio<int>(value: song.id),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -667,7 +679,10 @@ class _DuplicateCheckPageState extends ConsumerState<DuplicateCheckPage> {
                       ),
                       if (isRecommended)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: colorScheme.primaryContainer,
                             borderRadius: BorderRadius.circular(4),

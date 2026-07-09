@@ -44,10 +44,7 @@ class CacheConfig {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'max_size': maxSize,
-      'cache_dir': cacheDir,
-    };
+    return {'max_size': maxSize, 'cache_dir': cacheDir};
   }
 }
 
@@ -97,8 +94,9 @@ class CacheApi {
 
   /// 获取缓存配置
   Future<CacheConfig> getCacheConfig() async {
-    final response =
-        await dio.get('${AppConfig.apiPrefix}/cache-manage/config');
+    final response = await dio.get(
+      '${AppConfig.apiPrefix}/cache-manage/config',
+    );
     return CacheConfig.fromJson(response.data as Map<String, dynamic>);
   }
 

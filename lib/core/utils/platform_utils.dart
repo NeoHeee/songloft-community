@@ -34,11 +34,11 @@ class PlatformUtils {
   static bool get isWeb => kIsWeb;
 
   /// 是否可能是 Android TV
-  /// 
+  ///
   /// 注意：这只是一个基础判断，实际的 TV 检测需要结合屏幕尺寸。
   /// 在 Flutter 中，最准确的 TV 检测方式是：
   /// Android 平台 + 大屏幕（>= 1920 宽）+ 无触摸屏
-  /// 
+  ///
   /// 实际使用时应配合 context.isTv 使用：
   /// ```dart
   /// if (PlatformUtils.isAndroid && context.isTv) {
@@ -53,7 +53,7 @@ class PlatformUtils {
   }
 
   /// 是否支持触摸操作
-  /// 
+  ///
   /// TV 设备通常不支持触摸，主要通过遥控器的 D-Pad 操作
   /// 但这在纯 Dart 层面无法准确检测，需要使用平台通道
   static bool get supportsTouchInput {

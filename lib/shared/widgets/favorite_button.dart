@@ -119,10 +119,9 @@ class _FavoriteButtonState extends ConsumerState<FavoriteButton>
         ),
         icon: Icon(
           isFavorited ? Icons.favorite : Icons.favorite_border,
-          color:
-              isFavorited
-                  ? Colors.red
-                  : Theme.of(context).colorScheme.onSurfaceVariant,
+          color: isFavorited
+              ? Colors.red
+              : Theme.of(context).colorScheme.onSurfaceVariant,
         ),
         tooltip: isFavorited ? '取消收藏' : '收藏',
       ),

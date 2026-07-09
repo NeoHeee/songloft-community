@@ -39,10 +39,7 @@ class _MetadataRefreshManagerState
 
     return Column(
       mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildRemoteTitleSourceTile(theme),
-        refreshTile,
-      ],
+      children: [_buildRemoteTitleSourceTile(theme), refreshTile],
     );
   }
 
@@ -75,10 +72,7 @@ class _MetadataRefreshManagerState
                 }
               } catch (e) {
                 if (mounted) {
-                  ResponsiveSnackBar.showError(
-                    context,
-                    message: '保存失败: $e',
-                  );
+                  ResponsiveSnackBar.showError(context, message: '保存失败: $e');
                 }
               }
             },
@@ -102,10 +96,7 @@ class _MetadataRefreshManagerState
     );
   }
 
-  Widget _buildRunningState(
-    MetadataRefreshProgress progress,
-    ThemeData theme,
-  ) {
+  Widget _buildRunningState(MetadataRefreshProgress progress, ThemeData theme) {
     final label = progress.total > 0
         ? '${progress.completedCount} / ${progress.total}'
         : '准备中...';
@@ -143,8 +134,8 @@ class _MetadataRefreshManagerState
     final statusText = progress.status == 'cancelled'
         ? '已取消'
         : progress.status == 'failed'
-            ? '执行失败'
-            : '已完成';
+        ? '执行失败'
+        : '已完成';
     final detail =
         '成功 ${progress.processed} 首${progress.failed > 0 ? '，失败 ${progress.failed} 首' : ''}';
     return ListTile(

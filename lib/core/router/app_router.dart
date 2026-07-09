@@ -107,28 +107,23 @@ final routerProvider = Provider<GoRouter>((ref) {
           // 首页
           GoRoute(
             path: AppRoutes.home,
-            pageBuilder:
-                (context, state) => NoTransitionPage(
-                  child: AppConfig.isTvMode
-                      ? const TvHomePage()
-                      : const HomePage(),
-                ),
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: AppConfig.isTvMode ? const TvHomePage() : const HomePage(),
+            ),
           ),
 
           // 歌曲库
           GoRoute(
             path: AppRoutes.library,
-            pageBuilder:
-                (context, state) =>
-                    const NoTransitionPage(child: LibraryPage()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: LibraryPage()),
           ),
 
           // 歌单列表
           GoRoute(
             path: AppRoutes.playlists,
-            pageBuilder:
-                (context, state) =>
-                    const NoTransitionPage(child: PlaylistsPage()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: PlaylistsPage()),
           ),
 
           // 歌单详情
@@ -143,17 +138,15 @@ final routerProvider = Provider<GoRouter>((ref) {
           // 设置
           GoRoute(
             path: AppRoutes.settings,
-            pageBuilder:
-                (context, state) =>
-                    const NoTransitionPage(child: SettingsPage()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: SettingsPage()),
           ),
 
           // 服务器列表管理
           GoRoute(
             path: AppRoutes.servers,
-            pageBuilder:
-                (context, state) =>
-                    const NoTransitionPage(child: ServersPage()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: ServersPage()),
           ),
 
           // 菜单设置
@@ -188,35 +181,34 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
     ],
-    errorBuilder:
-        (context, state) => Scaffold(
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: Theme.of(context).colorScheme.error,
-                ),
-                const SizedBox(height: 16),
-                Text('页面未找到', style: Theme.of(context).textTheme.headlineSmall),
-                const SizedBox(height: 8),
-                Text(
-                  state.uri.path,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                FilledButton.icon(
-                  onPressed: () => context.go(AppRoutes.home),
-                  icon: const Icon(Icons.home),
-                  label: const Text('返回首页'),
-                ),
-              ],
+    errorBuilder: (context, state) => Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Theme.of(context).colorScheme.error,
             ),
-          ),
+            const SizedBox(height: 16),
+            Text('页面未找到', style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 8),
+            Text(
+              state.uri.path,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: () => context.go(AppRoutes.home),
+              icon: const Icon(Icons.home),
+              label: const Text('返回首页'),
+            ),
+          ],
         ),
+      ),
+    ),
   );
 });

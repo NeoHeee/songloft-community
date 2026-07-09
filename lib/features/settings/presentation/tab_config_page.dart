@@ -23,10 +23,9 @@ class TabConfigPage extends ConsumerWidget {
     final config = tabConfigAsync.value ?? TabConfig.defaultConfig();
     final plugins = pluginsAsync.value ?? [];
     final activePlugins = plugins
-        .where((p) =>
-            p.isActive &&
-            p.entryPath != null &&
-            p.entryPath!.isNotEmpty)
+        .where(
+          (p) => p.isActive && p.entryPath != null && p.entryPath!.isNotEmpty,
+        )
         .toList();
 
     final usedCount = _fixedTabs + config.optionalCount;
@@ -48,11 +47,11 @@ class TabConfigPage extends ConsumerWidget {
                 onChanged: atLimit && !config.showLibrary
                     ? null
                     : (value) => _updateConfig(
-                          context,
-                          ref,
-                          config.copyWith(showLibrary: value),
-                          atLimit && value,
-                        ),
+                        context,
+                        ref,
+                        config.copyWith(showLibrary: value),
+                        atLimit && value,
+                      ),
               ),
               const Divider(height: 1),
               SwitchListTile(
@@ -62,11 +61,11 @@ class TabConfigPage extends ConsumerWidget {
                 onChanged: atLimit && !config.showPlaylists
                     ? null
                     : (value) => _updateConfig(
-                          context,
-                          ref,
-                          config.copyWith(showPlaylists: value),
-                          atLimit && value,
-                        ),
+                        context,
+                        ref,
+                        config.copyWith(showPlaylists: value),
+                        atLimit && value,
+                      ),
               ),
             ],
           ),
@@ -82,7 +81,13 @@ class TabConfigPage extends ConsumerWidget {
                       subtitle: Text('请先在设置中安装并启用插件'),
                     ),
                   ]
-                : _buildPluginTiles(context, ref, config, activePlugins, atLimit),
+                : _buildPluginTiles(
+                    context,
+                    ref,
+                    config,
+                    activePlugins,
+                    atLimit,
+                  ),
           ),
           if (config.pluginTabs.length > 1) ...[
             const SizedBox(height: 16),
@@ -106,8 +111,8 @@ class TabConfigPage extends ConsumerWidget {
               '${usedCount > 5 ? '\n移动端超出 5 个时将折叠到「更多」菜单' : ''}',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
           const SizedBox(height: 32),
@@ -126,8 +131,9 @@ class TabConfigPage extends ConsumerWidget {
     final widgets = <Widget>[];
     for (var i = 0; i < activePlugins.length; i++) {
       final plugin = activePlugins[i];
-      final isEnabled = config.pluginTabs
-          .any((pt) => pt.entryPath == plugin.entryPath);
+      final isEnabled = config.pluginTabs.any(
+        (pt) => pt.entryPath == plugin.entryPath,
+      );
 
       if (i > 0) widgets.add(const Divider(height: 1));
       widgets.add(
@@ -143,16 +149,21 @@ class TabConfigPage extends ConsumerWidget {
           onChanged: atLimit && !isEnabled
               ? null
               : (value) {
-                  final newPluginTabs = List<PluginTabEntry>.from(config.pluginTabs);
+                  final newPluginTabs = List<PluginTabEntry>.from(
+                    config.pluginTabs,
+                  );
                   if (value) {
-                    newPluginTabs.add(PluginTabEntry(
-                      pluginId: plugin.id,
-                      entryPath: plugin.entryPath!,
-                      name: plugin.displayName,
-                    ));
+                    newPluginTabs.add(
+                      PluginTabEntry(
+                        pluginId: plugin.id,
+                        entryPath: plugin.entryPath!,
+                        name: plugin.displayName,
+                      ),
+                    );
                   } else {
                     newPluginTabs.removeWhere(
-                        (pt) => pt.entryPath == plugin.entryPath);
+                      (pt) => pt.entryPath == plugin.entryPath,
+                    );
                   }
                   _updateConfig(
                     context,
@@ -242,10 +253,7 @@ class _PluginTabReorderList extends StatelessWidget {
           title: Text(pt.name),
           trailing: ReorderableDragStartListener(
             index: index,
-            child: Icon(
-              Icons.drag_handle,
-              color: colorScheme.onSurfaceVariant,
-            ),
+            child: Icon(Icons.drag_handle, color: colorScheme.onSurfaceVariant),
           ),
         );
       },

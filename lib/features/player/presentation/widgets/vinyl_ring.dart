@@ -15,8 +15,9 @@ class VinylRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final grooveColor =
-        Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.06);
+    final grooveColor = Theme.of(
+      context,
+    ).colorScheme.onSurface.withValues(alpha: 0.06);
 
     return Stack(
       clipBehavior: Clip.none,

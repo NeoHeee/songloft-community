@@ -28,18 +28,16 @@ class TvHomePage extends ConsumerWidget {
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: playlistsAsync.when(
-          data:
-              (state) => _TvHomeContent(
-                playlists: state.items,
-                normalCount: normalPlaylistsAsync.value?.totalCount ?? 0,
-                radioCount: radioPlaylistsAsync.value?.totalCount ?? 0,
-              ),
+          data: (state) => _TvHomeContent(
+            playlists: state.items,
+            normalCount: normalPlaylistsAsync.value?.totalCount ?? 0,
+            radioCount: radioPlaylistsAsync.value?.totalCount ?? 0,
+          ),
           loading: () => const _TvLoadingContent(),
-          error:
-              (error, _) => _TvErrorContent(
-                error: error.toString(),
-                onRetry: () => ref.invalidate(playlistListProvider(null)),
-              ),
+          error: (error, _) => _TvErrorContent(
+            error: error.toString(),
+            onRetry: () => ref.invalidate(playlistListProvider(null)),
+          ),
         ),
       ),
     );
@@ -72,239 +70,234 @@ class _TvHomeContent extends ConsumerWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1920),
         child: Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: TvTheme.contentPadding,
-        vertical: TvTheme.spacingLarge,
-      ),
-      child: CustomScrollView(
-        slivers: [
-          // 顶部问候 + 时间
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: TvTheme.spacingLarge),
-              child: Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsets.symmetric(
+            horizontal: TvTheme.contentPadding,
+            vertical: TvTheme.spacingLarge,
+          ),
+          child: CustomScrollView(
+            slivers: [
+              // 顶部问候 + 时间
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: TvTheme.spacingLarge),
+                  child: Row(
                     children: [
-                      Text(
-                        'Songloft',
-                        style: textTheme.headlineLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onSurface,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Songloft',
+                            style: textTheme.headlineLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _getGreeting(),
+                            style: textTheme.titleMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _getGreeting(),
-                        style: textTheme.titleMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
+                      const Spacer(),
+                      // 统计信息
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: TvTheme.spacingLarge,
+                          vertical: TvTheme.spacingMedium,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerHigh,
+                          borderRadius: BorderRadius.circular(
+                            TvTheme.cardRadius,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.queue_music_rounded,
+                              color: colorScheme.primary,
+                              size: 28,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              '$normalCount 歌单',
+                              style: TvTheme.bodyStyle(context),
+                            ),
+                            const SizedBox(width: TvTheme.spacingLarge),
+                            Icon(
+                              Icons.radio_rounded,
+                              color: colorScheme.secondary,
+                              size: 28,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              '$radioCount 电台',
+                              style: TvTheme.bodyStyle(context),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                  const Spacer(),
-                  // 统计信息
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: TvTheme.spacingLarge,
-                      vertical: TvTheme.spacingMedium,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHigh,
-                      borderRadius: BorderRadius.circular(TvTheme.cardRadius),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                ),
+              ),
+
+              // 快捷导航
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: TvTheme.spacingLarge),
+                  child: SizedBox(
+                    height: 120,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
                       children: [
-                        Icon(
-                          Icons.queue_music_rounded,
-                          color: colorScheme.primary,
-                          size: 28,
+                        _TvQuickNavCard(
+                          title: '本地音乐',
+                          icon: Icons.library_music_rounded,
+                          autofocus: playlists.isEmpty,
+                          onSelect: () => context.go(AppRoutes.library),
                         ),
-                        const SizedBox(width: 12),
-                        Text(
-                          '$normalCount 歌单',
-                          style: TvTheme.bodyStyle(context),
+                        const SizedBox(width: TvTheme.spacingMedium),
+                        _TvQuickNavCard(
+                          title: '播放列表',
+                          icon: Icons.queue_music_rounded,
+                          onSelect: () => context.go(AppRoutes.playlists),
                         ),
-                        const SizedBox(width: TvTheme.spacingLarge),
-                        Icon(
-                          Icons.radio_rounded,
-                          color: colorScheme.secondary,
-                          size: 28,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          '$radioCount 电台',
-                          style: TvTheme.bodyStyle(context),
+                        const SizedBox(width: TvTheme.spacingMedium),
+                        _TvQuickNavCard(
+                          title: '设置',
+                          icon: Icons.settings_rounded,
+                          onSelect: () => context.go(AppRoutes.settings),
                         ),
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
+
+              // 我的歌单区域
+              if (normalPlaylists.isNotEmpty) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      bottom: TvTheme.spacingMedium,
+                    ),
+                    child: Text('我的歌单', style: TvTheme.titleStyle(context)),
+                  ),
+                ),
+                SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: TvTheme.gridColumns,
+                    mainAxisSpacing: TvTheme.gridSpacing,
+                    crossAxisSpacing: TvTheme.gridSpacing,
+                    childAspectRatio: 0.85,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final playlist = normalPlaylists[index];
+                      final isCurrent = playlist.id == currentPlaylistId;
+                      return _TvPlaylistCard(
+                        playlist: playlist,
+                        isCurrent: isCurrent,
+                        isPlaying: isPlaying && isCurrent,
+                        autofocus: playlists.isNotEmpty && index == 0,
+                        onSelect: () =>
+                            context.push('/playlists/${playlist.id}'),
+                      );
+                    },
+                    childCount: normalPlaylists.length > 8
+                        ? 8
+                        : normalPlaylists.length,
+                  ),
+                ),
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: TvTheme.spacingXLarge),
+                ),
+              ],
+
+              // 电台歌单区域
+              if (radioPlaylists.isNotEmpty) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      bottom: TvTheme.spacingMedium,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.radio_rounded,
+                          color: colorScheme.primary,
+                          size: 28,
+                        ),
+                        const SizedBox(width: 12),
+                        Text('我的电台', style: TvTheme.titleStyle(context)),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: TvTheme.gridColumns,
+                    mainAxisSpacing: TvTheme.gridSpacing,
+                    crossAxisSpacing: TvTheme.gridSpacing,
+                    childAspectRatio: 0.85,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final playlist = radioPlaylists[index];
+                      final isCurrent = playlist.id == currentPlaylistId;
+                      return _TvPlaylistCard(
+                        playlist: playlist,
+                        isCurrent: isCurrent,
+                        isPlaying: isPlaying && isCurrent,
+                        onSelect: () =>
+                            context.push('/playlists/${playlist.id}'),
+                      );
+                    },
+                    childCount: radioPlaylists.length > 8
+                        ? 8
+                        : radioPlaylists.length,
+                  ),
+                ),
+              ],
+
+              // 空状态
+              if (playlists.isEmpty)
+                SliverFillRemaining(
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.library_music_outlined,
+                          size: 80,
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: TvTheme.spacingLarge),
+                        Text('暂无歌单', style: TvTheme.titleStyle(context)),
+                        const SizedBox(height: TvTheme.spacingSmall),
+                        Text(
+                          '使用快捷导航浏览本地音乐',
+                          style: TvTheme.captionStyle(context),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+              // 底部间距
+              const SliverToBoxAdapter(
+                child: SizedBox(height: TvTheme.spacingXLarge),
+              ),
+            ],
           ),
-
-          // 快捷导航
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: TvTheme.spacingLarge),
-              child: SizedBox(
-                height: 120,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    _TvQuickNavCard(
-                      title: '本地音乐',
-                      icon: Icons.library_music_rounded,
-                      autofocus: playlists.isEmpty,
-                      onSelect: () => context.go(AppRoutes.library),
-                    ),
-                    const SizedBox(width: TvTheme.spacingMedium),
-                    _TvQuickNavCard(
-                      title: '播放列表',
-                      icon: Icons.queue_music_rounded,
-                      onSelect: () => context.go(AppRoutes.playlists),
-                    ),
-                    const SizedBox(width: TvTheme.spacingMedium),
-                    _TvQuickNavCard(
-                      title: '设置',
-                      icon: Icons.settings_rounded,
-                      onSelect: () => context.go(AppRoutes.settings),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // 我的歌单区域
-          if (normalPlaylists.isNotEmpty) ...[
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(
-                  bottom: TvTheme.spacingMedium,
-                ),
-                child: Text(
-                  '我的歌单',
-                  style: TvTheme.titleStyle(context),
-                ),
-              ),
-            ),
-            SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: TvTheme.gridColumns,
-                mainAxisSpacing: TvTheme.gridSpacing,
-                crossAxisSpacing: TvTheme.gridSpacing,
-                childAspectRatio: 0.85,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final playlist = normalPlaylists[index];
-                  final isCurrent = playlist.id == currentPlaylistId;
-                  return _TvPlaylistCard(
-                    playlist: playlist,
-                    isCurrent: isCurrent,
-                    isPlaying: isPlaying && isCurrent,
-                    autofocus: playlists.isNotEmpty && index == 0,
-                    onSelect: () => context.push('/playlists/${playlist.id}'),
-                  );
-                },
-                childCount: normalPlaylists.length > 8
-                    ? 8
-                    : normalPlaylists.length,
-              ),
-            ),
-            const SliverToBoxAdapter(
-              child: SizedBox(height: TvTheme.spacingXLarge),
-            ),
-          ],
-
-          // 电台歌单区域
-          if (radioPlaylists.isNotEmpty) ...[
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(
-                  bottom: TvTheme.spacingMedium,
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.radio_rounded,
-                      color: colorScheme.primary,
-                      size: 28,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      '我的电台',
-                      style: TvTheme.titleStyle(context),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: TvTheme.gridColumns,
-                mainAxisSpacing: TvTheme.gridSpacing,
-                crossAxisSpacing: TvTheme.gridSpacing,
-                childAspectRatio: 0.85,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final playlist = radioPlaylists[index];
-                  final isCurrent = playlist.id == currentPlaylistId;
-                  return _TvPlaylistCard(
-                    playlist: playlist,
-                    isCurrent: isCurrent,
-                    isPlaying: isPlaying && isCurrent,
-                    onSelect: () => context.push('/playlists/${playlist.id}'),
-                  );
-                },
-                childCount: radioPlaylists.length > 8
-                    ? 8
-                    : radioPlaylists.length,
-              ),
-            ),
-          ],
-
-          // 空状态
-          if (playlists.isEmpty)
-            SliverFillRemaining(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.library_music_outlined,
-                      size: 80,
-                      color: colorScheme.onSurfaceVariant.withValues(
-                        alpha: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: TvTheme.spacingLarge),
-                    Text(
-                      '暂无歌单',
-                      style: TvTheme.titleStyle(context),
-                    ),
-                    const SizedBox(height: TvTheme.spacingSmall),
-                    Text(
-                      '使用快捷导航浏览本地音乐',
-                      style: TvTheme.captionStyle(context),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-          // 底部间距
-          const SliverToBoxAdapter(
-            child: SizedBox(height: TvTheme.spacingXLarge),
-          ),
-        ],
-      ),
-    ),
+        ),
       ),
     );
   }
@@ -361,9 +354,9 @@ class _TvQuickNavCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               title,
-              style: TvTheme.bodyStyle(context).copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
+              style: TvTheme.bodyStyle(
+                context,
+              ).copyWith(color: colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -401,10 +394,9 @@ class _TvPlaylistCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(TvTheme.cardRadius),
-          border:
-              isCurrent
-                  ? Border.all(color: colorScheme.primary, width: 3)
-                  : null,
+          border: isCurrent
+              ? Border.all(color: colorScheme.primary, width: 3)
+              : null,
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -440,10 +432,9 @@ class _TvPlaylistCard extends StatelessWidget {
                     playlist.name,
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color:
-                          isCurrent
-                              ? colorScheme.primary
-                              : colorScheme.onSurface,
+                      color: isCurrent
+                          ? colorScheme.primary
+                          : colorScheme.onSurface,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -497,9 +488,7 @@ class _TvLoadingContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: CircularProgressIndicator(),
-    );
+    return const Center(child: CircularProgressIndicator());
   }
 }
 
@@ -518,16 +507,9 @@ class _TvErrorContent extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 80,
-            color: colorScheme.error,
-          ),
+          Icon(Icons.error_outline, size: 80, color: colorScheme.error),
           const SizedBox(height: TvTheme.spacingLarge),
-          Text(
-            '加载失败',
-            style: TvTheme.titleStyle(context),
-          ),
+          Text('加载失败', style: TvTheme.titleStyle(context)),
           const SizedBox(height: TvTheme.spacingSmall),
           Text(
             error,

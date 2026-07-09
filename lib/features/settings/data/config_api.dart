@@ -10,12 +10,7 @@ class Config {
   final String value; // JSON 字符串
   final DateTime? updatedAt;
 
-  Config({
-    this.id,
-    required this.key,
-    required this.value,
-    this.updatedAt,
-  });
+  Config({this.id, required this.key, required this.value, this.updatedAt});
 
   factory Config.fromJson(Map<String, dynamic> json) {
     return Config(
@@ -70,10 +65,7 @@ class ConfigApi {
     try {
       final response = await dio.post(
         '${AppConfig.apiPrefix}/configs',
-        data: {
-          'key': key,
-          'value': value,
-        },
+        data: {'key': key, 'value': value},
       );
       return Config.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {

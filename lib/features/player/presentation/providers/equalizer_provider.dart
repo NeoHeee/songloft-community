@@ -17,10 +17,9 @@ final equalizerServiceProvider = Provider<EqualizerService>((ref) {
   );
 });
 
-final equalizerProvider =
-    NotifierProvider<EqualizerNotifier, EqualizerSetting>(
-      EqualizerNotifier.new,
-    );
+final equalizerProvider = NotifierProvider<EqualizerNotifier, EqualizerSetting>(
+  EqualizerNotifier.new,
+);
 
 class EqualizerNotifier extends Notifier<EqualizerSetting> {
   Timer? _pushTimer;
@@ -56,10 +55,7 @@ class EqualizerNotifier extends Notifier<EqualizerSetting> {
   void setPreset(String preset) {
     final bands = EqualizerSetting.presets[preset];
     if (bands != null) {
-      state = state.copyWith(
-        preset: preset,
-        bands: List<double>.from(bands),
-      );
+      state = state.copyWith(preset: preset, bands: List<double>.from(bands));
       _applyAndPush();
     }
   }

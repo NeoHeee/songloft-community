@@ -69,7 +69,10 @@ class SongFilterBar extends StatelessWidget {
             if (songCount > 0)
               Container(
                 margin: const EdgeInsets.only(left: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 11,
+                  vertical: 7,
+                ),
                 decoration: BoxDecoration(
                   color: colorScheme.secondaryContainer.withValues(alpha: 0.52),
                   borderRadius: BorderRadius.circular(13),
@@ -109,9 +112,7 @@ class _FilterChip extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(right: 5),
       child: Material(
-        color: isSelected
-            ? colorScheme.primaryContainer
-            : Colors.transparent,
+        color: isSelected ? colorScheme.primaryContainer : Colors.transparent,
         borderRadius: BorderRadius.circular(13),
         child: InkWell(
           onTap: onTap,
@@ -136,8 +137,7 @@ class _FilterChip extends StatelessWidget {
                     color: isSelected
                         ? colorScheme.onPrimaryContainer
                         : colorScheme.onSurfaceVariant,
-                    fontWeight:
-                        isSelected ? FontWeight.w700 : FontWeight.w600,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                   ),
                 ),
               ],

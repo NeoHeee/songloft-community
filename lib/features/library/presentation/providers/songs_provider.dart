@@ -94,10 +94,9 @@ class SongsListState {
       isSelectingAll: isSelectingAll ?? this.isSelectingAll,
       sort: sort ?? this.sort,
       order: order ?? this.order,
-      excludePlaylistLabels:
-          clearExcludePlaylistLabels
-              ? null
-              : (excludePlaylistLabels ?? this.excludePlaylistLabels),
+      excludePlaylistLabels: clearExcludePlaylistLabels
+          ? null
+          : (excludePlaylistLabels ?? this.excludePlaylistLabels),
     );
   }
 }
@@ -300,7 +299,10 @@ class SongsListNotifier extends Notifier<SongsListState> {
     final selectedIds = state.selectedSongIds.toList();
 
     try {
-      final deleted = await _repository.batchDeleteSongs(selectedIds, deleteFiles: deleteFiles);
+      final deleted = await _repository.batchDeleteSongs(
+        selectedIds,
+        deleteFiles: deleteFiles,
+      );
 
       // 如果服务端返回的数量与选中数量不一致，状态可能已脏，直接全量刷新列表
       if (deleted != selectedIds.length) {
@@ -311,10 +313,9 @@ class SongsListNotifier extends Notifier<SongsListState> {
 
       // 正常路径：全部删除成功，按选中集合更新本地状态
       state = state.copyWith(
-        songs:
-            state.songs
-                .where((s) => !state.selectedSongIds.contains(s.id))
-                .toList(),
+        songs: state.songs
+            .where((s) => !state.selectedSongIds.contains(s.id))
+            .toList(),
         total: state.total - deleted,
         isSelectionMode: false,
         selectedSongIds: {},

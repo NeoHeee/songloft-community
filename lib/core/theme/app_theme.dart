@@ -77,7 +77,10 @@ class AppTheme {
         fillColor: colorScheme.surfaceContainerHighest.withValues(
           alpha: isDark ? 0.38 : 0.72,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -128,7 +131,9 @@ class AppTheme {
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
           minimumSize: const Size(42, 42),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
@@ -136,9 +141,11 @@ class AppTheme {
           minimumSize: isTv
               ? const Size(120, 56)
               : isDesktopOrTv
-                  ? const Size(92, 44)
-                  : const Size(88, 48),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              ? const Size(92, 44)
+              : const Size(88, 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
           textStyle: TextStyle(
             fontSize: isTv ? 18 : 15,
             fontWeight: FontWeight.w700,
@@ -150,9 +157,11 @@ class AppTheme {
           minimumSize: isTv
               ? const Size(120, 56)
               : isDesktopOrTv
-                  ? const Size(92, 44)
-                  : const Size(88, 48),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              ? const Size(92, 44)
+              : const Size(88, 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
           side: BorderSide(color: colorScheme.outlineVariant),
         ),
       ),
@@ -161,9 +170,11 @@ class AppTheme {
           minimumSize: isTv
               ? const Size(120, 56)
               : isDesktopOrTv
-                  ? const Size(88, 44)
-                  : const Size(80, 44),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ? const Size(88, 44)
+              : const Size(80, 44),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
       ),
       bottomSheetTheme: BottomSheetThemeData(
@@ -193,8 +204,8 @@ class AppTheme {
         ),
         insetPadding: isDesktopOrTv
             ? (isTv
-                ? const EdgeInsets.symmetric(horizontal: 48, vertical: 24)
-                : const EdgeInsets.symmetric(horizontal: 24, vertical: 12))
+                  ? const EdgeInsets.symmetric(horizontal: 48, vertical: 24)
+                  : const EdgeInsets.symmetric(horizontal: 24, vertical: 12))
             : null,
         width: isDesktopOrTv ? (isTv ? 600 : 480) : null,
       ),

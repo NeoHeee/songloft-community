@@ -40,7 +40,8 @@ class _ExcludeDirManagerState extends ConsumerState<ExcludeDirManager> {
 
   // 输入控制器
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _autoCreateExcludeController = TextEditingController();
+  final TextEditingController _autoCreateExcludeController =
+      TextEditingController();
 
   @override
   void initState() {
@@ -66,7 +67,9 @@ class _ExcludeDirManagerState extends ConsumerState<ExcludeDirManager> {
         _musicPath = setting.path;
         _excludeDirs = List<String>.from(setting.excludeDirs);
         _excludePaths = List<String>.from(setting.excludePaths);
-        _autoCreateExcludeDirs = List<String>.from(setting.autoCreateExcludeDirs);
+        _autoCreateExcludeDirs = List<String>.from(
+          setting.autoCreateExcludeDirs,
+        );
         _isLoading = false;
       });
 
@@ -287,10 +290,13 @@ class _ExcludeDirManagerState extends ConsumerState<ExcludeDirManager> {
             if (textEditingValue.text.isEmpty) {
               return const Iterable<String>.empty();
             }
-            return _allDirNames.where((name) =>
-                name.toLowerCase().contains(
-                    textEditingValue.text.toLowerCase()) &&
-                !_excludeDirs.contains(name));
+            return _allDirNames.where(
+              (name) =>
+                  name.toLowerCase().contains(
+                    textEditingValue.text.toLowerCase(),
+                  ) &&
+                  !_excludeDirs.contains(name),
+            );
           },
           onSelected: _addExcludeDir,
           fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
@@ -591,17 +597,22 @@ class _DirectoryTreeState extends ConsumerState<_DirectoryTree> {
     if (_error != null) {
       return Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
-        child: Text('加载目录失败: $_error',
-            style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        child: Text(
+          '加载目录失败: $_error',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
       );
     }
 
     if (_rootDirs == null || _rootDirs!.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
-        child: Text('目录为空',
-            style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        child: Text(
+          '目录为空',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
       );
     }
 
@@ -633,8 +644,7 @@ class _DirectoryTreeNode extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<_DirectoryTreeNode> createState() =>
-      _DirectoryTreeNodeState();
+  ConsumerState<_DirectoryTreeNode> createState() => _DirectoryTreeNodeState();
 }
 
 class _DirectoryTreeNodeState extends ConsumerState<_DirectoryTreeNode> {
@@ -649,8 +659,7 @@ class _DirectoryTreeNodeState extends ConsumerState<_DirectoryTreeNode> {
     setState(() => _isLoadingChildren = true);
     try {
       final directoryApi = ref.read(directoryApiProvider);
-      final result =
-          await directoryApi.getDirectories(path: widget.entry.path);
+      final result = await directoryApi.getDirectories(path: widget.entry.path);
       setState(() {
         _children = result.directories;
         _isLoadingChildren = false;
@@ -697,8 +706,7 @@ class _DirectoryTreeNodeState extends ConsumerState<_DirectoryTreeNode> {
                   child: Checkbox(
                     value: _isExcluded,
                     onChanged: (value) {
-                      widget.onTogglePath(
-                          widget.entry.path, value ?? false);
+                      widget.onTogglePath(widget.entry.path, value ?? false);
                     },
                   ),
                 ),
@@ -708,8 +716,8 @@ class _DirectoryTreeNodeState extends ConsumerState<_DirectoryTreeNode> {
                   _isExcluded
                       ? Icons.folder_off_outlined
                       : (_isExpanded
-                          ? Icons.folder_open
-                          : Icons.folder_outlined),
+                            ? Icons.folder_open
+                            : Icons.folder_outlined),
                   size: 20,
                   color: _isExcluded
                       ? colorScheme.onSurfaceVariant
@@ -724,17 +732,16 @@ class _DirectoryTreeNodeState extends ConsumerState<_DirectoryTreeNode> {
                       color: _isExcluded
                           ? colorScheme.onSurfaceVariant
                           : colorScheme.onSurface,
-                      decoration:
-                          _isExcluded ? TextDecoration.lineThrough : null,
+                      decoration: _isExcluded
+                          ? TextDecoration.lineThrough
+                          : null,
                     ),
                   ),
                 ),
                 // 展开/折叠箭头
                 if (widget.entry.hasChildren)
                   Icon(
-                    _isExpanded
-                        ? Icons.expand_less
-                        : Icons.expand_more,
+                    _isExpanded ? Icons.expand_less : Icons.expand_more,
                     size: 20,
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -743,8 +750,7 @@ class _DirectoryTreeNodeState extends ConsumerState<_DirectoryTreeNode> {
                   const SizedBox(
                     width: 16,
                     height: 16,
-                    child:
-                        CircularProgressIndicator(strokeWidth: 2),
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   ),
               ],
             ),

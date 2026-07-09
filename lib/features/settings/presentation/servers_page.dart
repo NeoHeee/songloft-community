@@ -43,9 +43,7 @@ class ServersPage extends ConsumerWidget {
         error: (e, _) => Center(child: Text('加载失败: $e')),
         data: (servers) {
           const showLocalMode = !kIsWeb && AppConfig.hasEmbeddedBackend;
-          const localModeCard = showLocalMode
-              ? _LocalModeCard()
-              : null;
+          const localModeCard = showLocalMode ? _LocalModeCard() : null;
 
           if (servers.isEmpty) {
             return ListView(
@@ -98,7 +96,9 @@ class ServersPage extends ConsumerWidget {
                   padding: const EdgeInsets.only(bottom: 96),
                   itemCount: servers.length,
                   onReorder: (oldIndex, newIndex) {
-                    ref.read(serversProvider.notifier).reorder(oldIndex, newIndex);
+                    ref
+                        .read(serversProvider.notifier)
+                        .reorder(oldIndex, newIndex);
                   },
                   itemBuilder: (context, index) {
                     final entry = servers[index];
@@ -111,9 +111,11 @@ class ServersPage extends ConsumerWidget {
                       isCurrent: isCurrent,
                       status: status,
                       onEdit: () => _showEditDialog(context, ref, entry),
-                      onDelete: () => _confirmDelete(context, ref, entry, isCurrent),
+                      onDelete: () =>
+                          _confirmDelete(context, ref, entry, isCurrent),
                       onTest: () => _probeOne(context, ref, entry),
-                      onSwitchTo: () => _switchTo(context, ref, entry, isCurrent),
+                      onSwitchTo: () =>
+                          _switchTo(context, ref, entry, isCurrent),
                     );
                   },
                 ),
@@ -122,11 +124,13 @@ class ServersPage extends ConsumerWidget {
           );
         },
       ),
-      floatingActionButton: isLocal ? null : FloatingActionButton(
-        onPressed: () => _showEditDialog(context, ref, null),
-        tooltip: '添加服务器',
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: isLocal
+          ? null
+          : FloatingActionButton(
+              onPressed: () => _showEditDialog(context, ref, null),
+              tooltip: '添加服务器',
+              child: const Icon(Icons.add),
+            ),
     );
   }
 
@@ -235,9 +239,11 @@ class ServersPage extends ConsumerWidget {
       final url = ServerEntry.normalizeUrl(urlController.text);
       final name = nameController.text.trim();
       final username = usernameController.text.trim().isEmpty
-          ? null : usernameController.text.trim();
+          ? null
+          : usernameController.text.trim();
       final password = passwordController.text.isEmpty
-          ? null : passwordController.text;
+          ? null
+          : passwordController.text;
       final notifier = ref.read(serversProvider.notifier);
       if (existing == null) {
         await notifier.add(
@@ -250,12 +256,14 @@ class ServersPage extends ConsumerWidget {
           ),
         );
       } else {
-        await notifier.editEntry(existing.copyWith(
-          name: name,
-          url: url,
-          usernameOverride: () => username,
-          passwordOverride: () => password,
-        ));
+        await notifier.editEntry(
+          existing.copyWith(
+            name: name,
+            url: url,
+            usernameOverride: () => username,
+            passwordOverride: () => password,
+          ),
+        );
       }
     } catch (e) {
       if (context.mounted) {
@@ -428,10 +436,7 @@ class _ServerTile extends StatelessWidget {
               const PopupMenuItem(value: 'switch', child: Text('切换到此项')),
               const PopupMenuItem(value: 'test', child: Text('测试连接')),
               const PopupMenuItem(value: 'edit', child: Text('编辑')),
-              const PopupMenuItem(
-                value: 'delete',
-                child: Text('删除'),
-              ),
+              const PopupMenuItem(value: 'delete', child: Text('删除')),
             ],
           ),
           ReorderableDragStartListener(
@@ -522,8 +527,8 @@ class _LocalModeCardState extends ConsumerState<_LocalModeCard> {
             Text(
               '开启后在设备上运行后端，无需网络即可播放本地音乐。',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
             if (_isSwitching) ...[
               const SizedBox(height: 8),
@@ -546,7 +551,8 @@ class _LocalModeCardState extends ConsumerState<_LocalModeCard> {
                         const SizedBox(height: 4),
                         Text(
                           musicDir ?? '未选择',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
                                 color: musicDir != null
                                     ? colorScheme.onSurface
                                     : colorScheme.error,
@@ -630,14 +636,15 @@ class _LocalModeCardState extends ConsumerState<_LocalModeCard> {
     dio.close();
 
     // 尝试恢复本地 session
-    final restored = await storage.restoreWallet(SecureStorageService.localWalletKey);
+    final restored = await storage.restoreWallet(
+      SecureStorageService.localWalletKey,
+    );
     if (restored && !await storage.isAccessTokenExpired()) {
       ref.read(authStateProvider.notifier).setAuthenticated();
     } else {
-      await ref.read(authStateProvider.notifier).login(
-        username: 'admin',
-        password: 'admin',
-      );
+      await ref
+          .read(authStateProvider.notifier)
+          .login(username: 'admin', password: 'admin');
     }
 
     if (mounted) {
@@ -658,7 +665,9 @@ class _LocalModeCardState extends ConsumerState<_LocalModeCard> {
     if (servers.isNotEmpty) {
       final target = servers.first;
       ref.read(baseUrlProvider.notifier).set(target.url);
-      final restored = await storage.restoreWallet(SecureStorageService.walletKey(target.url));
+      final restored = await storage.restoreWallet(
+        SecureStorageService.walletKey(target.url),
+      );
       if (restored && !await storage.isAccessTokenExpired()) {
         ref.read(authStateProvider.notifier).setAuthenticated();
         return;

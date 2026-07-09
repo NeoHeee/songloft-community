@@ -25,8 +25,7 @@ class FileLogger {
       _currentDir = logsDir.path;
 
       final now = DateTime.now();
-      final dateStr =
-          '${now.year}-${_pad(now.month)}-${_pad(now.day)}';
+      final dateStr = '${now.year}-${_pad(now.month)}-${_pad(now.day)}';
       final logFile = File(
         '${logsDir.path}${Platform.pathSeparator}songloft_$dateStr.log',
       );

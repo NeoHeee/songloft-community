@@ -144,9 +144,7 @@ class _BandSlider extends StatelessWidget {
             child: SliderTheme(
               data: SliderTheme.of(context).copyWith(
                 trackHeight: 3,
-                thumbShape: const RoundSliderThumbShape(
-                  enabledThumbRadius: 6,
-                ),
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
               ),
               child: Slider(
                 value: gain,

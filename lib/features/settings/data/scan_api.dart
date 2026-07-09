@@ -135,9 +135,7 @@ class ScanApi {
       final response = await dio.get(
         '${AppConfig.apiPrefix}/scan/fingerprints/status',
       );
-      return FingerprintStatus.fromJson(
-        response.data as Map<String, dynamic>,
-      );
+      return FingerprintStatus.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
@@ -172,12 +170,8 @@ class ScanApi {
   /// 获取重复歌曲组
   Future<DuplicatesResult> getDuplicates() async {
     try {
-      final response = await dio.get(
-        '${AppConfig.apiPrefix}/songs/duplicates',
-      );
-      return DuplicatesResult.fromJson(
-        response.data as Map<String, dynamic>,
-      );
+      final response = await dio.get('${AppConfig.apiPrefix}/songs/duplicates');
+      return DuplicatesResult.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
@@ -283,7 +277,8 @@ class DuplicateSong {
 
   String get fileSizeDisplay {
     if (fileSize < 1024) return '$fileSize B';
-    if (fileSize < 1024 * 1024) return '${(fileSize / 1024).toStringAsFixed(1)} KB';
+    if (fileSize < 1024 * 1024)
+      return '${(fileSize / 1024).toStringAsFixed(1)} KB';
     return '${(fileSize / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
 }
@@ -298,7 +293,8 @@ class DuplicateGroup {
   factory DuplicateGroup.fromJson(Map<String, dynamic> json) {
     return DuplicateGroup(
       fingerprint: json['fingerprint'] as String? ?? '',
-      songs: (json['songs'] as List<dynamic>?)
+      songs:
+          (json['songs'] as List<dynamic>?)
               ?.map((e) => DuplicateSong.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -320,7 +316,8 @@ class DuplicatesResult {
 
   factory DuplicatesResult.fromJson(Map<String, dynamic> json) {
     return DuplicatesResult(
-      groups: (json['groups'] as List<dynamic>?)
+      groups:
+          (json['groups'] as List<dynamic>?)
               ?.map((e) => DuplicateGroup.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],

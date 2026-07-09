@@ -144,10 +144,7 @@ class _DashboardHeader extends StatelessWidget {
   final int normalCount;
   final int radioCount;
 
-  const _DashboardHeader({
-    required this.normalCount,
-    required this.radioCount,
-  });
+  const _DashboardHeader({required this.normalCount, required this.radioCount});
 
   @override
   Widget build(BuildContext context) {
@@ -311,11 +308,7 @@ class _Metric extends StatelessWidget {
   final String value;
   final String label;
 
-  const _Metric({
-    required this.icon,
-    required this.value,
-    required this.label,
-  });
+  const _Metric({required this.icon, required this.value, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -624,12 +617,10 @@ class _PlaylistCard extends StatelessWidget {
                               playlist.coverImageUrl!,
                             ),
                             fit: BoxFit.cover,
-                            placeholder: (_, _) => _CoverPlaceholder(
-                              colorScheme: colorScheme,
-                            ),
-                            errorWidget: (_, _, _) => _CoverPlaceholder(
-                              colorScheme: colorScheme,
-                            ),
+                            placeholder: (_, _) =>
+                                _CoverPlaceholder(colorScheme: colorScheme),
+                            errorWidget: (_, _, _) =>
+                                _CoverPlaceholder(colorScheme: colorScheme),
                           )
                         else
                           _CoverPlaceholder(colorScheme: colorScheme),
@@ -702,10 +693,7 @@ class _CoverPlaceholder extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            colorScheme.primaryContainer,
-            colorScheme.tertiaryContainer,
-          ],
+          colors: [colorScheme.primaryContainer, colorScheme.tertiaryContainer],
         ),
       ),
       child: Center(
@@ -731,11 +719,7 @@ class _LoadingContent extends StatelessWidget {
         children: [
           SkeletonLoader(height: 86, borderRadius: BorderRadius.circular(22)),
           const SizedBox(height: 28),
-          SkeletonLoader(
-            height: 22,
-            width: 160,
-            borderRadius: AppRadius.smAll,
-          ),
+          SkeletonLoader(height: 22, width: 160, borderRadius: AppRadius.smAll),
           const SizedBox(height: 16),
           SizedBox(
             height: 210,

@@ -203,8 +203,9 @@ class _JSPluginCard extends StatelessWidget {
 
     final url =
         '${AppConfig.baseUrl}${AppConfig.basePath}/api/v1/jsplugin/${plugin.entryPath}';
-    final theme =
-        Theme.of(context).brightness == Brightness.dark ? 'dark' : 'light';
+    final theme = Theme.of(context).brightness == Brightness.dark
+        ? 'dark'
+        : 'light';
 
     if (kIsWeb) {
       final token = SecureStorageService.cachedAccessToken ?? '';

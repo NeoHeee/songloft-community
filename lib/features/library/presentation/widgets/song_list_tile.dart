@@ -204,8 +204,9 @@ class SongListTile extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                     style: textTheme.bodyMedium?.copyWith(
                       color: isCurrentSong ? colorScheme.primary : null,
-                      fontWeight:
-                          isCurrentSong ? FontWeight.w700 : FontWeight.w600,
+                      fontWeight: isCurrentSong
+                          ? FontWeight.w700
+                          : FontWeight.w600,
                     ),
                   ),
                 ),

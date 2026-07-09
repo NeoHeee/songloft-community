@@ -116,9 +116,7 @@ class _DirectoryPickerSheetState extends ConsumerState<DirectoryPickerSheet> {
             ),
           ),
           const Divider(height: 1),
-          Expanded(
-            child: _buildBody(theme),
-          ),
+          Expanded(child: _buildBody(theme)),
         ],
       ),
     );
@@ -193,7 +191,9 @@ class _AllRow extends StatelessWidget {
               Icon(
                 Icons.all_inbox,
                 size: 20,
-                color: selected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                color: selected
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -315,8 +315,9 @@ class _DirectoryNodeState extends ConsumerState<_DirectoryNode> {
                   child: Text(
                     widget.entry.name,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight:
-                          _isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: _isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                       color: _isSelected ? colorScheme.primary : null,
                     ),
                     maxLines: 1,

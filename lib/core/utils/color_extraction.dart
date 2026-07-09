@@ -99,8 +99,9 @@ final coverColorsProvider = FutureProvider.family<CoverPalette?, String?>((
     // 基于 darkMutedColor（遮罩色）的亮度决定前景色
     // 与歌单详情页 _buildHeaderBackground 中的 overlayColor 逻辑保持一致
     final overlayColor = paletteGenerator.darkMutedColor?.color ?? Colors.black;
-    final onImageColor =
-        overlayColor.computeLuminance() > 0.5 ? Colors.black : Colors.white;
+    final onImageColor = overlayColor.computeLuminance() > 0.5
+        ? Colors.black
+        : Colors.white;
 
     final palette = CoverPalette(
       dominantColor: paletteGenerator.dominantColor?.color ?? Colors.grey,
@@ -161,14 +162,15 @@ CoverPalette generatePaletteFromMetadata({
 /// Returns cover-extracted palette when available, otherwise metadata-derived.
 final playerBackgroundPaletteProvider =
     FutureProvider.family<CoverPalette, Song>((ref, song) async {
-  if (song.coverUrl != null && song.coverUrl!.isNotEmpty) {
-    final coverPalette =
-        await ref.watch(coverColorsProvider(song.coverUrl).future);
-    if (coverPalette != null) return coverPalette;
-  }
-  return generatePaletteFromMetadata(
-    songId: song.id,
-    title: song.title,
-    artist: song.artist,
-  );
-});
+      if (song.coverUrl != null && song.coverUrl!.isNotEmpty) {
+        final coverPalette = await ref.watch(
+          coverColorsProvider(song.coverUrl).future,
+        );
+        if (coverPalette != null) return coverPalette;
+      }
+      return generatePaletteFromMetadata(
+        songId: song.id,
+        title: song.title,
+        artist: song.artist,
+      );
+    });

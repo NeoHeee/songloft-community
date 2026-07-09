@@ -120,8 +120,7 @@ class _CacheManagerState extends ConsumerState<CacheManager> {
     // cached_network_image 图片缓存大小
     try {
       final tempDir = await getTemporaryDirectory();
-      final imageCacheDir =
-          Directory('${tempDir.path}/libCachedImageData');
+      final imageCacheDir = Directory('${tempDir.path}/libCachedImageData');
       if (await imageCacheDir.exists()) {
         await for (final entity in imageCacheDir.list(recursive: true)) {
           if (entity is File) {
@@ -194,8 +193,7 @@ class _CacheManagerState extends ConsumerState<CacheManager> {
       // 清理 cached_network_image 图片缓存
       try {
         final tempDir = await getTemporaryDirectory();
-        final imageCacheDir =
-            Directory('${tempDir.path}/libCachedImageData');
+        final imageCacheDir = Directory('${tempDir.path}/libCachedImageData');
         if (await imageCacheDir.exists()) {
           await imageCacheDir.delete(recursive: true);
         }
@@ -243,10 +241,9 @@ class _CacheManagerState extends ConsumerState<CacheManager> {
     try {
       final cacheApi = ref.read(cacheApiProvider);
       final current = ref.read(serverCacheConfigProvider).value;
-      await cacheApi.updateCacheConfig(CacheConfig(
-        maxSize: maxSize,
-        cacheDir: current?.cacheDir ?? '',
-      ));
+      await cacheApi.updateCacheConfig(
+        CacheConfig(maxSize: maxSize, cacheDir: current?.cacheDir ?? ''),
+      );
       ref.invalidate(serverCacheConfigProvider);
       ref.invalidate(serverCacheStatsProvider);
     } catch (e) {
@@ -270,10 +267,9 @@ class _CacheManagerState extends ConsumerState<CacheManager> {
     if (result == null || result == config.cacheDir) return;
     try {
       final api = ref.read(cacheApiProvider);
-      await api.updateCacheConfig(CacheConfig(
-        maxSize: config.maxSize,
-        cacheDir: result,
-      ));
+      await api.updateCacheConfig(
+        CacheConfig(maxSize: config.maxSize, cacheDir: result),
+      );
       ref.invalidate(serverCacheConfigProvider);
       ref.invalidate(serverCacheStatsProvider);
       if (mounted) {
@@ -386,9 +382,7 @@ class _CacheManagerState extends ConsumerState<CacheManager> {
                 size: 18,
               ),
               label: Text(_serverExpanded ? '收起' : '管理'),
-              style: TextButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-              ),
+              style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
             ),
           ],
         ),
@@ -398,8 +392,9 @@ class _CacheManagerState extends ConsumerState<CacheManager> {
         statsAsync.when(
           data: (stats) {
             final maxSize = stats.maxSize;
-            final progress =
-                maxSize > 0 ? (stats.totalSize / maxSize).clamp(0.0, 1.0) : 0.0;
+            final progress = maxSize > 0
+                ? (stats.totalSize / maxSize).clamp(0.0, 1.0)
+                : 0.0;
             final sizeText = maxSize > 0
                 ? '${_formatSize(stats.totalSize)} / ${_formatSize(maxSize)}'
                 : '${_formatSize(stats.totalSize)} (无上限)';
@@ -426,8 +421,7 @@ class _CacheManagerState extends ConsumerState<CacheManager> {
                     child: LinearProgressIndicator(
                       value: progress,
                       minHeight: 6,
-                      backgroundColor:
-                          colorScheme.surfaceContainerHighest,
+                      backgroundColor: colorScheme.surfaceContainerHighest,
                       valueColor: AlwaysStoppedAnimation<Color>(
                         progress > 0.9
                             ? colorScheme.error
@@ -442,10 +436,8 @@ class _CacheManagerState extends ConsumerState<CacheManager> {
             padding: EdgeInsets.symmetric(vertical: 8),
             child: LinearProgressIndicator(),
           ),
-          error: (e, _) => Text(
-            '获取缓存信息失败',
-            style: TextStyle(color: colorScheme.error),
-          ),
+          error: (e, _) =>
+              Text('获取缓存信息失败', style: TextStyle(color: colorScheme.error)),
         ),
 
         // 折叠区域：Slider + 清理按钮
@@ -535,8 +527,7 @@ class _CacheManagerState extends ConsumerState<CacheManager> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.delete_outline),
-                  label:
-                      Text(_isCleaningServer ? '清理中...' : '清理服务端缓存'),
+                  label: Text(_isCleaningServer ? '清理中...' : '清理服务端缓存'),
                 ),
               ),
             ],
@@ -572,16 +563,13 @@ class _CacheManagerState extends ConsumerState<CacheManager> {
               ),
             ),
             TextButton.icon(
-              onPressed: () =>
-                  setState(() => _localExpanded = !_localExpanded),
+              onPressed: () => setState(() => _localExpanded = !_localExpanded),
               icon: Icon(
                 _localExpanded ? Icons.expand_less : Icons.tune,
                 size: 18,
               ),
               label: Text(_localExpanded ? '收起' : '管理'),
-              style: TextButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-              ),
+              style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
             ),
           ],
         ),
@@ -591,14 +579,9 @@ class _CacheManagerState extends ConsumerState<CacheManager> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            Text('缓存大小', style: theme.textTheme.bodyMedium),
             Text(
-              '缓存大小',
-              style: theme.textTheme.bodyMedium,
-            ),
-            Text(
-              _localCacheSizeLoaded
-                  ? _formatSize(_localCacheSize)
-                  : '计算中...',
+              _localCacheSizeLoaded ? _formatSize(_localCacheSize) : '计算中...',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -764,13 +747,15 @@ class _CacheDirDialogState extends State<_CacheDirDialog> {
       if (mounted) setState(() => _validateResult = result);
     } catch (e) {
       if (mounted) {
-        setState(() => _validateResult = DirValidateResult(
-          valid: false,
-          created: false,
-          totalSize: 0,
-          freeSize: 0,
-          error: e.toString(),
-        ));
+        setState(
+          () => _validateResult = DirValidateResult(
+            valid: false,
+            created: false,
+            totalSize: 0,
+            freeSize: 0,
+            error: e.toString(),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _validating = false);
@@ -894,7 +879,11 @@ class _CacheDirDialogState extends State<_CacheDirDialog> {
       ),
       child: Row(
         children: [
-          Icon(Icons.check_circle_outline, color: colorScheme.primary, size: 20),
+          Icon(
+            Icons.check_circle_outline,
+            color: colorScheme.primary,
+            size: 20,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(

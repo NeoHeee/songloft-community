@@ -133,9 +133,9 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
           onPressed: state.selectedSongIds.isEmpty
               ? null
               : () => _showAddToPlaylistDialog(
-                    context,
-                    state.selectedSongIds.toList(),
-                  ),
+                  context,
+                  state.selectedSongIds.toList(),
+                ),
         ),
         IconButton(
           icon: Icon(Icons.delete_outline_rounded, color: colorScheme.error),
@@ -157,8 +157,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : Text(
-                  state.total > 0 &&
-                          state.selectedSongIds.length >= state.total
+                  state.total > 0 && state.selectedSongIds.length >= state.total
                       ? '取消全选'
                       : '全选',
                 ),
@@ -305,7 +304,10 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
             color: colorScheme.outlineVariant.withValues(alpha: 0.18),
           ),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 15,
+          vertical: 14,
+        ),
       ),
       onChanged: _onSearchChanged,
     );
@@ -410,9 +412,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                       ? Icons.visibility_off_rounded
                       : Icons.visibility_rounded,
                 ),
-                title: Text(
-                  state.showHidden ? '隐藏已隐藏歌曲' : '显示隐藏歌曲',
-                ),
+                title: Text(state.showHidden ? '隐藏已隐藏歌曲' : '显示隐藏歌曲'),
                 contentPadding: EdgeInsets.zero,
               ),
             ),
@@ -741,7 +741,9 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                 borderRadius: BorderRadius.circular(28),
               ),
               child: Icon(
-                isSearch ? Icons.search_off_rounded : Icons.library_music_rounded,
+                isSearch
+                    ? Icons.search_off_rounded
+                    : Icons.library_music_rounded,
                 size: 42,
                 color: colorScheme.primary,
               ),
@@ -781,25 +783,17 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     }
   }
 
-  Future<void> _navigateToAddSong(
-    BuildContext context,
-    String songType,
-  ) async {
+  Future<void> _navigateToAddSong(BuildContext context, String songType) async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
-        builder: (context) => SongEditPage(songType: songType),
-      ),
+      MaterialPageRoute(builder: (context) => SongEditPage(songType: songType)),
     );
     if (result == true) {
       ref.read(songsListProvider.notifier).refresh();
     }
   }
 
-  Future<void> _navigateToEditSong(
-    BuildContext context,
-    Song song,
-  ) async {
+  Future<void> _navigateToEditSong(BuildContext context, Song song) async {
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
@@ -841,13 +835,11 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
           FilledButton(
             onPressed: () async {
               Navigator.pop(context);
-              final cleaned =
-                  await ref.read(songsListProvider.notifier).cleanSongs();
+              final cleaned = await ref
+                  .read(songsListProvider.notifier)
+                  .cleanSongs();
               if (context.mounted) {
-                ResponsiveSnackBar.show(
-                  context,
-                  message: '已清理 $cleaned 首无效歌曲',
-                );
+                ResponsiveSnackBar.show(context, message: '已清理 $cleaned 首无效歌曲');
               }
             },
             child: const Text('清理'),
@@ -874,10 +866,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
           .batchDeleteSongs(deleteFiles: result.deleteFiles);
       if (context.mounted) {
         if (deleted > 0) {
-          ResponsiveSnackBar.showSuccess(
-            context,
-            message: '已删除 $deleted 首歌曲',
-          );
+          ResponsiveSnackBar.showSuccess(context, message: '已删除 $deleted 首歌曲');
         } else {
           ResponsiveSnackBar.showError(context, message: '删除失败');
         }

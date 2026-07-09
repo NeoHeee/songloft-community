@@ -34,15 +34,14 @@ class ConfirmDialog extends StatelessWidget {
 
     return AlertDialog(
       title: Text(title),
-      content:
-          content != null
-              ? ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: context.responsiveDialogMaxWidth,
-                ),
-                child: Text(content!),
-              )
-              : null,
+      content: content != null
+          ? ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: context.responsiveDialogMaxWidth,
+              ),
+              child: Text(content!),
+            )
+          : null,
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
@@ -75,14 +74,13 @@ class ConfirmDialog extends StatelessWidget {
   }) async {
     final result = await showDialog<bool>(
       context: context,
-      builder:
-          (context) => ConfirmDialog(
-            title: title,
-            content: content,
-            confirmText: confirmText,
-            cancelText: cancelText,
-            isDestructive: isDestructive,
-          ),
+      builder: (context) => ConfirmDialog(
+        title: title,
+        content: content,
+        confirmText: confirmText,
+        cancelText: cancelText,
+        isDestructive: isDestructive,
+      ),
     );
     return result ?? false;
   }

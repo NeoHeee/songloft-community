@@ -1,7 +1,9 @@
 import 'package:flutter/services.dart';
 
 class TvDetector {
-  static const MethodChannel _channel = MethodChannel('com.songloft/tv_detector');
+  static const MethodChannel _channel = MethodChannel(
+    'com.songloft/tv_detector',
+  );
 
   static Future<bool> isTv() async {
     try {

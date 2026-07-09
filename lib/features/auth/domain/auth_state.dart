@@ -96,10 +96,7 @@ class TokenListResponse {
   final List<TokenInfo> tokens;
   final int total;
 
-  TokenListResponse({
-    required this.tokens,
-    required this.total,
-  });
+  TokenListResponse({required this.tokens, required this.total});
 
   factory TokenListResponse.fromJson(Map<String, dynamic> json) {
     final tokensList = json['tokens'] as List<dynamic>;
@@ -136,11 +133,7 @@ class AuthState {
     this.isLoading = false,
   });
 
-  AuthState copyWith({
-    AuthStatus? status,
-    String? error,
-    bool? isLoading,
-  }) {
+  AuthState copyWith({AuthStatus? status, String? error, bool? isLoading}) {
     return AuthState(
       status: status ?? this.status,
       error: error,
@@ -155,18 +148,15 @@ class AuthState {
   AuthState loading() => copyWith(isLoading: true, error: null);
 
   /// 认证成功状态
-  AuthState authenticated() => copyWith(
-        status: AuthStatus.authenticated,
-        isLoading: false,
-        error: null,
-      );
+  AuthState authenticated() =>
+      copyWith(status: AuthStatus.authenticated, isLoading: false, error: null);
 
   /// 未认证状态
   AuthState unauthenticated([String? error]) => copyWith(
-        status: AuthStatus.unauthenticated,
-        isLoading: false,
-        error: error,
-      );
+    status: AuthStatus.unauthenticated,
+    isLoading: false,
+    error: error,
+  );
 
   @override
   String toString() =>

@@ -50,9 +50,7 @@ class _DeleteSongDialogState extends State<DeleteSongDialog> {
     return AlertDialog(
       title: Text(widget.title),
       content: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: context.responsiveDialogMaxWidth,
-        ),
+        constraints: BoxConstraints(maxWidth: context.responsiveDialogMaxWidth),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,9 +86,9 @@ class _DeleteSongDialogState extends State<DeleteSongDialog> {
           child: const Text('取消'),
         ),
         TextButton(
-          onPressed: () => Navigator.of(context).pop(
-            DeleteSongResult(deleteFiles: _deleteFiles),
-          ),
+          onPressed: () => Navigator.of(
+            context,
+          ).pop(DeleteSongResult(deleteFiles: _deleteFiles)),
           style: TextButton.styleFrom(
             minimumSize: context.responsiveButtonMinSize,
             foregroundColor: theme.colorScheme.error,

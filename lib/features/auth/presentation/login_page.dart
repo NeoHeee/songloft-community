@@ -443,10 +443,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             if (_showLocalMode) ...[
                               const SizedBox(height: TvTheme.spacingLarge),
                               OutlinedButton.icon(
-                                onPressed:
-                                    _isLocalModeBootstrapping
-                                        ? null
-                                        : _handleLocalMode,
+                                onPressed: _isLocalModeBootstrapping
+                                    ? null
+                                    : _handleLocalMode,
                                 style: OutlinedButton.styleFrom(
                                   minimumSize: const Size.fromHeight(
                                     TvTheme.minButtonSize,
@@ -456,17 +455,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                     borderRadius: BorderRadius.circular(14),
                                   ),
                                 ),
-                                icon:
-                                    _isLocalModeBootstrapping
-                                        ? SizedBox(
-                                          height: 28,
-                                          width: 28,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 3,
-                                            color: colorScheme.primary,
-                                          ),
-                                        )
-                                        : const Icon(Icons.phone_android),
+                                icon: _isLocalModeBootstrapping
+                                    ? SizedBox(
+                                        height: 28,
+                                        width: 28,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 3,
+                                          color: colorScheme.primary,
+                                        ),
+                                      )
+                                    : const Icon(Icons.phone_android),
                                 label: Text(
                                   _isLocalModeBootstrapping
                                       ? _localModeHint
@@ -574,8 +572,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       autofocus: autofocus,
       autofillHints: autofillHints,
       keyboardType: keyboardType,
-      textInputAction:
-          isLastField ? TextInputAction.done : TextInputAction.next,
+      textInputAction: isLastField
+          ? TextInputAction.done
+          : TextInputAction.next,
       onFieldSubmitted: (_) {
         if (isLastField && onSubmit != null) {
           onSubmit();
@@ -610,21 +609,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           _apiUrlFocusNode.requestFocus();
         }
       },
-      suffixIconBuilder:
-          (hasFocus) => IconButton(
-            icon: Icon(
-              _obscurePassword ? Icons.visibility_off : Icons.visibility,
-              color:
-                  hasFocus ? colorScheme.primary : colorScheme.onSurfaceVariant,
-            ),
-            iconSize: 28,
-            tooltip: _obscurePassword ? '显示密码' : '隐藏密码',
-            onPressed: () {
-              setState(() {
-                _obscurePassword = !_obscurePassword;
-              });
-            },
-          ),
+      suffixIconBuilder: (hasFocus) => IconButton(
+        icon: Icon(
+          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+          color: hasFocus ? colorScheme.primary : colorScheme.onSurfaceVariant,
+        ),
+        iconSize: 28,
+        tooltip: _obscurePassword ? '显示密码' : '隐藏密码',
+        onPressed: () {
+          setState(() {
+            _obscurePassword = !_obscurePassword;
+          });
+        },
+      ),
       validator: (value) {
         if (value == null || value.isEmpty) {
           return '请输入密码';
@@ -654,25 +651,23 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               curve: TvTheme.focusAnimationCurve,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                border:
-                    hasFocus
-                        ? Border.all(
-                          color: colorScheme.primary,
-                          width: TvTheme.focusBorderWidth,
-                        )
-                        : null,
-                boxShadow:
-                    hasFocus
-                        ? [
-                          BoxShadow(
-                            color: colorScheme.primary.withValues(
-                              alpha: TvTheme.focusGlowOpacity,
-                            ),
-                            blurRadius: TvTheme.focusShadowBlurRadius,
-                            spreadRadius: TvTheme.focusGlowSpreadRadius,
+                border: hasFocus
+                    ? Border.all(
+                        color: colorScheme.primary,
+                        width: TvTheme.focusBorderWidth,
+                      )
+                    : null,
+                boxShadow: hasFocus
+                    ? [
+                        BoxShadow(
+                          color: colorScheme.primary.withValues(
+                            alpha: TvTheme.focusGlowOpacity,
                           ),
-                        ]
-                        : null,
+                          blurRadius: TvTheme.focusShadowBlurRadius,
+                          spreadRadius: TvTheme.focusGlowSpreadRadius,
+                        ),
+                      ]
+                    : null,
               ),
               child: FilledButton(
                 focusNode: null,
@@ -686,17 +681,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child:
-                    authState.isLoading
-                        ? SizedBox(
-                          height: 28,
-                          width: 28,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 3,
-                            color: colorScheme.onPrimary,
-                          ),
-                        )
-                        : Text(hasFocus ? '按确认键登录' : '登录'),
+                child: authState.isLoading
+                    ? SizedBox(
+                        height: 28,
+                        width: 28,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3,
+                          color: colorScheme.onPrimary,
+                        ),
+                      )
+                    : Text(hasFocus ? '按确认键登录' : '登录'),
               ),
             ),
           );
@@ -791,26 +785,26 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final servers = ref.watch(serversProvider).value ?? const <ServerEntry>[];
     if (servers.length >= 2) {
       final current = ref.watch(baseUrlProvider);
-      final selected =
-          servers.any((s) => s.url == current) ? current : servers.first.url;
+      final selected = servers.any((s) => s.url == current)
+          ? current
+          : servers.first.url;
       return DropdownButtonFormField<String>(
         initialValue: selected,
         decoration: const InputDecoration(
           labelText: '服务器',
           prefixIcon: Icon(Icons.cloud_outlined),
         ),
-        items:
-            servers
-                .map(
-                  (s) => DropdownMenuItem(
-                    value: s.url,
-                    child: Text(
-                      s.name.isNotEmpty ? '${s.name} (${s.url})' : s.url,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                )
-                .toList(),
+        items: servers
+            .map(
+              (s) => DropdownMenuItem(
+                value: s.url,
+                child: Text(
+                  s.name.isNotEmpty ? '${s.name} (${s.url})' : s.url,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            )
+            .toList(),
         onChanged: (url) {
           if (url != null) ref.read(baseUrlProvider.notifier).set(url);
         },
@@ -841,17 +835,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     return FilledButton(
       onPressed: authState.isLoading ? null : _handleLogin,
       style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-      child:
-          authState.isLoading
-              ? SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: colorScheme.onPrimary,
-                ),
-              )
-              : const Text('登录'),
+      child: authState.isLoading
+          ? SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: colorScheme.onPrimary,
+              ),
+            )
+          : const Text('登录'),
     );
   }
 
@@ -928,17 +921,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           style: OutlinedButton.styleFrom(
             minimumSize: const Size.fromHeight(48),
           ),
-          icon:
-              _isLocalModeBootstrapping
-                  ? SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: colorScheme.primary,
-                    ),
-                  )
-                  : const Icon(Icons.phone_android),
+          icon: _isLocalModeBootstrapping
+              ? SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: colorScheme.primary,
+                  ),
+                )
+              : const Icon(Icons.phone_android),
           label: Text(_isLocalModeBootstrapping ? _localModeHint : '使用本地模式'),
         ),
       ],
@@ -1144,26 +1136,24 @@ class _TvFocusableTextFieldState extends State<_TvFocusableTextField> {
         curve: TvTheme.focusAnimationCurve,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          border:
-              _hasFocus
-                  ? Border.all(
-                    color: colorScheme.primary,
-                    width: TvTheme.focusBorderWidth,
-                  )
-                  : Border.all(
-                    color: colorScheme.outline.withValues(alpha: 0.4),
-                    width: 1.5,
+          border: _hasFocus
+              ? Border.all(
+                  color: colorScheme.primary,
+                  width: TvTheme.focusBorderWidth,
+                )
+              : Border.all(
+                  color: colorScheme.outline.withValues(alpha: 0.4),
+                  width: 1.5,
+                ),
+          boxShadow: _hasFocus
+              ? [
+                  BoxShadow(
+                    color: colorScheme.primary.withValues(alpha: 0.25),
+                    blurRadius: 16,
+                    spreadRadius: 1,
                   ),
-          boxShadow:
-              _hasFocus
-                  ? [
-                    BoxShadow(
-                      color: colorScheme.primary.withValues(alpha: 0.25),
-                      blurRadius: 16,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                  : null,
+                ]
+              : null,
         ),
         child: TextFormField(
           controller: widget.controller,
@@ -1183,10 +1173,9 @@ class _TvFocusableTextFieldState extends State<_TvFocusableTextField> {
             hintText: widget.hintText,
             labelStyle: TextStyle(
               fontSize: TvTheme.fontSizeCaption,
-              color:
-                  _hasFocus
-                      ? colorScheme.primary
-                      : colorScheme.onSurfaceVariant,
+              color: _hasFocus
+                  ? colorScheme.primary
+                  : colorScheme.onSurfaceVariant,
             ),
             hintStyle: TextStyle(
               fontSize: TvTheme.fontSizeBody,
@@ -1195,10 +1184,9 @@ class _TvFocusableTextFieldState extends State<_TvFocusableTextField> {
             prefixIcon: Icon(
               widget.prefixIcon,
               size: 28,
-              color:
-                  _hasFocus
-                      ? colorScheme.primary
-                      : colorScheme.onSurfaceVariant,
+              color: _hasFocus
+                  ? colorScheme.primary
+                  : colorScheme.onSurfaceVariant,
             ),
             suffixIcon: widget.suffixIconBuilder?.call(_hasFocus),
             contentPadding: const EdgeInsets.symmetric(
@@ -1206,10 +1194,9 @@ class _TvFocusableTextFieldState extends State<_TvFocusableTextField> {
               vertical: 20,
             ),
             filled: true,
-            fillColor:
-                _hasFocus
-                    ? colorScheme.primaryContainer.withValues(alpha: 0.15)
-                    : colorScheme.surfaceContainerLow,
+            fillColor: _hasFocus
+                ? colorScheme.primaryContainer.withValues(alpha: 0.15)
+                : colorScheme.surfaceContainerLow,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(13),
               borderSide: BorderSide.none,

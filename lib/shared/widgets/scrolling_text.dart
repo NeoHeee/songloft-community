@@ -62,16 +62,16 @@ class _ScrollingTextState extends State<ScrollingText>
 
   void _checkOverflow() {
     if (!mounted) return;
-    
+
     final maxScrollExtent = _scrollController.position.maxScrollExtent;
     final overflow = maxScrollExtent > 0;
-    
+
     if (overflow != _isOverflowing) {
       setState(() {
         _isOverflowing = overflow;
       });
     }
-    
+
     if (_isOverflowing && !_isScrolling) {
       _startScrolling();
     }

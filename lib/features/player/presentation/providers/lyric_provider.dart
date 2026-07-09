@@ -51,8 +51,9 @@ class LyricState {
       currentIndex: currentIndex ?? this.currentIndex,
       isLoading: isLoading ?? this.isLoading,
       loadFailed: loadFailed ?? this.loadFailed,
-      rawLyricText:
-          clearRawLyricText ? null : (rawLyricText ?? this.rawLyricText),
+      rawLyricText: clearRawLyricText
+          ? null
+          : (rawLyricText ?? this.rawLyricText),
     );
   }
 }
@@ -97,9 +98,9 @@ class LyricNotifier extends Notifier<LyricState> {
         state.currentLyricText,
         state.nextLyricText,
       );
-      ref.read(audioHandlerProvider).updateNowPlayingLyric(
-        state.currentLyricText,
-      );
+      ref
+          .read(audioHandlerProvider)
+          .updateNowPlayingLyric(state.currentLyricText);
     }
   }
 
@@ -134,9 +135,9 @@ class LyricNotifier extends Notifier<LyricState> {
         state.currentLyricText,
         state.nextLyricText,
       );
-      ref.read(audioHandlerProvider).updateNowPlayingLyric(
-        state.currentLyricText,
-      );
+      ref
+          .read(audioHandlerProvider)
+          .updateNowPlayingLyric(state.currentLyricText);
       return;
     }
 
@@ -164,9 +165,9 @@ class LyricNotifier extends Notifier<LyricState> {
         state.currentLyricText,
         state.nextLyricText,
       );
-      ref.read(audioHandlerProvider).updateNowPlayingLyric(
-        state.currentLyricText,
-      );
+      ref
+          .read(audioHandlerProvider)
+          .updateNowPlayingLyric(state.currentLyricText);
 
       if (lyricText.isNotEmpty) {
         await LyricCacheService().put(lyricUrl, lyricText);

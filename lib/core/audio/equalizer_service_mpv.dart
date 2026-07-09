@@ -104,12 +104,28 @@ class MpvEqualizerService implements EqualizerService {
 
   static List<double> _mapTo18Bands(List<double> tenBands) {
     const mpv18Freqs = [
-      65.0, 92.0, 131.0, 185.0, 262.0, 370.0, 523.0, 740.0,
-      1047.0, 1480.0, 2093.0, 2960.0, 4186.0, 5920.0, 8372.0,
-      11840.0, 16744.0, 20000.0,
+      65.0,
+      92.0,
+      131.0,
+      185.0,
+      262.0,
+      370.0,
+      523.0,
+      740.0,
+      1047.0,
+      1480.0,
+      2093.0,
+      2960.0,
+      4186.0,
+      5920.0,
+      8372.0,
+      11840.0,
+      16744.0,
+      20000.0,
     ];
-    final srcFreqs =
-        EqualizerSetting.frequencies.map((f) => f.toDouble()).toList();
+    final srcFreqs = EqualizerSetting.frequencies
+        .map((f) => f.toDouble())
+        .toList();
     final result = List<double>.filled(18, 0);
     for (var i = 0; i < 18; i++) {
       result[i] = _interpolate(mpv18Freqs[i], srcFreqs, tenBands);

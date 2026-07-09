@@ -46,10 +46,7 @@ class SettingsMasterDetail extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 110),
       children: [
-        if (header != null) ...[
-          header!,
-          const SizedBox(height: 16),
-        ],
+        if (header != null) ...[header!, const SizedBox(height: 16)],
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 2, 4, 10),
           child: Text(
@@ -138,10 +135,7 @@ class SettingsMasterDetail extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.all(12),
             children: [
-              if (header != null) ...[
-                header!,
-                const SizedBox(height: 14),
-              ],
+              if (header != null) ...[header!, const SizedBox(height: 14)],
               Padding(
                 padding: const EdgeInsets.fromLTRB(10, 4, 10, 10),
                 child: Text(
@@ -221,9 +215,7 @@ class _CategoryItem extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             border: selected
-                ? Border.all(
-                    color: colorScheme.primary.withValues(alpha: 0.18),
-                  )
+                ? Border.all(color: colorScheme.primary.withValues(alpha: 0.18))
                 : null,
           ),
           child: Row(
@@ -240,8 +232,9 @@ class _CategoryItem extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: foreground,
-                        fontWeight:
-                            selected ? FontWeight.w700 : FontWeight.w600,
+                        fontWeight: selected
+                            ? FontWeight.w700
+                            : FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -261,10 +254,7 @@ class _CategoryItem extends StatelessWidget {
                 ),
               ),
               if (selected)
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: colorScheme.primary,
-                ),
+                Icon(Icons.chevron_right_rounded, color: colorScheme.primary),
             ],
           ),
         ),

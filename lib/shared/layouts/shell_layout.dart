@@ -76,8 +76,9 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
 
     final isPluginTab = location.startsWith('/plugin-tab/');
     final isSettings = location.startsWith('/settings');
-    final currentEntryPath =
-        isPluginTab ? location.replaceFirst('/plugin-tab/', '') : null;
+    final currentEntryPath = isPluginTab
+        ? location.replaceFirst('/plugin-tab/', '')
+        : null;
 
     Widget body;
     if (kIsWeb) {
@@ -119,10 +120,10 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
       body = widget.child;
     }
 
-    final bottomPlayer =
-        (isPluginTab || isSettings) ? null : _buildBottomPlayer(context);
-    final playlistDrawer =
-        showPlaylistDrawer ? const PlaylistDrawer() : null;
+    final bottomPlayer = (isPluginTab || isSettings)
+        ? null
+        : _buildBottomPlayer(context);
+    final playlistDrawer = showPlaylistDrawer ? const PlaylistDrawer() : null;
 
     void onDestinationSelected(int index) {
       if (index >= 0 && index < activeDest.indexToRoute.length) {

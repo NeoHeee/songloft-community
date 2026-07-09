@@ -106,10 +106,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
 
     final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => LyricAdjustPage(
-          song: song,
-          originalLyric: lyricText,
-        ),
+        builder: (_) => LyricAdjustPage(song: song, originalLyric: lyricText),
       ),
     );
 

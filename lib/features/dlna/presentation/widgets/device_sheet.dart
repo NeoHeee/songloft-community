@@ -35,10 +35,7 @@ class _DlnaDeviceSheetState extends ConsumerState<DlnaDeviceSheet> {
               children: [
                 const Icon(Icons.cast),
                 const SizedBox(width: 12),
-                Text(
-                  '投屏',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
+                Text('投屏', style: Theme.of(context).textTheme.titleMedium),
                 const Spacer(),
                 if (dlnaState.isCasting)
                   TextButton(
@@ -61,10 +58,7 @@ class _DlnaDeviceSheetState extends ConsumerState<DlnaDeviceSheet> {
             ),
           if (dlnaState.isCasting && dlnaState.activeDevice != null)
             ListTile(
-              leading: Icon(
-                Icons.cast_connected,
-                color: colorScheme.primary,
-              ),
+              leading: Icon(Icons.cast_connected, color: colorScheme.primary),
               title: Text(dlnaState.activeDevice!.name),
               subtitle: const Text('已连接'),
               trailing: IconButton(
@@ -124,8 +118,8 @@ class _DlnaDeviceSheetState extends ConsumerState<DlnaDeviceSheet> {
             Text(
               isDiscovering ? '正在搜索局域网设备...' : '未发现 DLNA 设备',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),

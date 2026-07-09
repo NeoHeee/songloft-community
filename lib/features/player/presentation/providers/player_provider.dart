@@ -86,17 +86,13 @@ class PlayerNotifier extends Notifier<PlayerState> {
     _audioHandler.notifySongActivated = (int songId) {
       final dio = ref.read(dioProvider);
       unawaited(
-        dio
-            .post('/api/v1/songs/$songId/activate')
-            .catchError(
-              (e) {
-                debugPrint('[Player] activate notify failed (ignored): $e');
-                return Response(
-                  requestOptions: RequestOptions(path: ''),
-                  statusCode: 0,
-                );
-              },
-            ),
+        dio.post('/api/v1/songs/$songId/activate').catchError((e) {
+          debugPrint('[Player] activate notify failed (ignored): $e');
+          return Response(
+            requestOptions: RequestOptions(path: ''),
+            statusCode: 0,
+          );
+        }),
       );
     };
 
@@ -267,7 +263,7 @@ class PlayerNotifier extends Notifier<PlayerState> {
         isBuffering:
             playerState.processingState == ja.ProcessingState.loading ||
             (playerState.processingState == ja.ProcessingState.buffering &&
-            !isLive),
+                !isLive),
       );
       if (wasPlaying != playerState.playing) {
         _liveActivity.updatePlaybackState(
@@ -327,10 +323,7 @@ class PlayerNotifier extends Notifier<PlayerState> {
   }
 
   void _notifyPlayEvent(int songId, String type) {
-    ref
-        .read(songsApiProvider)
-        .songPlayed(songId, type: type)
-        .catchError((e) {
+    ref.read(songsApiProvider).songPlayed(songId, type: type).catchError((e) {
       debugPrint('[Player] playEvent($type) notify failed: $e');
     });
   }
@@ -356,9 +349,7 @@ class PlayerNotifier extends Notifier<PlayerState> {
         return;
       }
       debugPrint('[Player] Sleep timer: $next songs remaining');
-      state = state.copyWith(
-        sleepTimer: timer.copyWith(remainingSongs: next),
-      );
+      state = state.copyWith(sleepTimer: timer.copyWith(remainingSongs: next));
       // 不 return：继续走 playMode 分支让队列推进到下一首
     }
 
@@ -547,11 +538,8 @@ class PlayerNotifier extends Notifier<PlayerState> {
       //   开头重播（ExoPlayer STATE_ENDED 下 setPlayWhenReady 不会重启），
       //   且切换过音质后需要用新 URL 重新加载
       final ps = _audioHandler.processingState;
-      if (ps == ja.ProcessingState.idle ||
-          ps == ja.ProcessingState.completed) {
-        debugPrint(
-          '[Player] togglePlay: player $ps, re-loading current song',
-        );
+      if (ps == ja.ProcessingState.idle || ps == ja.ProcessingState.completed) {
+        debugPrint('[Player] togglePlay: player $ps, re-loading current song');
         _consecutiveFailures = 0;
         final gen = ++_playGeneration;
         await _playCurrent(gen);
@@ -1175,12 +1163,14 @@ class PlayerNotifier extends Notifier<PlayerState> {
       }
 
       // playPlaylist 内部会递增 _loadGeneration，取消之前的后台加载
-      final effectiveStartIndex = startIndex == 0 &&
-              state.playMode == PlayMode.random
+      final effectiveStartIndex =
+          startIndex == 0 && state.playMode == PlayMode.random
           ? _random.nextInt(firstPageSongs.length)
           : startIndex;
-      final safeStartIndex =
-          effectiveStartIndex.clamp(0, firstPageSongs.length - 1);
+      final safeStartIndex = effectiveStartIndex.clamp(
+        0,
+        firstPageSongs.length - 1,
+      );
       await playPlaylist(firstPageSongs, startIndex: safeStartIndex);
 
       if (total > firstPageSongs.length) {
@@ -1630,8 +1620,7 @@ class PlayerNotifier extends Notifier<PlayerState> {
     final isLocal = nextSong.type == 'local';
     final prefs = await ref.read(appPreferencesProvider.future);
     final quality = prefs.getAudioQuality();
-    final needsQualityTranscode =
-        quality != 'original' && quality.isNotEmpty;
+    final needsQualityTranscode = quality != 'original' && quality.isNotEmpty;
 
     // 本地歌曲且无需转码且无音质转码 → 无意义预热（本地文件随时可读）
     if (isLocal && targetFormat == null && !needsQualityTranscode) return;
@@ -1742,11 +1731,10 @@ class PlayerNotifier extends Notifier<PlayerState> {
     }
 
     // 获取未播放的索引
-    final availableIndices =
-        List<int>.generate(
-          state.playlist.length,
-          (i) => i,
-        ).where((i) => !_playedIndices.contains(i)).toList();
+    final availableIndices = List<int>.generate(
+      state.playlist.length,
+      (i) => i,
+    ).where((i) => !_playedIndices.contains(i)).toList();
 
     if (availableIndices.isEmpty) {
       return _random.nextInt(state.playlist.length);

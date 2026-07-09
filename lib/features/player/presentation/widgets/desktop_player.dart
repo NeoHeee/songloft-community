@@ -85,10 +85,7 @@ class DesktopPlayer extends ConsumerWidget {
               borderRadius: BorderRadius.circular(17),
               color: colorScheme.primaryContainer.withValues(alpha: 0.5),
             ),
-            child: Icon(
-              Icons.graphic_eq_rounded,
-              color: colorScheme.primary,
-            ),
+            child: Icon(Icons.graphic_eq_rounded, color: colorScheme.primary),
           ),
           const SizedBox(width: 14),
           Text(

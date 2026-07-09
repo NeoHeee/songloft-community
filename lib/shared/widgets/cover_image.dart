@@ -37,35 +37,29 @@ class CoverImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // 使用 UrlHelper 处理封面 URL（自动拼接 baseUrl + access_token）
-    final displayUrl =
-        coverUrl != null && coverUrl!.isNotEmpty
-            ? UrlHelper.buildCoverUrl(coverUrl!)
-            : null;
+    final displayUrl = coverUrl != null && coverUrl!.isNotEmpty
+        ? UrlHelper.buildCoverUrl(coverUrl!)
+        : null;
 
     final imageWidget = ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
       child: SizedBox(
         width: size,
         height: size,
-        child:
-            displayUrl != null
-                ? CachedNetworkImage(
-                  imageUrl: displayUrl,
-                  fit: fit,
-                  placeholder: (context, url) => _buildPlaceholder(context),
-                  errorWidget:
-                      (context, url, error) => _buildPlaceholder(context),
-                )
-                : _buildPlaceholder(context),
+        child: displayUrl != null
+            ? CachedNetworkImage(
+                imageUrl: displayUrl,
+                fit: fit,
+                placeholder: (context, url) => _buildPlaceholder(context),
+                errorWidget: (context, url, error) =>
+                    _buildPlaceholder(context),
+              )
+            : _buildPlaceholder(context),
       ),
     );
 
     if (semanticLabel != null) {
-      return Semantics(
-        image: true,
-        label: semanticLabel!,
-        child: imageWidget,
-      );
+      return Semantics(image: true, label: semanticLabel!, child: imageWidget);
     }
     return ExcludeSemantics(child: imageWidget);
   }

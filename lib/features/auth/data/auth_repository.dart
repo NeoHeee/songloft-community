@@ -9,10 +9,7 @@ class AuthRepository {
   final AuthApi authApi;
   final SecureStorageService secureStorage;
 
-  AuthRepository({
-    required this.authApi,
-    required this.secureStorage,
-  });
+  AuthRepository({required this.authApi, required this.secureStorage});
 
   /// 登录
   /// 调用 API 并存储 Token
@@ -79,10 +76,7 @@ class AuthRepository {
   }
 
   /// 获取 Token 列表
-  Future<TokenListResponse> getTokens({
-    int limit = 20,
-    int offset = 0,
-  }) async {
+  Future<TokenListResponse> getTokens({int limit = 20, int offset = 0}) async {
     return authApi.getTokens(limit: limit, offset: offset);
   }
 

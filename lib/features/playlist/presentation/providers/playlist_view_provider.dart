@@ -42,10 +42,9 @@ class PlaylistViewModeNotifier extends Notifier<PlaylistViewMode> {
   }
 
   Future<void> toggleViewMode() async {
-    final newMode =
-        state == PlaylistViewMode.grid
-            ? PlaylistViewMode.list
-            : PlaylistViewMode.grid;
+    final newMode = state == PlaylistViewMode.grid
+        ? PlaylistViewMode.list
+        : PlaylistViewMode.grid;
     state = newMode;
     try {
       final prefs = await ref.read(appPreferencesProvider.future);

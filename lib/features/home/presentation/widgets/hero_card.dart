@@ -174,10 +174,7 @@ class HeroCard extends StatelessWidget {
                         ),
                       ),
                       // 播放按钮
-                      _PlayButton(
-                        isPlaying: isPlaying,
-                        onPressed: onPlay,
-                      ),
+                      _PlayButton(isPlaying: isPlaying, onPressed: onPlay),
                     ],
                   ),
                 ),
@@ -195,28 +192,26 @@ class HeroCard extends StatelessWidget {
       return CachedNetworkImage(
         imageUrl: UrlHelper.buildCoverUrl(coverUrl),
         fit: BoxFit.cover,
-        placeholder:
-            (context, url) => Container(
-              color: colorScheme.surfaceContainerHighest,
-              child: Center(
-                child: Icon(
-                  Icons.queue_music_rounded,
-                  size: 64,
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
-                ),
-              ),
+        placeholder: (context, url) => Container(
+          color: colorScheme.surfaceContainerHighest,
+          child: Center(
+            child: Icon(
+              Icons.queue_music_rounded,
+              size: 64,
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
             ),
-        errorWidget:
-            (context, url, error) => Container(
-              color: colorScheme.surfaceContainerHighest,
-              child: Center(
-                child: Icon(
-                  Icons.queue_music_rounded,
-                  size: 64,
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
-                ),
-              ),
+          ),
+        ),
+        errorWidget: (context, url, error) => Container(
+          color: colorScheme.surfaceContainerHighest,
+          child: Center(
+            child: Icon(
+              Icons.queue_music_rounded,
+              size: 64,
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
             ),
+          ),
+        ),
       );
     }
     return Container(
@@ -237,10 +232,7 @@ class _PlayButton extends StatelessWidget {
   final bool isPlaying;
   final VoidCallback onPressed;
 
-  const _PlayButton({
-    required this.isPlaying,
-    required this.onPressed,
-  });
+  const _PlayButton({required this.isPlaying, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {

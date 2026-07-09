@@ -80,7 +80,9 @@ class MiniPlayer extends ConsumerWidget {
                                       ),
                                     ))
                                       Padding(
-                                        padding: const EdgeInsets.only(right: 5),
+                                        padding: const EdgeInsets.only(
+                                          right: 5,
+                                        ),
                                         child: Icon(
                                           Icons.cast_connected_rounded,
                                           size: 13,
@@ -90,9 +92,11 @@ class MiniPlayer extends ConsumerWidget {
                                     Expanded(
                                       child: Text(
                                         song.artist ?? '未知艺术家',
-                                        style: theme.textTheme.bodySmall?.copyWith(
-                                          color: colorScheme.onSurfaceVariant,
-                                        ),
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color:
+                                                  colorScheme.onSurfaceVariant,
+                                            ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),

@@ -39,8 +39,7 @@ class PlaylistCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final highlighted =
-        (isSelectionMode && isSelected) || isCurrentPlaylist;
+    final highlighted = (isSelectionMode && isSelected) || isCurrentPlaylist;
 
     return Material(
       color: colorScheme.surfaceContainerLow,
@@ -140,7 +139,8 @@ class PlaylistCard extends StatelessWidget {
                       final showDescription =
                           playlist.description?.isNotEmpty == true &&
                           constraints.maxHeight >= 76;
-                      final showLabels = playlist.labels.isNotEmpty &&
+                      final showLabels =
+                          playlist.labels.isNotEmpty &&
                           constraints.maxHeight >= 100;
 
                       return Column(
@@ -199,9 +199,7 @@ class PlaylistCard extends StatelessWidget {
                               runSpacing: 4,
                               children: playlist.labels
                                   .take(2)
-                                  .map(
-                                    (label) => _LabelChip(label: label),
-                                  )
+                                  .map((label) => _LabelChip(label: label))
                                   .toList(),
                             ),
                           ],
@@ -230,12 +228,10 @@ class PlaylistCard extends StatelessWidget {
       child: CachedNetworkImage(
         imageUrl: UrlHelper.buildCoverUrl(playlist.coverImageUrl!),
         fit: BoxFit.cover,
-        placeholder: (_, _) => _CoverPlaceholder(
-          isRadio: playlist.type == 'radio',
-        ),
-        errorWidget: (_, _, _) => _CoverPlaceholder(
-          isRadio: playlist.type == 'radio',
-        ),
+        placeholder: (_, _) =>
+            _CoverPlaceholder(isRadio: playlist.type == 'radio'),
+        errorWidget: (_, _, _) =>
+            _CoverPlaceholder(isRadio: playlist.type == 'radio'),
       ),
     );
   }
@@ -300,10 +296,7 @@ class PlaylistCard extends StatelessWidget {
                   Icons.delete_outline_rounded,
                   color: colorScheme.error,
                 ),
-                title: Text(
-                  '删除',
-                  style: TextStyle(color: colorScheme.error),
-                ),
+                title: Text('删除', style: TextStyle(color: colorScheme.error)),
                 contentPadding: EdgeInsets.zero,
               ),
             ),
@@ -443,10 +436,7 @@ class _CoverPlaceholder extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            colorScheme.primaryContainer,
-            colorScheme.tertiaryContainer,
-          ],
+          colors: [colorScheme.primaryContainer, colorScheme.tertiaryContainer],
         ),
       ),
       child: Center(

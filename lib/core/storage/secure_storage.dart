@@ -71,8 +71,9 @@ class SecureStorageService {
     cachedRefreshToken = refreshToken;
     debugPrint('[SecureStorage] saveTokens: caching tokens in memory');
 
-    final expiresAt =
-        DateTime.now().add(Duration(seconds: expiresIn)).toIso8601String();
+    final expiresAt = DateTime.now()
+        .add(Duration(seconds: expiresIn))
+        .toIso8601String();
 
     final prefs = await _getPrefs();
     await Future.wait([

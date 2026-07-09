@@ -230,7 +230,8 @@ class _JSPluginManagerState extends ConsumerState<JSPluginManager> {
     final inactive = plugins.length - active - errors;
     final filtered = plugins.where((plugin) {
       final query = _query.toLowerCase();
-      final matchesQuery = query.isEmpty ||
+      final matchesQuery =
+          query.isEmpty ||
           plugin.displayName.toLowerCase().contains(query) ||
           (plugin.author?.toLowerCase().contains(query) ?? false) ||
           (plugin.description?.toLowerCase().contains(query) ?? false);
@@ -351,14 +352,13 @@ class _JSPluginManagerState extends ConsumerState<JSPluginManager> {
     if (confirmed != true) return;
 
     try {
-      final message = await ref.read(jsPluginApiProvider).cleanupOrphanStorage();
+      final message = await ref
+          .read(jsPluginApiProvider)
+          .cleanupOrphanStorage();
       if (mounted) ResponsiveSnackBar.showSuccess(context, message: message);
     } on ApiException catch (error) {
       if (mounted) {
-        ResponsiveSnackBar.showError(
-          context,
-          message: '清理失败：${error.message}',
-        );
+        ResponsiveSnackBar.showError(context, message: '清理失败：${error.message}');
       }
     } catch (error) {
       if (mounted) {
@@ -412,7 +412,10 @@ class _StatusFilterChip extends StatelessWidget {
                 ),
                 const SizedBox(width: 7),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: selected
                         ? accent.withValues(alpha: 0.16)
@@ -461,8 +464,8 @@ class _JSPluginCardState extends ConsumerState<_JSPluginCard> {
     final statusColor = plugin.isError
         ? colorScheme.error
         : plugin.isActive
-            ? Colors.green
-            : colorScheme.onSurfaceVariant;
+        ? Colors.green
+        : colorScheme.onSurfaceVariant;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -681,10 +684,7 @@ class _JSPluginCardState extends ConsumerState<_JSPluginCard> {
       ref.invalidate(jsPluginsProvider);
     } on ApiException catch (error) {
       if (mounted) {
-        ResponsiveSnackBar.showError(
-          context,
-          message: '操作失败：${error.message}',
-        );
+        ResponsiveSnackBar.showError(context, message: '操作失败：${error.message}');
       }
     } catch (error) {
       if (mounted) {
@@ -709,10 +709,7 @@ class _JSPluginCardState extends ConsumerState<_JSPluginCard> {
       ref.invalidate(pluginKeepAliveProvider);
     } on ApiException catch (error) {
       if (mounted) {
-        ResponsiveSnackBar.showError(
-          context,
-          message: '操作失败：${error.message}',
-        );
+        ResponsiveSnackBar.showError(context, message: '操作失败：${error.message}');
       }
     } catch (error) {
       if (mounted) {
@@ -756,7 +753,9 @@ class _JSPluginCardState extends ConsumerState<_JSPluginCard> {
 
     setState(() => _forceUpdating = true);
     try {
-      await ref.read(jsPluginApiProvider).updatePlugin(
+      await ref
+          .read(jsPluginApiProvider)
+          .updatePlugin(
             widget.plugin.id,
             githubProxy: proxy.isEmpty ? null : proxy,
             force: true,
@@ -809,17 +808,15 @@ class _JSPluginCardState extends ConsumerState<_JSPluginCard> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(
-                  context,
-                  (confirmed: false, keepData: false),
-                ),
+                onPressed: () =>
+                    Navigator.pop(context, (confirmed: false, keepData: false)),
                 child: const Text('取消'),
               ),
               FilledButton(
-                onPressed: () => Navigator.pop(
-                  context,
-                  (confirmed: true, keepData: keepData),
-                ),
+                onPressed: () => Navigator.pop(context, (
+                  confirmed: true,
+                  keepData: keepData,
+                )),
                 style: FilledButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.error,
                 ),
@@ -834,20 +831,16 @@ class _JSPluginCardState extends ConsumerState<_JSPluginCard> {
 
     setState(() => _deleting = true);
     try {
-      await ref.read(jsPluginApiProvider).deletePlugin(
-            widget.plugin.id,
-            keepData: result.keepData,
-          );
+      await ref
+          .read(jsPluginApiProvider)
+          .deletePlugin(widget.plugin.id, keepData: result.keepData);
       ref.invalidate(jsPluginsProvider);
       if (mounted) {
         ResponsiveSnackBar.showSuccess(context, message: '插件已删除');
       }
     } on ApiException catch (error) {
       if (mounted) {
-        ResponsiveSnackBar.showError(
-          context,
-          message: '删除失败：${error.message}',
-        );
+        ResponsiveSnackBar.showError(context, message: '删除失败：${error.message}');
       }
     } catch (error) {
       if (mounted) {
@@ -870,8 +863,8 @@ class _PluginStatusBadge extends StatelessWidget {
     final (label, color) = plugin.isError
         ? ('异常', colorScheme.error)
         : plugin.isActive
-            ? ('已启用', Colors.green)
-            : ('已禁用', colorScheme.onSurfaceVariant);
+        ? ('已启用', Colors.green)
+        : ('已禁用', colorScheme.onSurfaceVariant);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -1138,10 +1131,7 @@ class _JSPluginUploadDialogState extends State<_JSPluginUploadDialog> {
       }
     } on ApiException catch (error) {
       if (mounted) {
-        ResponsiveSnackBar.showError(
-          context,
-          message: '上传失败：${error.message}',
-        );
+        ResponsiveSnackBar.showError(context, message: '上传失败：${error.message}');
       }
     } catch (error) {
       if (mounted) {
@@ -1651,7 +1641,11 @@ class _BatchUpdateResult extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: [
-            _ResultStat(label: '已更新', count: result.updated, color: Colors.green),
+            _ResultStat(
+              label: '已更新',
+              count: result.updated,
+              color: Colors.green,
+            ),
             _ResultStat(
               label: '失败',
               count: result.failed,
@@ -1672,13 +1666,13 @@ class _BatchUpdateResult extends StatelessWidget {
               item.success
                   ? Icons.check_circle_rounded
                   : item.error != null
-                      ? Icons.error_outline_rounded
-                      : Icons.check_rounded,
+                  ? Icons.error_outline_rounded
+                  : Icons.check_rounded,
               color: item.success
                   ? Colors.green
                   : item.error != null
-                      ? colorScheme.error
-                      : colorScheme.onSurfaceVariant,
+                  ? colorScheme.error
+                  : colorScheme.onSurfaceVariant,
             ),
             title: Text(
               item.pluginName.isEmpty ? item.entryPath : item.pluginName,

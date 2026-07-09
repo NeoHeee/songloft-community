@@ -69,8 +69,9 @@ class RedesignedDesktopShell extends StatelessWidget {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(26),
                               child: ColoredBox(
-                                color:
-                                    colorScheme.surface.withValues(alpha: 0.72),
+                                color: colorScheme.surface.withValues(
+                                  alpha: 0.72,
+                                ),
                                 child: body,
                               ),
                             ),
@@ -134,8 +135,9 @@ class _Sidebar extends StatelessWidget {
         ],
       ),
       child: Column(
-        crossAxisAlignment:
-            compact ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+        crossAxisAlignment: compact
+            ? CrossAxisAlignment.center
+            : CrossAxisAlignment.start,
         children: [
           _BrandHeader(compact: compact),
           Padding(
@@ -200,15 +202,11 @@ class _BrandHeader extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        compact ? 17 : 20,
-        22,
-        compact ? 17 : 20,
-        8,
-      ),
+      padding: EdgeInsets.fromLTRB(compact ? 17 : 20, 22, compact ? 17 : 20, 8),
       child: Row(
-        mainAxisAlignment:
-            compact ? MainAxisAlignment.center : MainAxisAlignment.start,
+        mainAxisAlignment: compact
+            ? MainAxisAlignment.center
+            : MainAxisAlignment.start,
         children: [
           Container(
             width: 48,
@@ -299,14 +297,13 @@ class _SidebarItem extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(17),
             border: selected
-                ? Border.all(
-                    color: colorScheme.primary.withValues(alpha: 0.18),
-                  )
+                ? Border.all(color: colorScheme.primary.withValues(alpha: 0.18))
                 : null,
           ),
           child: Row(
-            mainAxisAlignment:
-                compact ? MainAxisAlignment.center : MainAxisAlignment.start,
+            mainAxisAlignment: compact
+                ? MainAxisAlignment.center
+                : MainAxisAlignment.start,
             children: [
               IconTheme(
                 data: IconThemeData(color: foreground, size: 24),
@@ -321,8 +318,7 @@ class _SidebarItem extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: foreground,
-                      fontWeight:
-                          selected ? FontWeight.w700 : FontWeight.w600,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                     ),
                   ),
                 ),
@@ -342,9 +338,7 @@ class _SidebarItem extends StatelessWidget {
       ),
     );
 
-    return compact
-        ? Tooltip(message: destination.label, child: item)
-        : item;
+    return compact ? Tooltip(message: destination.label, child: item) : item;
   }
 }
 

@@ -82,9 +82,8 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
         ),
         body: _buildContent(context, playlist, songsAsync),
       ),
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, _) => Scaffold(
         appBar: AppBar(
           leading: IconButton(
@@ -221,9 +220,7 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
               child: _buildLoadMoreIndicator(songsAsync.value!),
             ),
           SliverToBoxAdapter(
-            child: SizedBox(
-              height: MediaQuery.paddingOf(context).bottom + 90,
-            ),
+            child: SizedBox(height: MediaQuery.paddingOf(context).bottom + 90),
           ),
         ],
       ),
@@ -257,8 +254,9 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
 
     final details = Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment:
-          vertical ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+      crossAxisAlignment: vertical
+          ? CrossAxisAlignment.center
+          : CrossAxisAlignment.start,
       children: [
         Text(
           playlist.name,
@@ -288,9 +286,7 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
           spacing: 6,
           runSpacing: 6,
           alignment: vertical ? WrapAlignment.center : WrapAlignment.start,
-          children: [
-            for (final tag in tags) _PlaylistMetaChip(label: tag),
-          ],
+          children: [for (final tag in tags) _PlaylistMetaChip(label: tag)],
         ),
       ],
     );
@@ -307,9 +303,7 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
           ],
         ),
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(
-          color: accent.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: accent.withValues(alpha: 0.2)),
       ),
       child: vertical
           ? SingleChildScrollView(
@@ -379,8 +373,9 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
               children: [
                 if (showPrimaryActions && !_isSortMode && !_isSelectMode) ...[
                   FilledButton.icon(
-                    onPressed:
-                        songs.isEmpty ? null : () => _playAll(playlist, songs),
+                    onPressed: songs.isEmpty
+                        ? null
+                        : () => _playAll(playlist, songs),
                     icon: const Icon(Icons.play_arrow_rounded),
                     label: const Text('播放全部'),
                   ),
@@ -408,8 +403,8 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
                   _isSortMode
                       ? '调整歌曲顺序'
                       : _isSelectMode
-                          ? '已选择 ${_selectedSongIds.length} 首'
-                          : '歌曲列表',
+                      ? '已选择 ${_selectedSongIds.length} 首'
+                      : '歌曲列表',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -419,8 +414,8 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
                   state == null
                       ? '正在读取歌单内容'
                       : state.keyword.isEmpty
-                          ? '共 ${state.total} 首，可搜索、排序或批量管理'
-                          : '搜索“${state.keyword}”，找到 ${state.total} 首',
+                      ? '共 ${state.total} 首，可搜索、排序或批量管理'
+                      : '搜索“${state.keyword}”，找到 ${state.total} 首',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -465,9 +460,7 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
           onPressed: songs.isEmpty ? null : () => _playAll(playlist, songs),
           icon: const Icon(Icons.play_arrow_rounded),
           label: const Text('播放全部'),
-          style: FilledButton.styleFrom(
-            minimumSize: const Size.fromHeight(48),
-          ),
+          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
         ),
         const SizedBox(height: 9),
         OutlinedButton.icon(
@@ -660,14 +653,12 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
       loading: () => SliverToBoxAdapter(
         child: Column(
           children: [
-            for (var index = 0; index < 5; index++)
-              SkeletonLoader.listTile(),
+            for (var index = 0; index < 5; index++) SkeletonLoader.listTile(),
           ],
         ),
       ),
-      error: (error, _) => SliverToBoxAdapter(
-        child: _buildError(error.toString()),
-      ),
+      error: (error, _) =>
+          SliverToBoxAdapter(child: _buildError(error.toString())),
     );
   }
 
@@ -709,33 +700,30 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 7),
       sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final song = songs[index];
-            final selected = _selectedSongIds.contains(song.id);
-            return _PlaylistSongTile(
-              song: song,
-              index: index,
-              displayIndex: index + 1,
-              isCurrent: currentSong?.id == song.id,
-              selectionMode: _isSelectMode,
-              selected: selected,
-              onTap: _isSelectMode
-                  ? () => _toggleSongSelection(song.id)
-                  : () => _playSong(song, songs, index),
-              onLongPress: _isSelectMode
-                  ? null
-                  : () {
-                      _enterSelectMode();
-                      _toggleSongSelection(song.id);
-                    },
-              onSelected: () => _toggleSongSelection(song.id),
-              onRemove: () => _removeSong(playlist.id, song),
-              onDelete: () => _deleteSongFromLibrary(song),
-            );
-          },
-          childCount: songs.length,
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final song = songs[index];
+          final selected = _selectedSongIds.contains(song.id);
+          return _PlaylistSongTile(
+            song: song,
+            index: index,
+            displayIndex: index + 1,
+            isCurrent: currentSong?.id == song.id,
+            selectionMode: _isSelectMode,
+            selected: selected,
+            onTap: _isSelectMode
+                ? () => _toggleSongSelection(song.id)
+                : () => _playSong(song, songs, index),
+            onLongPress: _isSelectMode
+                ? null
+                : () {
+                    _enterSelectMode();
+                    _toggleSongSelection(song.id);
+                  },
+            onSelected: () => _toggleSongSelection(song.id),
+            onRemove: () => _removeSong(playlist.id, song),
+            onDelete: () => _deleteSongFromLibrary(song),
+          );
+        }, childCount: songs.length),
       ),
     );
   }
@@ -792,8 +780,8 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
           child: Text(
             '已加载全部 ${state.total} 首歌曲',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       );
@@ -812,10 +800,7 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
     if (_isSortMode) {
       return [
         TextButton(onPressed: _cancelSortMode, child: const Text('取消')),
-        FilledButton.tonal(
-          onPressed: _exitSortMode,
-          child: const Text('保存顺序'),
-        ),
+        FilledButton.tonal(onPressed: _exitSortMode, child: const Text('保存顺序')),
         const SizedBox(width: 8),
       ];
     }
@@ -830,7 +815,7 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
             if (!mounted) return;
             final allSongs =
                 ref.read(playlistSongsProvider(_playlistIdInt)).value?.items ??
-                    songs;
+                songs;
             _toggleSelectAll(allSongs);
           },
           child: Text(_selectedSongIds.length == total ? '取消全选' : '全选'),
@@ -897,10 +882,7 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
                   Icons.delete_outline_rounded,
                   color: colorScheme.error,
                 ),
-                title: Text(
-                  '删除歌单',
-                  style: TextStyle(color: colorScheme.error),
-                ),
+                title: Text('删除歌单', style: TextStyle(color: colorScheme.error)),
                 contentPadding: EdgeInsets.zero,
               ),
             ),
@@ -1140,10 +1122,8 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
   Future<void> _showEditDialog(Playlist playlist) async {
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => _PlaylistEditDialog(
-        playlist: playlist,
-        playlistId: _playlistIdInt,
-      ),
+      builder: (context) =>
+          _PlaylistEditDialog(playlist: playlist, playlistId: _playlistIdInt),
     );
 
     if (result == true && mounted) {
@@ -1235,7 +1215,9 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
   }
 
   void _playSong(Song song, List<Song> songs, int index) {
-    ref.read(playerStateProvider.notifier).playPlaylist(
+    ref
+        .read(playerStateProvider.notifier)
+        .playPlaylist(
           songs,
           startIndex: index,
           sourcePlaylistId: _playlistIdInt,
@@ -1307,10 +1289,9 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
     if (result == null || !mounted) return;
 
     try {
-      final deleted = await ref.read(songsApiProvider).batchDeleteSongs(
-            ids.toList(),
-            deleteFiles: result.deleteFiles,
-          );
+      final deleted = await ref
+          .read(songsApiProvider)
+          .batchDeleteSongs(ids.toList(), deleteFiles: result.deleteFiles);
       ref.invalidate(playlistSongsProvider(_playlistIdInt));
       ref.invalidate(songsListProvider);
       _removeDeletedSongsFromPlayerQueue(ids);
@@ -1354,7 +1335,11 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline_rounded, size: 58, color: colorScheme.error),
+            Icon(
+              Icons.error_outline_rounded,
+              size: 58,
+              color: colorScheme.error,
+            ),
             const SizedBox(height: 14),
             Text('加载失败', style: theme.textTheme.titleMedium),
             const SizedBox(height: 7),
@@ -1413,9 +1398,8 @@ class _PlaylistCover extends StatelessWidget {
               child: CachedNetworkImage(
                 imageUrl: UrlHelper.buildCoverUrl(playlist.coverImageUrl!),
                 fit: BoxFit.cover,
-                placeholder: (_, _) => Container(
-                  color: colorScheme.surfaceContainerHighest,
-                ),
+                placeholder: (_, _) =>
+                    Container(color: colorScheme.surfaceContainerHighest),
                 errorWidget: (_, _, _) =>
                     _PlaylistCoverPlaceholder(playlist: playlist),
               ),
@@ -1437,10 +1421,7 @@ class _PlaylistCoverPlaceholder extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            colorScheme.primaryContainer,
-            colorScheme.tertiaryContainer,
-          ],
+          colors: [colorScheme.primaryContainer, colorScheme.tertiaryContainer],
         ),
       ),
       child: Icon(
@@ -1575,8 +1556,9 @@ class _PlaylistSongTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: isCurrent ? colorScheme.primary : null,
-                          fontWeight:
-                              isCurrent ? FontWeight.w800 : FontWeight.w700,
+                          fontWeight: isCurrent
+                              ? FontWeight.w800
+                              : FontWeight.w700,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -1662,17 +1644,13 @@ class _SongCover extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: coverUrl == null
-          ? Icon(
-              Icons.music_note_rounded,
-              color: colorScheme.onSurfaceVariant,
-            )
+          ? Icon(Icons.music_note_rounded, color: colorScheme.onSurfaceVariant)
           : ExcludeSemantics(
               child: CachedNetworkImage(
                 imageUrl: UrlHelper.buildCoverUrl(coverUrl),
                 fit: BoxFit.cover,
-                placeholder: (_, _) => Container(
-                  color: colorScheme.surfaceContainerHighest,
-                ),
+                placeholder: (_, _) =>
+                    Container(color: colorScheme.surfaceContainerHighest),
                 errorWidget: (_, _, _) => Icon(
                   Icons.music_note_rounded,
                   color: colorScheme.onSurfaceVariant,
@@ -1687,10 +1665,7 @@ class _PlaylistEditDialog extends ConsumerStatefulWidget {
   final Playlist playlist;
   final int playlistId;
 
-  const _PlaylistEditDialog({
-    required this.playlist,
-    required this.playlistId,
-  });
+  const _PlaylistEditDialog({required this.playlist, required this.playlistId});
 
   @override
   ConsumerState<_PlaylistEditDialog> createState() =>
@@ -1733,7 +1708,8 @@ class _PlaylistEditDialogState extends ConsumerState<_PlaylistEditDialog> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final hasCover = _coverMode != 'clear' &&
+    final hasCover =
+        _coverMode != 'clear' &&
         (_coverMode == 'local' ||
             _coverMode == 'song' ||
             widget.playlist.coverUrl?.isNotEmpty == true);
@@ -1949,9 +1925,8 @@ class _PlaylistEditDialogState extends ConsumerState<_PlaylistEditDialog> {
         child: CachedNetworkImage(
           imageUrl: UrlHelper.buildCoverUrl(previewUrl!),
           fit: BoxFit.cover,
-          placeholder: (_, _) => const Center(
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
+          placeholder: (_, _) =>
+              const Center(child: CircularProgressIndicator(strokeWidth: 2)),
           errorWidget: (_, _, _) => _buildPlaceholder(colorScheme),
         ),
       );
@@ -1965,10 +1940,7 @@ class _PlaylistEditDialogState extends ConsumerState<_PlaylistEditDialog> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            colorScheme.primaryContainer,
-            colorScheme.tertiaryContainer,
-          ],
+          colors: [colorScheme.primaryContainer, colorScheme.tertiaryContainer],
         ),
       ),
       child: Icon(

@@ -28,7 +28,9 @@ class MusicPathSetting {
           (json['exclude_paths'] as List?)?.map((e) => e as String).toList() ??
           <String>[],
       autoCreateExcludeDirs:
-          (json['auto_create_exclude_dirs'] as List?)?.map((e) => e as String).toList() ??
+          (json['auto_create_exclude_dirs'] as List?)
+              ?.map((e) => e as String)
+              .toList() ??
           <String>[],
     );
   }
@@ -114,13 +116,12 @@ class PluginRegistryConfig {
     String? name,
     bool? enabled,
     String? token,
-  }) =>
-      PluginRegistryConfig(
-        url: url ?? this.url,
-        name: name ?? this.name,
-        enabled: enabled ?? this.enabled,
-        token: token ?? this.token,
-      );
+  }) => PluginRegistryConfig(
+    url: url ?? this.url,
+    name: name ?? this.name,
+    enabled: enabled ?? this.enabled,
+    token: token ?? this.token,
+  );
 }
 
 /// 插件 Tab 条目
@@ -570,9 +571,7 @@ class SettingsApi {
     }
   }
 
-  Future<UserPreferences> updateUserPreferences(
-    UserPreferences prefs,
-  ) async {
+  Future<UserPreferences> updateUserPreferences(UserPreferences prefs) async {
     try {
       final response = await dio.put(
         '${AppConfig.apiPrefix}/settings/user-preferences',
@@ -697,7 +696,8 @@ class MetadataRefreshProgress {
 
   bool get isIdle => status == 'idle';
   bool get isRunning => status == 'running' || status == 'cancelling';
-  bool get isDone => status == 'done' || status == 'cancelled' || status == 'failed';
+  bool get isDone =>
+      status == 'done' || status == 'cancelled' || status == 'failed';
   int get completedCount => processed + failed;
   double get progress => total > 0 ? completedCount / total : 0;
 }

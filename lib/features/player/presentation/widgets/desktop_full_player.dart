@@ -108,10 +108,7 @@ class _DesktopFullPlayerState extends ConsumerState<DesktopFullPlayer>
       body: Stack(
         children: [
           Positioned.fill(
-            child: _PlayerBackground(
-              coverUrl: coverUrl,
-              palette: palette,
-            ),
+            child: _PlayerBackground(coverUrl: coverUrl, palette: palette),
           ),
           SafeArea(
             child: LayoutBuilder(
@@ -398,8 +395,9 @@ class _DesktopFullPlayerState extends ConsumerState<DesktopFullPlayer>
           ];
 
     return Row(
-      mainAxisAlignment:
-          alignEnd ? MainAxisAlignment.end : MainAxisAlignment.start,
+      mainAxisAlignment: alignEnd
+          ? MainAxisAlignment.end
+          : MainAxisAlignment.start,
       children: children,
     );
   }
@@ -427,8 +425,9 @@ class _NowPlayingCard extends StatelessWidget {
 
     final info = Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment:
-          horizontal ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      crossAxisAlignment: horizontal
+          ? CrossAxisAlignment.start
+          : CrossAxisAlignment.center,
       children: [
         Text(
           song.title,
@@ -565,10 +564,7 @@ class _ArtworkPlaceholder extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            colorScheme.primaryContainer,
-            colorScheme.tertiaryContainer,
-          ],
+          colors: [colorScheme.primaryContainer, colorScheme.tertiaryContainer],
         ),
       ),
       child: Icon(

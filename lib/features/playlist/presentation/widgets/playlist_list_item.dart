@@ -39,8 +39,7 @@ class PlaylistListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final highlighted =
-        (isSelectionMode && isSelected) || isCurrentPlaylist;
+    final highlighted = (isSelectionMode && isSelected) || isCurrentPlaylist;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -222,10 +221,7 @@ class PlaylistListItem extends StatelessWidget {
                 Icons.delete_outline_rounded,
                 color: colorScheme.error,
               ),
-              title: Text(
-                '删除',
-                style: TextStyle(color: colorScheme.error),
-              ),
+              title: Text('删除', style: TextStyle(color: colorScheme.error)),
               contentPadding: EdgeInsets.zero,
             ),
           ),
@@ -271,12 +267,10 @@ class _Cover extends StatelessWidget {
               child: CachedNetworkImage(
                 imageUrl: UrlHelper.buildCoverUrl(playlist.coverImageUrl!),
                 fit: BoxFit.cover,
-                placeholder: (_, _) => _CoverPlaceholder(
-                  isRadio: playlist.type == 'radio',
-                ),
-                errorWidget: (_, _, _) => _CoverPlaceholder(
-                  isRadio: playlist.type == 'radio',
-                ),
+                placeholder: (_, _) =>
+                    _CoverPlaceholder(isRadio: playlist.type == 'radio'),
+                errorWidget: (_, _, _) =>
+                    _CoverPlaceholder(isRadio: playlist.type == 'radio'),
               ),
             )
           else
@@ -310,10 +304,7 @@ class _CoverPlaceholder extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            colorScheme.primaryContainer,
-            colorScheme.tertiaryContainer,
-          ],
+          colors: [colorScheme.primaryContainer, colorScheme.tertiaryContainer],
         ),
       ),
       child: Icon(
@@ -349,8 +340,7 @@ class _RoundActionButton extends StatelessWidget {
         backgroundColor: selected
             ? colorScheme.primary
             : colorScheme.primaryContainer.withValues(alpha: 0.62),
-        foregroundColor:
-            selected ? colorScheme.onPrimary : colorScheme.primary,
+        foregroundColor: selected ? colorScheme.onPrimary : colorScheme.primary,
       ),
       icon: Icon(icon),
     );

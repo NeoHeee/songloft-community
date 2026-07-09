@@ -56,8 +56,7 @@ class _LyricAdjustPageState extends ConsumerState<LyricAdjustPage> {
   }
 
   bool get _hasChanges =>
-      _globalOffsetMs != 0 ||
-      _perLineDeltaMs.values.any((v) => v != 0);
+      _globalOffsetMs != 0 || _perLineDeltaMs.values.any((v) => v != 0);
 
   void _resetAll() {
     setState(() {
@@ -121,9 +120,9 @@ class _LyricAdjustPageState extends ConsumerState<LyricAdjustPage> {
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('保存失败：$e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('保存失败：$e')));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
