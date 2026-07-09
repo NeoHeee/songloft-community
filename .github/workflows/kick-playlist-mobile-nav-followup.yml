@@ -20,16 +20,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ui-redesign
-          fetch-depth: 0
-          show-progress: false
-
-      - name: Extract and apply prepared patch
+      - name: Clone branch and apply prepared patch
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          git clone --quiet --branch ui-redesign \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" source
+          cd source
           python - <<'PY'
           from pathlib import Path
           from textwrap import dedent
@@ -43,21 +42,7 @@ jobs:
           Path('/tmp/apply-followup.py').write_text(script, encoding='utf-8')
           print(f'Extracted {len(script.splitlines())} patch lines')
           PY
-
-          set +e
-          python /tmp/apply-followup.py > /tmp/followup-patch.log 2>&1
-          status=$?
-          set -e
-          cat /tmp/followup-patch.log
-          if [ "$status" -ne 0 ]; then
-            cp /tmp/followup-patch.log .github/followup-patch-error.log
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add .github/followup-patch-error.log
-            git commit -m "chore(ci): capture follow-up patch failure"
-            git push origin ui-redesign
-            exit "$status"
-          fi
+          python /tmp/apply-followup.py
 
       - uses: subosito/flutter-action@v2
         with:
@@ -66,6 +51,7 @@ jobs:
           cache: true
 
       - name: Format updated Dart sources
+        working-directory: source
         run: |
           dart format \
             lib/features/playlist/presentation/playlists_page.dart \
@@ -75,6 +61,7 @@ jobs:
             lib/shared/layouts/adaptive_scaffold.dart
 
       - name: Commit follow-up and remove one-shot workflows
+        working-directory: source
         shell: bash
         run: |
           rm -f \
