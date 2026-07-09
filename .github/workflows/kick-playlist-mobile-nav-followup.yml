@@ -1,0 +1,30 @@
+name: Kick playlist and mobile navigation follow-up
+
+on:
+  push:
+    branches:
+      - ui-redesign
+    paths:
+      - '.github/workflows/kick-playlist-mobile-nav-followup.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  kick:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui-redesign
+          fetch-depth: 0
+      - name: Trigger follow-up workflow
+        shell: bash
+        run: |
+          printf '\n# triggered by one-shot launcher\n' >> .github/workflows/apply-playlist-mobile-nav-followup.yml
+          rm -f .github/workflows/kick-playlist-mobile-nav-followup.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/apply-playlist-mobile-nav-followup.yml .github/workflows/kick-playlist-mobile-nav-followup.yml
+          git commit -m "chore(ci): trigger playlist and mobile navigation follow-up"
+          git push origin ui-redesign
