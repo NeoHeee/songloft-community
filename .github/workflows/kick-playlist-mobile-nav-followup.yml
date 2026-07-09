@@ -28,3 +28,5 @@ jobs:
           git add .github/workflows/apply-playlist-mobile-nav-followup.yml .github/workflows/kick-playlist-mobile-nav-followup.yml
           git commit -m "chore(ci): trigger playlist and mobile navigation follow-up"
           git push origin ui-redesign
+
+# second commit intentionally activates this one-shot workflow
