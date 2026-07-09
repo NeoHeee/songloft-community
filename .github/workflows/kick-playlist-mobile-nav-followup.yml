@@ -65,3 +65,5 @@ jobs:
           fi
           git commit -m "feat(ui): add playlist search and compact mobile navigation [platform-build]"
           git push origin ui-redesign
+
+# rerun after active destination alignment fix
