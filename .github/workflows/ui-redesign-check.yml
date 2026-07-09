@@ -8,6 +8,8 @@ on:
       - 'lib/**'
       - 'test/**'
       - 'web/**'
+      - 'android/**'
+      - 'windows/**'
       - 'pubspec.yaml'
       - '.github/workflows/ui-redesign-check.yml'
   pull_request:
@@ -17,6 +19,8 @@ on:
       - 'lib/**'
       - 'test/**'
       - 'web/**'
+      - 'android/**'
+      - 'windows/**'
       - 'pubspec.yaml'
       - '.github/workflows/ui-redesign-check.yml'
   workflow_dispatch:
@@ -82,5 +86,75 @@ jobs:
         with:
           name: songloft-web-preview
           path: build/web
+          if-no-files-found: error
+          retention-days: 14
+
+  build-android:
+    name: Build Android APKs
+    needs: analyze
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && contains(github.event.head_commit.message, '[platform-build]'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build release APKs
+        run: flutter build apk --release --split-per-abi
+      - name: Collect APKs
+        run: |
+          mkdir -p apk-output
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk apk-output/songloft-arm64-v8a.apk
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk apk-output/songloft-armeabi-v7a.apk
+          cp build/app/outputs/flutter-apk/app-x86_64-release.apk apk-output/songloft-x86_64.apk
+      - name: Upload Android preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-android-preview
+          path: apk-output/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  build-windows:
+    name: Build Windows x64
+    needs: analyze
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && contains(github.event.head_commit.message, '[platform-build]'))
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+      - name: Build Windows release
+        run: flutter build windows --release
+      - name: Package portable ZIP
+        shell: pwsh
+        run: |
+          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath songloft-windows-x64.zip
+      - name: Upload Windows preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-windows-preview
+          path: songloft-windows-x64.zip
           if-no-files-found: error
           retention-days: 14
