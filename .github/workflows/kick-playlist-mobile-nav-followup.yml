@@ -83,6 +83,26 @@ jobs:
               index = close_index + 1
 
           script = '\n'.join(lines) + '\n'
+          script = script.replace(
+              "                          onSelectionChanged: (selected) {\n"
+              "                              setState(() {\n"
+              "                                _selectedType = selected.first;\n"
+              "                              });\n"
+              "                            },",
+              "                          onSelectionChanged: (selected) {\n"
+              "                            setState(() {\n"
+              "                              _selectedType = selected.first;\n"
+              "                            });\n"
+              "                          },",
+          )
+          script = script.replace(
+              "                          onSelectionChanged: (selected) {\n"
+              "                              _changeSelectedType(selected.first);\n"
+              "                            },",
+              "                          onSelectionChanged: (selected) {\n"
+              "                            _changeSelectedType(selected.first);\n"
+              "                          },",
+          )
           Path('/tmp/apply-followup.py').write_text(script, encoding='utf-8')
           print(f'Extracted and normalized {len(lines)} patch lines')
           PY
