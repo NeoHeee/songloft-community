@@ -25,17 +25,187 @@ on:
       - '.github/workflows/ui-redesign-check.yml'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
   group: ui-check-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  apply-startup-fix:
+    name: Apply Windows startup fix
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui-redesign
+          fetch-depth: 0
+
+      - name: Apply visible startup screen and timeout guards
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('lib/main.dart')
+          text = path.read_text(encoding='utf-8')
+
+          if 'runApp(const _NativeBootstrapApp());' not in text:
+              text = text.replace(
+                  '  WidgetsFlutterBinding.ensureInitialized();\n',
+                  '  WidgetsFlutterBinding.ensureInitialized();\n\n'
+                  '  // Windows 原生窗口可能在完整初始化前先显示。立即提交可见首帧，\n'
+                  '  // 避免单实例、托盘、凭据或音频插件初始化缓慢时出现纯白窗口。\n'
+                  '  runApp(const _NativeBootstrapApp());\n',
+                  1,
+              )
+
+          text = text.replace(
+              '  await FileLogger.init();',
+              '  try {\n'
+              '    await FileLogger.init().timeout(const Duration(seconds: 3));\n'
+              '  } catch (_) {\n'
+              '    // 日志初始化失败不能阻止应用继续启动。\n'
+              '  }',
+              1,
+          )
+          text = text.replace(
+              '  AppConfig.isTvMode = await TvDetector.isTv();',
+              '  AppConfig.isTvMode = await TvDetector.isTv().timeout(\n'
+              '    const Duration(seconds: 3),\n'
+              '    onTimeout: () => false,\n'
+              '  );',
+              1,
+          )
+          text = text.replace(
+              '      final prefs = await AppPreferences.create();\n'
+              '      await prefs.migrateLegacyApiBaseUrl();',
+              '      final prefs = await AppPreferences.create().timeout(\n'
+              '        const Duration(seconds: 5),\n'
+              '      );\n'
+              '      await prefs.migrateLegacyApiBaseUrl().timeout(\n'
+              '        const Duration(seconds: 5),\n'
+              '      );',
+              1,
+          )
+          text = text.replace(
+              '    await SecureStorageService().getAccessToken();',
+              '    await SecureStorageService().getAccessToken().timeout(\n'
+              '      const Duration(seconds: 5),\n'
+              '    );',
+              1,
+          )
+
+          if 'class _NativeBootstrapApp extends StatelessWidget' not in text:
+              marker = '\nString _generateUserId() {'
+              widget = r'''
+
+class _NativeBootstrapApp extends StatelessWidget {
+  const _NativeBootstrapApp();
+
+  @override
+  Widget build(BuildContext context) {
+    const seed = Color(0xFF6750A4);
+    return MaterialApp(
+      title: 'Songloft',
+      debugShowCheckedModeBanner: false,
+      themeMode: ThemeMode.system,
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: seed),
+      ),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: seed,
+          brightness: Brightness.dark,
+        ),
+      ),
+      home: const Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _StartupMark(),
+              SizedBox(height: 24),
+              SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(strokeWidth: 2.6),
+              ),
+              SizedBox(height: 18),
+              Text('正在启动 Songloft…'),
+              SizedBox(height: 6),
+              Text(
+                '正在初始化音频与桌面服务',
+                style: TextStyle(fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StartupMark extends StatelessWidget {
+  const _StartupMark();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      width: 76,
+      height: 76,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [colors.primaryContainer, colors.tertiaryContainer],
+        ),
+        borderRadius: BorderRadius.circular(25),
+      ),
+      child: Icon(
+        Icons.graphic_eq_rounded,
+        size: 40,
+        color: colors.primary,
+      ),
+    );
+  }
+}
+'''
+              if marker not in text:
+                  raise SystemExit('main.dart insertion marker not found')
+              text = text.replace(marker, widget + marker, 1)
+
+          path.write_text(text, encoding='utf-8')
+
+          temporary = Path('.github/workflows/apply-windows-startup-fix.yml')
+          if temporary.exists():
+              temporary.unlink()
+
+      - name: Commit startup fix when needed
+        run: |
+          dart format lib/main.dart
+          if git diff --quiet; then
+            echo "Startup fix already applied"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/main.dart .github/workflows/apply-windows-startup-fix.yml
+          git commit -m "fix(windows): show startup screen before plugin initialization"
+          git push origin ui-redesign
+
   analyze:
     name: Flutter analyze
+    needs: apply-startup-fix
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ui-redesign
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.41.5'
@@ -72,6 +242,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ui-redesign
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.41.5'
@@ -99,6 +271,8 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ui-redesign
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -127,34 +301,104 @@ jobs:
           retention-days: 14
 
   build-windows:
-    name: Build Windows x64
+    name: Build and launch Windows x64
     needs: analyze
     if: >-
+      github.event_name == 'pull_request' ||
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'push' && contains(github.event.head_commit.message, '[platform-build]'))
     runs-on: windows-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout redesigned player
+        uses: actions/checkout@v4
+        with:
+          ref: ui-redesign
+
+      - name: Checkout Songloft backend
+        uses: actions/checkout@v4
+        with:
+          repository: NeoHeee/songloft
+          ref: main
+          path: _server
+          submodules: recursive
+          fetch-depth: 1
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+          cache: true
+          cache-dependency-path: _server/go.sum
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.41.5'
           channel: stable
           cache: true
-      - name: Install dependencies
+
+      - name: Install Flutter dependencies
         run: flutter pub get
-      - name: Enable Windows desktop
-        run: flutter config --enable-windows-desktop
-      - name: Build Windows release
-        run: flutter build windows --release
+
+      - name: Build bundled Go backend
+        working-directory: _server
+        shell: pwsh
+        run: |
+          go build -tags lite -o "$env:GITHUB_WORKSPACE\windows\runner\songloft-server.exe" .
+          if (-not (Test-Path "$env:GITHUB_WORKSPACE\windows\runner\songloft-server.exe")) {
+            throw 'Bundled backend was not produced'
+          }
+
+      - name: Build Windows release with backend
+        run: >-
+          flutter build windows --release
+          --dart-define=HAS_BACKEND=true
+          --dart-define=FRONTEND_VERSION=ui-white-screen-fix
+
+      - name: Verify complete bundle
+        shell: pwsh
+        run: |
+          $bundle = 'build\windows\x64\runner\Release'
+          $required = @(
+            'songloft_flutter.exe',
+            'songloft-server.exe',
+            'flutter_windows.dll',
+            'libmpv-2.dll',
+            'data\app.so',
+            'data\flutter_assets\AssetManifest.bin'
+          )
+          foreach ($item in $required) {
+            if (-not (Test-Path (Join-Path $bundle $item))) {
+              throw "Missing Windows bundle file: $item"
+            }
+          }
+
+      - name: Launch smoke test
+        shell: pwsh
+        run: |
+          $bundle = Resolve-Path 'build\windows\x64\runner\Release'
+          $exe = Join-Path $bundle 'songloft_flutter.exe'
+          $process = Start-Process -FilePath $exe -WorkingDirectory $bundle -PassThru
+          Start-Sleep -Seconds 18
+          $process.Refresh()
+          if ($process.HasExited) {
+            $logs = Get-ChildItem "$env:APPDATA" -Filter 'songloft_*.log' -Recurse -ErrorAction SilentlyContinue |
+              Sort-Object LastWriteTime -Descending |
+              Select-Object -First 1
+            if ($logs) { Get-Content $logs.FullName -Tail 200 }
+            throw "Songloft exited during startup with code $($process.ExitCode)"
+          }
+          Stop-Process -Id $process.Id -Force
+          Write-Host 'Songloft remained alive after the Windows startup smoke test.'
+
       - name: Package portable ZIP
         shell: pwsh
         run: |
-          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath songloft-windows-x64.zip
-      - name: Upload Windows preview
+          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath songloft-windows-x64-white-screen-fix.zip
+
+      - name: Upload Windows fixed preview
         uses: actions/upload-artifact@v4
         with:
-          name: songloft-windows-preview
-          path: songloft-windows-x64.zip
+          name: songloft-windows-white-screen-fix
+          path: songloft-windows-x64-white-screen-fix.zip
           if-no-files-found: error
           retention-days: 14
