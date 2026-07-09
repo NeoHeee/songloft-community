@@ -12,7 +12,7 @@ import '../../data/jsplugin_api.dart';
 import '../providers/jsplugin_provider.dart';
 import 'plugin_icon.dart';
 
-/// JS 插件入口网格组件
+/// JS 插件快捷入口网格
 class JSPluginGrid extends ConsumerWidget {
   const JSPluginGrid({super.key});
 
@@ -22,68 +22,104 @@ class JSPluginGrid extends ConsumerWidget {
 
     return pluginsAsync.when(
       data: (plugins) {
-        final activePlugins =
-            plugins
-                .where(
-                  (p) =>
-                      p.isActive &&
-                      p.entryPath != null &&
-                      p.entryPath!.isNotEmpty,
-                )
-                .toList();
+        final activePlugins = plugins
+            .where(
+              (plugin) =>
+                  plugin.isActive &&
+                  plugin.entryPath != null &&
+                  plugin.entryPath!.isNotEmpty,
+            )
+            .toList();
 
         if (activePlugins.isEmpty) {
           return const SizedBox.shrink();
         }
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'JS 插件',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            ),
-            const SizedBox(height: 12),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final containerWidth = constraints.maxWidth - 24;
-                final int crossAxisCount;
-                if (context.isMobile ||
-                    containerWidth < ResponsiveBreakpoints.tablet) {
-                  // 手机：每列约 90px，3-5 列自适应
-                  crossAxisCount = (containerWidth / 90).floor().clamp(3, 5);
-                } else if (containerWidth < ResponsiveBreakpoints.desktop) {
-                  // 平板：4-5 列
-                  crossAxisCount = (containerWidth / 110).floor().clamp(4, 5);
-                } else {
-                  // 桌面：5-8 列
-                  crossAxisCount = (containerWidth / 120).floor().clamp(5, 8);
-                }
+        final theme = Theme.of(context);
+        final colorScheme = theme.colorScheme;
 
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: crossAxisCount,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                    childAspectRatio: 0.88,
-                  ),
-                  itemCount: activePlugins.length,
-                  itemBuilder: (context, index) {
-                    final plugin = activePlugins[index];
-                    return _JSPluginCard(plugin: plugin);
-                  },
-                );
-              },
+        return Container(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.24),
             ),
-          ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: colorScheme.tertiaryContainer.withValues(
+                        alpha: 0.72,
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(
+                      Icons.extension_rounded,
+                      color: colorScheme.tertiary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '插件快捷入口',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          '${activePlugins.length} 个扩展已启用',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final width = constraints.maxWidth;
+                  final int crossAxisCount;
+                  if (context.isMobile ||
+                      width < ResponsiveBreakpoints.tablet) {
+                    crossAxisCount = (width / 104).floor().clamp(2, 4);
+                  } else if (width < ResponsiveBreakpoints.desktop) {
+                    crossAxisCount = (width / 128).floor().clamp(4, 5);
+                  } else {
+                    crossAxisCount = (width / 150).floor().clamp(4, 7);
+                  }
+
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      childAspectRatio: 0.95,
+                    ),
+                    itemCount: activePlugins.length,
+                    itemBuilder: (context, index) {
+                      return _JSPluginCard(plugin: activePlugins[index]);
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
         );
       },
       loading: () => const SizedBox.shrink(),
@@ -92,7 +128,6 @@ class JSPluginGrid extends ConsumerWidget {
   }
 }
 
-/// JS 插件卡片组件
 class _JSPluginCard extends StatelessWidget {
   final JSPlugin plugin;
 
@@ -100,38 +135,60 @@ class _JSPluginCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    return Card(
+    return Material(
+      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.58),
+      borderRadius: BorderRadius.circular(18),
       clipBehavior: Clip.antiAlias,
-      elevation: 0,
-      color: colorScheme.surfaceContainerLow,
       child: InkWell(
         onTap: () => _openPlugin(context),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          padding: const EdgeInsets.fromLTRB(10, 13, 10, 10),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // 顶部插件图标
-              PluginIcon(
-                iconUrl: plugin.iconUrl,
-                displayName: plugin.displayName,
-                size: 46,
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: PluginIcon(
+                  iconUrl: plugin.iconUrl,
+                  displayName: plugin.displayName,
+                  size: 46,
+                ),
               ),
-              const SizedBox(height: 8),
-              // 底部插件名称
+              const SizedBox(height: 10),
               Text(
                 plugin.displayName,
-                style: textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
+              if (plugin.version != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'v${plugin.version}',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -139,7 +196,6 @@ class _JSPluginCard extends StatelessWidget {
     );
   }
 
-  /// 打开插件入口
   void _openPlugin(BuildContext context) {
     if (plugin.entryPath == null || plugin.entryPath!.isEmpty) {
       return;
@@ -151,14 +207,12 @@ class _JSPluginCard extends StatelessWidget {
         Theme.of(context).brightness == Brightness.dark ? 'dark' : 'light';
 
     if (kIsWeb) {
-      // Web 平台：使用 launchUrl 在新标签页打开
       final token = SecureStorageService.cachedAccessToken ?? '';
       final params = <String>['theme=$theme'];
       if (token.isNotEmpty) params.add('access_token=$token');
       final webUrl = Uri.parse('$url?${params.join('&')}');
       launchUrl(webUrl, mode: LaunchMode.externalApplication);
     } else {
-      // 原生平台：应用内 WebView（主题由 WebView 页面自行处理）
       context.push(
         Uri(
           path: AppRoutes.plugin,
