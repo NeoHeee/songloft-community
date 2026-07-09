@@ -4,17 +4,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/url_helper.dart';
 import '../../../../shared/widgets/favorite_button.dart';
+import '../../../dlna/presentation/widgets/cast_button.dart';
 import '../../domain/player_state.dart';
 import '../providers/player_provider.dart';
 import 'desktop_full_player.dart';
-import 'play_controls.dart';
-import 'progress_bar.dart';
 import 'equalizer_panel.dart';
+import 'play_controls.dart';
 import 'popup_controls.dart';
+import 'progress_bar.dart';
 import 'volume_control.dart';
-import '../../../dlna/presentation/widgets/cast_button.dart';
 
-/// 桌面端底部播放器栏
+/// 桌面端悬浮播放坞
 class DesktopPlayer extends ConsumerWidget {
   const DesktopPlayer({super.key});
 
@@ -23,75 +23,79 @@ class DesktopPlayer extends ConsumerWidget {
     final state = ref.watch(playerStateProvider);
     final notifier = ref.read(playerStateProvider.notifier);
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    return Container(
-      height: 90,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          top: BorderSide(color: theme.colorScheme.outlineVariant, width: 1),
-        ),
-      ),
-      child: Column(
-        children: [
-          // 顶部进度条（可点击）
-          ClickableProgressBar(
-            position: state.currentTime,
-            duration: state.duration,
-            onSeek: notifier.seek,
-            height: 4,
-          ),
-          // 主内容
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  // 左侧：歌曲信息
-                  Expanded(flex: 3, child: _buildSongInfo(context, state)),
-                  // 中间：播放控制
-                  Expanded(
-                    flex: 4,
-                    child: _buildPlayControls(context, state, notifier),
-                  ),
-                  // 右侧：工具栏
-                  Expanded(
-                    flex: 3,
-                    child: _buildToolbar(context, state, notifier),
-                  ),
-                ],
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
+      child: Material(
+        color: colorScheme.surfaceContainerHigh,
+        elevation: 14,
+        shadowColor: Colors.black.withValues(alpha: 0.24),
+        borderRadius: BorderRadius.circular(24),
+        clipBehavior: Clip.antiAlias,
+        child: SizedBox(
+          height: 96,
+          child: Column(
+            children: [
+              SizedBox(
+                height: 4,
+                child: ClickableProgressBar(
+                  position: state.currentTime,
+                  duration: state.duration,
+                  onSeek: notifier.seek,
+                  height: 4,
+                ),
               ),
-            ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  child: Row(
+                    children: [
+                      Expanded(flex: 3, child: _buildSongInfo(context, state)),
+                      Expanded(
+                        flex: 4,
+                        child: _buildPlayControls(context, state, notifier),
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: _buildToolbar(context, state, notifier),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildSongInfo(BuildContext context, PlayerState state) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     if (!state.hasSong) {
       return Row(
         children: [
-          // 空封面
           Container(
-            width: 56,
-            height: 56,
+            width: 58,
+            height: 58,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(17),
+              color: colorScheme.primaryContainer.withValues(alpha: 0.5),
             ),
             child: Icon(
-              Icons.music_note_rounded,
-              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+              Icons.graphic_eq_rounded,
+              color: colorScheme.primary,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Text(
-            '无播放内容',
+            '准备播放音乐',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -103,7 +107,6 @@ class DesktopPlayer extends ConsumerWidget {
 
     return Row(
       children: [
-        // 可点击区域（封面+标题）
         Expanded(
           child: Semantics(
             button: true,
@@ -113,35 +116,38 @@ class DesktopPlayer extends ConsumerWidget {
               behavior: HitTestBehavior.opaque,
               child: Row(
                 children: [
-                  // 封面
                   Container(
-                    width: 56,
-                    height: 56,
+                    width: 58,
+                    height: 58,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      color: theme.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(17),
+                      color: colorScheme.surfaceContainerHighest,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.18),
+                          blurRadius: 12,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
                     ),
                     clipBehavior: Clip.antiAlias,
-                    child:
-                        coverUrl != null
-                            ? ExcludeSemantics(
-                              child: Image.network(
-                                UrlHelper.buildCoverUrl(coverUrl),
-                                fit: BoxFit.cover,
-                                errorBuilder:
-                                    (_, _, _) => Icon(
-                                      Icons.music_note_rounded,
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                    ),
+                    child: coverUrl != null
+                        ? ExcludeSemantics(
+                            child: Image.network(
+                              UrlHelper.buildCoverUrl(coverUrl),
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) => Icon(
+                                Icons.graphic_eq_rounded,
+                                color: colorScheme.primary,
                               ),
-                            )
-                            : Icon(
-                              Icons.music_note_rounded,
-                              color: theme.colorScheme.onSurfaceVariant,
                             ),
+                          )
+                        : Icon(
+                            Icons.graphic_eq_rounded,
+                            color: colorScheme.primary,
+                          ),
                   ),
-                  const SizedBox(width: 12),
-                  // 标题和艺术家
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -149,8 +155,9 @@ class DesktopPlayer extends ConsumerWidget {
                       children: [
                         Text(
                           song.title,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.2,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -159,7 +166,7 @@ class DesktopPlayer extends ConsumerWidget {
                         Text(
                           song.artist ?? '未知艺术家',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                            color: colorScheme.onSurfaceVariant,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -173,7 +180,6 @@ class DesktopPlayer extends ConsumerWidget {
           ),
         ),
         const SizedBox(width: 8),
-        // 收藏按钮
         FavoriteButton(songId: song.id, songType: song.type, size: 20),
       ],
     );
@@ -189,7 +195,6 @@ class DesktopPlayer extends ConsumerWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // 控制按钮
         PlayControls(
           isPlaying: state.isPlaying,
           hasPrev: state.hasPrev,
@@ -199,29 +204,30 @@ class DesktopPlayer extends ConsumerWidget {
           onPause: notifier.togglePlay,
           onPrev: notifier.playPrev,
           onNext: notifier.playNext,
-          size: 40,
+          size: 42,
         ),
         const SizedBox(height: 4),
-        // 时间显示
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               Formatters.formatDuration(state.currentTime.inSeconds.toDouble()),
-              style: theme.textTheme.bodySmall?.copyWith(
+              style: theme.textTheme.labelSmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
             Text(
-              ' / ',
-              style: theme.textTheme.bodySmall?.copyWith(
+              '  ·  ',
+              style: theme.textTheme.labelSmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             Text(
               Formatters.formatDuration(state.duration.inSeconds.toDouble()),
-              style: theme.textTheme.bodySmall?.copyWith(
+              style: theme.textTheme.labelSmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
           ],
@@ -241,29 +247,22 @@ class DesktopPlayer extends ConsumerWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // 播放模式
         _buildPlayModeButton(context, state, notifier, theme),
-        // 音量控制：使用响应式组件自动适配
         Flexible(
           child: ResponsiveVolumeControl(
             volume: state.volume,
             onVolumeChanged: notifier.setVolume,
           ),
         ),
-        // 均衡器
         IconButton(
           onPressed: () => showEqualizerSheet(context),
           icon: const Icon(Icons.equalizer_rounded, size: 20),
           tooltip: '均衡器',
           visualDensity: VisualDensity.compact,
         ),
-        // 投屏
         const CastButton(iconSize: 20, visualDensity: VisualDensity.compact),
-        // 睡眠定时
         _buildSleepTimerButton(context, state, notifier, theme),
-        // 歌词按钮
         _buildLyricsButton(context, state, theme),
-        // 播放列表
         IconButton(
           onPressed: notifier.togglePlaylistDrawer,
           icon: Icon(
@@ -278,7 +277,6 @@ class DesktopPlayer extends ConsumerWidget {
     );
   }
 
-  /// 构建播放模式按钮（使用自定义弹出层）
   Widget _buildPlayModeButton(
     BuildContext context,
     PlayerState state,
@@ -291,7 +289,6 @@ class DesktopPlayer extends ConsumerWidget {
     );
   }
 
-  /// 构建睡眠定时按钮（使用自定义弹出层）
   Widget _buildSleepTimerButton(
     BuildContext context,
     PlayerState state,
@@ -307,7 +304,6 @@ class DesktopPlayer extends ConsumerWidget {
     );
   }
 
-  /// 构建歌词按钮
   Widget _buildLyricsButton(
     BuildContext context,
     PlayerState state,
@@ -321,10 +317,9 @@ class DesktopPlayer extends ConsumerWidget {
       icon: Icon(
         Icons.lyrics_rounded,
         size: 20,
-        color:
-            hasLyrics
-                ? null
-                : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+        color: hasLyrics
+            ? null
+            : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
       ),
       tooltip: '歌词',
       visualDensity: VisualDensity.compact,
