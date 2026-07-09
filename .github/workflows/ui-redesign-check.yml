@@ -48,8 +48,13 @@ jobs:
           cache: true
       - name: Install dependencies
         run: flutter pub get
-      - name: Check formatting
-        run: dart format --output=none --set-exit-if-changed lib
+      - name: Format sources
+        run: dart format lib
+      - name: Verify formatting is committed
+        shell: bash
+        run: |
+          git diff --name-only -- lib
+          git diff --exit-code -- lib
       - name: Analyze
         run: flutter analyze
 
