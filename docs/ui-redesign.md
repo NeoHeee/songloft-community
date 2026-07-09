@@ -35,6 +35,16 @@
 - 重构歌单内搜索、播放、添加、多选、批量删除和永久排序操作。
 - 重构插件管理：状态统计、搜索筛选、响应式卡片、上传、更新、强制安装和清理残留。
 
+## 第五阶段（已完成）
+
+- Android 启动页从默认纯白背景改为随系统明暗模式切换的紫色渐变，并复用现有应用图标。
+- Web/PWA 浏览器主题改为新版紫色体系，补充 `theme-color`、深浅色声明和 iOS Web App 元数据。
+- PWA 取消强制竖屏，支持手机和平板横竖屏自适应。
+- 新建服务端 `ui-redesign-integration` 分支和集成工作流。
+- 使用固定前端 Commit 构建嵌入式 Flutter Web、Go 完整版二进制和 Docker 镜像。
+- Docker 容器启动后验证首页、部署模式、主程序 JS 与 CanvasKit 均可访问。
+- 输出可通过 `docker load` 导入的 NAS 测试镜像包。
+
 ## 工程验证
 
 - GitHub Actions 自动执行依赖安装、Dart 格式检查和 `flutter analyze`。
@@ -42,15 +52,18 @@
 - Flutter Web Release 已完成编译验证，并上传 `songloft-web-preview`。
 - Android Release 已完成三种 ABI 构建：`arm64-v8a`、`armeabi-v7a`、`x86_64`。
 - Windows x64 Release 已完成编译并生成便携 ZIP。
-- Web、Android、Windows 预览产物默认保留 14 天。
+- 嵌入式 Web 已通过本地 CanvasKit、字体、部署模式和 Brotli/Gzip 资源完整性验证。
+- Linux AMD64 Go 完整版已成功嵌入新版 Web UI。
+- Docker 镜像已成功构建、启动并通过 HTTP 冒烟测试。
+- Web、Android、Windows、Linux 和 Docker 预览产物默认保留 14 天。
 - Android 与 Windows 构建采用按需触发，避免普通 UI 提交重复消耗构建资源。
 
 ## 后续阶段
 
-1. 完成手机、平板、桌面端视觉回归和交互细节修正。
-2. 增加 Docker / Songloft 服务端内嵌 Web 构建验证。
-3. 完成正式品牌名称、应用图标和启动页替换。
-4. 整理合并说明，并评估是否合并到 `main`。
+1. 使用真实音乐库完成手机、平板、桌面端视觉回归和交互细节修正。
+2. 根据最终确认的品牌素材统一 Android、iOS、Windows、macOS 与 Web 图标。
+3. 优化 iOS 启动页和 Windows 可执行文件内部名称等发行元数据。
+4. 整理合并策略，并在确认后分别合并客户端和服务端集成 PR。
 
 ## 设计原则
 
