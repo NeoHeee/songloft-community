@@ -94,7 +94,6 @@ jobs:
     needs: analyze
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      github.event_name == 'pull_request' ||
       (github.event_name == 'push' && contains(github.event.head_commit.message, '[platform-build]'))
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -132,7 +131,6 @@ jobs:
     needs: analyze
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      github.event_name == 'pull_request' ||
       (github.event_name == 'push' && contains(github.event.head_commit.message, '[platform-build]'))
     runs-on: windows-latest
     timeout-minutes: 45
