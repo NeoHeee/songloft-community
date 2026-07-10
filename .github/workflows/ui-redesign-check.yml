@@ -38,7 +38,7 @@ concurrency:
 
 jobs:
   analyze:
-    name: Flutter analyze
+    name: Flutter analyze and theme tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -53,7 +53,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Format working copy
-        run: dart format lib
+        run: dart format lib test
+      - name: Run theme pack tests
+        run: flutter test test/core/theme/theme_pack_test.dart
       - name: Analyze
         run: flutter analyze
 
