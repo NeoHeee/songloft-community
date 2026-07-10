@@ -82,7 +82,7 @@
 - Docker 镜像已成功构建、启动并通过 HTTP 冒烟测试。
 - Web、Android、Windows、Linux 和 Docker 预览产物默认保留 14 天。
 - Android 与 Windows 构建采用按需触发，避免普通 UI 提交重复消耗构建资源。
-- 在线主题目录完整验证：GitHub Actions Run `29068028016`，验证提交 `abca19f72335eab1c7c281f8da15e956e3dd22f7`。
+- 在线主题目录完整验证：GitHub Actions Run `29068028016`，验证提交 `abca19f72335eab1c7c281f8da15e956e3dd22f7`；之后仅补充说明文档。
 
 ## 后续阶段
 
