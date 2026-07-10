@@ -1,0 +1,47 @@
+name: Normalize theme sharing formatting
+
+on:
+  push:
+    branches:
+      - ui-redesign
+    paths:
+      - '.github/workflows/format-theme-sharing.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/format-theme-sharing.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui-redesign
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Normalize Dart formatting
+        run: dart format lib test
+      - name: Show formatting changes
+        run: git status --short
+      - name: Commit normalized formatting
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib test
+          if git diff --cached --quiet; then
+            echo "No formatting changes"
+            exit 0
+          fi
+          git commit -m "style: normalize Dart formatting [platform-build]"
+          git push origin ui-redesign
