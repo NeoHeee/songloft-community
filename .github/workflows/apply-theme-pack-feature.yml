@@ -1,0 +1,68 @@
+name: Apply theme pack feature
+
+on:
+  push:
+    branches:
+      - ui-redesign
+    paths:
+      - '.github/workflows/apply-theme-pack-feature.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui-redesign
+          fetch-depth: 0
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+
+      - name: Apply integration patch
+        run: python scripts/apply-theme-pack-feature.py
+
+      - name: Format changed sources
+        run: |
+          dart format \
+            lib/main.dart \
+            lib/core/theme/app_theme.dart \
+            lib/core/theme/theme_pack.dart \
+            lib/core/theme/theme_pack_provider.dart \
+            lib/core/theme/theme_tokens.dart \
+            lib/features/settings/presentation/settings_page.dart \
+            lib/features/settings/presentation/widgets/theme_pack_manager.dart \
+            lib/shared/layouts/redesigned_desktop_shell.dart \
+            lib/features/player/presentation/widgets/mini_player.dart
+
+      - name: Install dependencies and analyze
+        run: |
+          flutter pub get
+          flutter analyze
+
+      - name: Commit integrated feature
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            lib/main.dart \
+            lib/core/theme/app_theme.dart \
+            lib/core/theme/theme_pack.dart \
+            lib/core/theme/theme_pack_provider.dart \
+            lib/core/theme/theme_tokens.dart \
+            lib/features/settings/presentation/settings_page.dart \
+            lib/features/settings/presentation/widgets/theme_pack_manager.dart \
+            lib/shared/layouts/redesigned_desktop_shell.dart \
+            lib/features/player/presentation/widgets/mini_player.dart \
+            docs/theme-packs.md \
+            examples/themes/aurora-purple.songloft-theme
+          git commit -m "feat(theme): add custom theme pack support [platform-build]"
+          git push origin ui-redesign
