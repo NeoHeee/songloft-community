@@ -163,7 +163,7 @@ community-aurora-purple-v1.0.0.songloft-theme
 
 后续规范版本可增加打包图片资源，但必须继续采用白名单字段、文件大小限制、资源数量限制和路径校验。
 
-## 自动化测试
+## 自动化测试与发布验证
 
 仓库中的 `test/core/theme/theme_pack_test.dart` 覆盖以下规则：
 
@@ -177,3 +177,5 @@ community-aurora-purple-v1.0.0.songloft-theme
 - 颜色格式校验
 - 播放器渐变数量校验
 - 圆角范围校验
+
+GitHub Actions Run `29066765978` 已通过严格格式检查、主题包测试、`flutter analyze`、Flutter Web Release、Android 三种 ABI Release 以及 Windows x64 完整便携包构建。对应功能验证提交为 `dad8b0ca4fe8428b49a3b31cb137d4269fde5208`。
