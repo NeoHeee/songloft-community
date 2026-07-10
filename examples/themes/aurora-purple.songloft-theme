@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "community-aurora-purple",
+  "name": "极光紫",
+  "version": "1.0.0",
+  "author": "Songloft Community",
+  "description": "紫色、靛蓝与青色渐变组成的示例主题包。",
+  "light": {
+    "seed": "#7057FF",
+    "background": "#F6F4FF",
+    "surface": "#FFFFFF",
+    "secondary": "#3C7DFF",
+    "tertiary": "#00AFC7",
+    "playerGradient": ["#7057FF", "#00AFC7"],
+    "cardRadius": 24,
+    "controlRadius": 16,
+    "navigationRadius": 17
+  },
+  "dark": {
+    "seed": "#A18DFF",
+    "background": "#0A0B14",
+    "surface": "#151725",
+    "secondary": "#75A5FF",
+    "tertiary": "#56D7E5",
+    "playerGradient": ["#8169FF", "#16A8C3"],
+    "cardRadius": 24,
+    "controlRadius": 16,
+    "navigationRadius": 17
+  }
+}
