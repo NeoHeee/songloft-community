@@ -6,9 +6,14 @@ on:
       - ui-redesign
     paths:
       - '.github/workflows/apply-theme-pack-feature.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/apply-theme-pack-feature.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   apply:
@@ -47,24 +52,19 @@ jobs:
           flutter pub get
           flutter analyze
 
-      - name: Commit integrated feature
-        shell: bash
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            lib/main.dart \
-            lib/core/theme/app_theme.dart \
-            lib/core/theme/theme_pack.dart \
-            lib/core/theme/theme_pack_provider.dart \
-            lib/core/theme/theme_tokens.dart \
-            lib/features/settings/presentation/settings_page.dart \
-            lib/features/settings/presentation/widgets/theme_pack_manager.dart \
-            lib/shared/layouts/redesigned_desktop_shell.dart \
-            lib/features/player/presentation/widgets/mini_player.dart \
-            docs/theme-packs.md \
-            examples/themes/aurora-purple.songloft-theme
-          git commit -m "feat(theme): add custom theme pack support [platform-build]"
-          git push origin ui-redesign
-
-# one-shot integration trigger
+      - name: Upload integrated sources
+        uses: actions/upload-artifact@v4
+        with:
+          name: theme-pack-integrated-sources
+          path: |
+            lib/main.dart
+            lib/core/theme/app_theme.dart
+            lib/core/theme/theme_pack.dart
+            lib/core/theme/theme_pack_provider.dart
+            lib/core/theme/theme_tokens.dart
+            lib/features/settings/presentation/settings_page.dart
+            lib/features/settings/presentation/widgets/theme_pack_manager.dart
+            lib/shared/layouts/redesigned_desktop_shell.dart
+            lib/features/player/presentation/widgets/mini_player.dart
+          if-no-files-found: error
+          retention-days: 7
