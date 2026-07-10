@@ -253,26 +253,48 @@ class _DashboardHeader extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: [
-                        _Metric(
-                          icon: Icons.queue_music_rounded,
-                          value: '$normalCount',
-                          label: '歌单',
-                        ),
-                        _Metric(
-                          icon: Icons.radio_rounded,
-                          value: '$radioCount',
-                          label: '电台',
-                        ),
-                        const _Metric(
-                          icon: Icons.cloud_done_rounded,
-                          value: '在线',
-                          label: '音乐库',
-                        ),
-                      ],
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final compact = constraints.maxWidth < 600;
+                        final metrics = <Widget>[
+                          _Metric(
+                            icon: Icons.queue_music_rounded,
+                            value: '$normalCount',
+                            label: '歌单',
+                            compact: compact,
+                          ),
+                          _Metric(
+                            icon: Icons.radio_rounded,
+                            value: '$radioCount',
+                            label: '电台',
+                            compact: compact,
+                          ),
+                          _Metric(
+                            icon: Icons.cloud_done_rounded,
+                            value: '在线',
+                            label: '音乐库',
+                            compact: compact,
+                          ),
+                        ];
+
+                        if (!compact) {
+                          return Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: metrics,
+                          );
+                        }
+
+                        return Row(
+                          children: [
+                            for (var i = 0; i < metrics.length; i++) ...[
+                              Expanded(child: metrics[i]),
+                              if (i != metrics.length - 1)
+                                const SizedBox(width: 8),
+                            ],
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -316,38 +338,52 @@ class _Metric extends StatelessWidget {
   final IconData icon;
   final String value;
   final String label;
+  final bool compact;
 
-  const _Metric({required this.icon, required this.value, required this.label});
+  const _Metric({
+    required this.icon,
+    required this.value,
+    required this.label,
+    this.compact = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+      alignment: Alignment.center,
+      padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 13, vertical: 9),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(14),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 17, color: Colors.white),
-          const SizedBox(width: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: compact ? 16 : 17, color: Colors.white),
+            SizedBox(width: compact ? 5 : 8),
+            Text(
+              value,
+              maxLines: 1,
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: compact ? 14 : null,
+              ),
             ),
-          ),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.72),
-              fontWeight: FontWeight.w600,
+            SizedBox(width: compact ? 3 : 5),
+            Text(
+              label,
+              maxLines: 1,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.72),
+                fontWeight: FontWeight.w600,
+                fontSize: compact ? 14 : null,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
