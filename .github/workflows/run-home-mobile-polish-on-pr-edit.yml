@@ -1,0 +1,71 @@
+name: Run home mobile polish on PR edit
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - edited
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.pull_request.head.ref == 'ui-redesign'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui-redesign
+          fetch-depth: 0
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+
+      - name: Execute requested source patch
+        shell: python
+        run: |
+          from pathlib import Path
+
+          workflow = Path('.github/workflows/apply-home-mobile-polish.yml')
+          text = workflow.read_text(encoding='utf-8')
+          start = (
+              "      - name: Apply requested home changes\n"
+              "        shell: python\n"
+              "        run: |\n"
+          )
+          end = "\n      - name: Format and validate\n"
+          if start not in text or end not in text:
+              raise RuntimeError('Unable to locate embedded source patch')
+          block = text.split(start, 1)[1].split(end, 1)[0]
+          script = '\n'.join(
+              line[10:] if line.startswith('          ') else line
+              for line in block.splitlines()
+          )
+          exec(compile(script, str(workflow), 'exec'), {})
+
+      - name: Format and validate
+        run: |
+          dart format \
+            lib/core/storage/app_preferences.dart \
+            lib/features/home/presentation/home_page.dart \
+            lib/features/jsplugin/presentation/widgets/jsplugin_grid.dart
+          flutter pub get
+          flutter analyze
+          git diff --check
+
+      - name: Commit changes
+        run: |
+          git config user.name "Songloft UI Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add \
+            lib/core/storage/app_preferences.dart \
+            lib/features/home/presentation/home_page.dart \
+            lib/features/jsplugin/presentation/widgets/jsplugin_grid.dart
+          git commit -m "feat(home): customize plugin shortcuts and keep greeting on one line"
+          git push origin HEAD:ui-redesign
