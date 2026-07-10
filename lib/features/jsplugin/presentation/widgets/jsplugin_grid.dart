@@ -40,7 +40,7 @@ class HomePluginHiddenEntriesNotifier extends AsyncNotifier<Set<String>> {
   }
 
   Future<void> showAll() async {
-    state = const AsyncData(<String>{});
+    state = const AsyncData<Set<String>>(<String>{});
     final prefs = await AppPreferences.create();
     await prefs.setHiddenHomePluginEntries(const <String>{});
   }
@@ -65,15 +65,15 @@ class JSPluginGrid extends ConsumerWidget {
                   plugin.entryPath!.isNotEmpty,
             )
             .toList();
-        final hiddenEntries = hiddenEntriesAsync.value ?? const <String>{};
-        final visiblePlugins = activePlugins
-            .where((plugin) => !hiddenEntries.contains(plugin.entryPath))
-            .toList();
 
         if (activePlugins.isEmpty) {
           return const SizedBox.shrink();
         }
 
+        final hiddenEntries = hiddenEntriesAsync.value ?? const <String>{};
+        final visiblePlugins = activePlugins
+            .where((plugin) => !hiddenEntries.contains(plugin.entryPath))
+            .toList();
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
 
@@ -232,10 +232,9 @@ class _PluginVisibilitySheet extends ConsumerWidget {
     final hiddenEntries = hiddenEntriesAsync.value ?? const <String>{};
 
     return SafeArea(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxHeight: 620),
+      child: FractionallySizedBox(
+        heightFactor: 0.72,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 4, 12, 12),
@@ -273,7 +272,7 @@ class _PluginVisibilitySheet extends ConsumerWidget {
               ),
             ),
             const Divider(height: 1),
-            Flexible(
+            Expanded(
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 itemCount: plugins.length,
@@ -290,6 +289,10 @@ class _PluginVisibilitySheet extends ConsumerWidget {
                         : (value) => ref
                               .read(homePluginHiddenEntriesProvider.notifier)
                               .setVisible(entryPath, visible: value),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 2,
+                    ),
                     secondary: Container(
                       width: 44,
                       height: 44,
@@ -309,9 +312,9 @@ class _PluginVisibilitySheet extends ConsumerWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    subtitle: plugin.version == null
-                        ? null
-                        : Text('v${plugin.version}'),
+                    subtitle: plugin.version == null || plugin.version!.isEmpty
+                        ? const Text('已启用')
+                        : Text('版本 ${plugin.version}'),
                   );
                 },
               ),
