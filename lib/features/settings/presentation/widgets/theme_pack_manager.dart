@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -108,12 +107,8 @@ class ThemePackManager extends ConsumerWidget {
                       pack: pack,
                       selected: pack.id == state.selectedId,
                       onSelected: () => _selectTheme(context, ref, pack),
-                      onAction: (action) => _handlePackAction(
-                        context,
-                        ref,
-                        pack,
-                        action,
-                      ),
+                      onAction: (action) =>
+                          _handlePackAction(context, ref, pack, action),
                     );
                   },
                 ),
@@ -212,6 +207,7 @@ class ThemePackManager extends ConsumerWidget {
       final isUpdate = currentState.customPacks.any(
         (installed) => installed.id == pack.id,
       );
+      if (!context.mounted) return;
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (dialogContext) => _ThemeImportPreviewDialog(
@@ -250,12 +246,16 @@ class ThemePackManager extends ConsumerWidget {
           context: context,
           builder: (_) => _ThemePackDetailsDialog(pack: pack),
         );
+        break;
       case _ThemePackAction.copyJson:
         await _copyThemeJson(context, pack);
+        break;
       case _ThemePackAction.export:
         await _exportThemePack(context, pack);
+        break;
       case _ThemePackAction.delete:
         await _confirmDelete(context, ref, pack);
+        break;
     }
   }
 
@@ -287,10 +287,7 @@ class ThemePackManager extends ConsumerWidget {
         bytes: bytes,
       );
       if (outputPath == null || !context.mounted) return;
-      ResponsiveSnackBar.showSuccess(
-        context,
-        message: '主题包“${pack.name}”已导出',
-      );
+      ResponsiveSnackBar.showSuccess(context, message: '主题包“${pack.name}”已导出');
     } catch (e) {
       if (!context.mounted) return;
       ResponsiveSnackBar.showError(context, message: '导出失败：$e');
@@ -350,13 +347,9 @@ class ThemePackManager extends ConsumerWidget {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   const _GuideLine(text: 'schemaVersion 当前固定为 1'),
-                  const _GuideLine(
-                    text: 'id 使用小写字母、数字、点、下划线或短横线，长度 3-64',
-                  ),
+                  const _GuideLine(text: 'id 使用小写字母、数字、点、下划线或短横线，长度 3-64'),
                   const _GuideLine(text: 'light 和 dark 必须同时提供'),
-                  const _GuideLine(
-                    text: '颜色使用 #RRGGBB 或 #AARRGGBB；圆角范围为 0-40',
-                  ),
+                  const _GuideLine(text: '颜色使用 #RRGGBB 或 #AARRGGBB；圆角范围为 0-40'),
                   const _GuideLine(text: '单个主题包最大 128 KB，最多安装 32 个'),
                   const _GuideLine(text: '同一自定义 id 再次导入会显示更新提示'),
                   const SizedBox(height: AppSpacing.md),
@@ -653,18 +646,18 @@ class _ThemePackDetailsDialog extends StatelessWidget {
               const SizedBox(height: AppSpacing.lg),
               Text(
                 '浅色配色',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: AppSpacing.sm),
               _PaletteDetails(palette: pack.light),
               const SizedBox(height: AppSpacing.lg),
               Text(
                 '深色配色',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: AppSpacing.sm),
               _PaletteDetails(palette: pack.dark),
@@ -708,9 +701,9 @@ class _ThemePackSummary extends StatelessWidget {
             children: [
               Text(
                 pack.name,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 2),
               Text(
@@ -867,9 +860,7 @@ class _PaletteDetails extends StatelessWidget {
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.sm,
           children: colors
-              .map(
-                (entry) => _ColorChip(label: entry.$1, color: entry.$2),
-              )
+              .map((entry) => _ColorChip(label: entry.$1, color: entry.$2))
               .toList(growable: false),
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -904,9 +895,7 @@ class _ColorChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: AppRadius.smAll,
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outlineVariant,
-        ),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

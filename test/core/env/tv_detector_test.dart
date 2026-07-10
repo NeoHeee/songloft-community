@@ -15,11 +15,11 @@ void main() {
   test('isTv returns true when method channel returns true', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
-      if (methodCall.method == 'isTvMode') {
-        return true;
-      }
-      return null;
-    });
+          if (methodCall.method == 'isTvMode') {
+            return true;
+          }
+          return null;
+        });
 
     final isTv = await TvDetector.isTv();
     expect(isTv, isTrue);
@@ -28,11 +28,11 @@ void main() {
   test('isTv returns false when method channel returns false', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
-      if (methodCall.method == 'isTvMode') {
-        return false;
-      }
-      return null;
-    });
+          if (methodCall.method == 'isTvMode') {
+            return false;
+          }
+          return null;
+        });
 
     final isTv = await TvDetector.isTv();
     expect(isTv, isFalse);
@@ -41,8 +41,8 @@ void main() {
   test('isTv returns false on MissingPluginException', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
-      throw MissingPluginException();
-    });
+          throw MissingPluginException();
+        });
 
     final isTv = await TvDetector.isTv();
     expect(isTv, isFalse);

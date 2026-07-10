@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:songloft_flutter/shared/widgets/tv_focusable.dart';
 
 void main() {
-  testWidgets('TvFocusable responds to focus and selection', (WidgetTester tester) async {
+  testWidgets('TvFocusable responds to focus and selection', (
+    WidgetTester tester,
+  ) async {
     bool tapped = false;
     final focusNode = FocusNode();
 

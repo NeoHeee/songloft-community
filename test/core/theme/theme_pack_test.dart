@@ -28,7 +28,10 @@ void main() {
 
       final pack = SongloftThemePack.fromJson(json);
 
-      expect(pack.light.playerGradient, [const Color(0xFF6750A4), const Color(0xFF6750A4)]);
+      expect(pack.light.playerGradient, [
+        const Color(0xFF6750A4),
+        const Color(0xFF6750A4),
+      ]);
       expect(pack.light.cardRadius, 22);
       expect(pack.light.controlRadius, 15);
       expect(pack.light.navigationRadius, 16);
@@ -36,7 +39,9 @@ void main() {
 
     test('round-trips through pretty JSON', () {
       final original = SongloftThemePack.fromJson(_validThemeJson());
-      final restored = SongloftThemePack.fromJsonString(original.toPrettyJson());
+      final restored = SongloftThemePack.fromJsonString(
+        original.toPrettyJson(),
+      );
 
       expect(restored.id, original.id);
       expect(restored.name, original.name);
