@@ -1,25 +1,18 @@
 name: Apply mobile metric row
 
 on:
-  push:
-    branches:
-      - ui-redesign
-    paths:
-      - '.github/workflows/apply-metric-row-mobile.yml'
   pull_request:
     branches:
       - main
     types:
-      - edited
+      - synchronize
 
 permissions:
   contents: write
 
 jobs:
   apply:
-    if: >-
-      github.event_name == 'push' ||
-      github.event.pull_request.head.ref == 'ui-redesign'
+    if: github.event.pull_request.head.ref == 'ui-redesign'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -41,6 +34,10 @@ jobs:
 
           path = Path('lib/features/home/presentation/home_page.dart')
           text = path.read_text(encoding='utf-8')
+
+          if "final compact = constraints.maxWidth < 600;" in text:
+              print('Metric row already patched')
+              raise SystemExit(0)
 
           old = '''                    Wrap(
                       spacing: 10,
@@ -185,6 +182,10 @@ jobs:
 
       - name: Commit change
         run: |
+          if git diff --quiet; then
+            echo "No source change needed"
+            exit 0
+          fi
           git config user.name "Songloft UI Bot"
           git config user.email "actions@users.noreply.github.com"
           git add lib/features/home/presentation/home_page.dart
