@@ -170,3 +170,5 @@ jobs:
           path: songloft-windows-x64.zip
           retention-days: 14
           if-no-files-found: error
+
+# verifies theme preview, export, sharing, tests and formatted release sources
