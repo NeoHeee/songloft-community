@@ -1,0 +1,44 @@
+name: Build latest mobile APKs
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - edited
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: github.event.pull_request.head.ref == 'ui-redesign'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui-redesign
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Build release APKs
+        run: flutter build apk --release --split-per-abi
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-mobile-apk-latest
+          path: build/app/outputs/flutter-apk/*-release.apk
+          retention-days: 14
+          if-no-files-found: error
