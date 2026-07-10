@@ -38,8 +38,23 @@ jobs:
       - name: Run theme system tests
         run: flutter test test/core/theme
       - name: Analyze
-        run: flutter analyze
+        shell: bash
+        run: |
+          set +e
+          flutter analyze > theme-catalog-analyze.log 2>&1
+          status=$?
+          cat theme-catalog-analyze.log
+          exit "$status"
+      - name: Upload analyzer log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: theme-catalog-analyzer-log
+          path: theme-catalog-analyze.log
+          if-no-files-found: warn
+          retention-days: 7
       - name: Commit catalog integration
+        if: success()
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
