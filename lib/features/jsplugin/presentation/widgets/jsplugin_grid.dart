@@ -6,11 +6,45 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../config/app_config.dart';
 import '../../../../core/router/app_router.dart';
+import '../../../../core/storage/app_preferences.dart';
 import '../../../../core/storage/secure_storage.dart';
 import '../../../../core/theme/responsive.dart';
 import '../../data/jsplugin_api.dart';
 import '../providers/jsplugin_provider.dart';
 import 'plugin_icon.dart';
+
+/// 首页插件入口隐藏状态。仅控制首页展示，不改变插件启用状态。
+final homePluginHiddenEntriesProvider =
+    AsyncNotifierProvider<HomePluginHiddenEntriesNotifier, Set<String>>(
+      HomePluginHiddenEntriesNotifier.new,
+    );
+
+class HomePluginHiddenEntriesNotifier extends AsyncNotifier<Set<String>> {
+  @override
+  Future<Set<String>> build() async {
+    final prefs = await AppPreferences.create();
+    return prefs.getHiddenHomePluginEntries();
+  }
+
+  Future<void> setVisible(String entryPath, {required bool visible}) async {
+    final current = state.value ?? const <String>{};
+    final next = <String>{...current};
+    if (visible) {
+      next.remove(entryPath);
+    } else {
+      next.add(entryPath);
+    }
+    state = AsyncData(next);
+    final prefs = await AppPreferences.create();
+    await prefs.setHiddenHomePluginEntries(next);
+  }
+
+  Future<void> showAll() async {
+    state = const AsyncData(<String>{});
+    final prefs = await AppPreferences.create();
+    await prefs.setHiddenHomePluginEntries(const <String>{});
+  }
+}
 
 /// JS 插件快捷入口网格
 class JSPluginGrid extends ConsumerWidget {
@@ -19,18 +53,22 @@ class JSPluginGrid extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pluginsAsync = ref.watch(jsPluginsProvider);
+    final hiddenEntriesAsync = ref.watch(homePluginHiddenEntriesProvider);
 
     return pluginsAsync.when(
       data: (plugins) {
-        final activePlugins =
-            plugins
-                .where(
-                  (plugin) =>
-                      plugin.isActive &&
-                      plugin.entryPath != null &&
-                      plugin.entryPath!.isNotEmpty,
-                )
-                .toList();
+        final activePlugins = plugins
+            .where(
+              (plugin) =>
+                  plugin.isActive &&
+                  plugin.entryPath != null &&
+                  plugin.entryPath!.isNotEmpty,
+            )
+            .toList();
+        final hiddenEntries = hiddenEntriesAsync.value ?? const <String>{};
+        final visiblePlugins = activePlugins
+            .where((plugin) => !hiddenEntries.contains(plugin.entryPath))
+            .toList();
 
         if (activePlugins.isEmpty) {
           return const SizedBox.shrink();
@@ -79,7 +117,7 @@ class JSPluginGrid extends ConsumerWidget {
                           ),
                         ),
                         Text(
-                          '${activePlugins.length} 个扩展已启用',
+                          '${visiblePlugins.length} 个显示 · ${activePlugins.length} 个已启用',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                           ),
@@ -87,44 +125,200 @@ class JSPluginGrid extends ConsumerWidget {
                       ],
                     ),
                   ),
+                  IconButton.filledTonal(
+                    tooltip: '选择快捷入口',
+                    onPressed: () =>
+                        _showVisibilitySheet(context, activePlugins),
+                    icon: const Icon(Icons.tune_rounded),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final width = constraints.maxWidth;
-                  final int crossAxisCount;
-                  if (context.isMobile ||
-                      width < ResponsiveBreakpoints.tablet) {
-                    crossAxisCount = (width / 104).floor().clamp(2, 4);
-                  } else if (width < ResponsiveBreakpoints.desktop) {
-                    crossAxisCount = (width / 128).floor().clamp(4, 5);
-                  } else {
-                    crossAxisCount = (width / 150).floor().clamp(4, 7);
-                  }
-
-                  return GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
-                      mainAxisSpacing: 10,
-                      crossAxisSpacing: 10,
-                      childAspectRatio: 0.95,
+              if (visiblePlugins.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 22,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.42,
                     ),
-                    itemCount: activePlugins.length,
-                    itemBuilder: (context, index) {
-                      return _JSPluginCard(plugin: activePlugins[index]);
-                    },
-                  );
-                },
-              ),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.visibility_off_rounded,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '已隐藏全部快捷入口',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '点击右上角调节按钮可重新显示',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final width = constraints.maxWidth;
+                    final int crossAxisCount;
+                    if (context.isMobile ||
+                        width < ResponsiveBreakpoints.tablet) {
+                      crossAxisCount = (width / 104).floor().clamp(2, 4);
+                    } else if (width < ResponsiveBreakpoints.desktop) {
+                      crossAxisCount = (width / 128).floor().clamp(4, 5);
+                    } else {
+                      crossAxisCount = (width / 150).floor().clamp(4, 7);
+                    }
+
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        mainAxisSpacing: 10,
+                        crossAxisSpacing: 10,
+                        childAspectRatio: 0.95,
+                      ),
+                      itemCount: visiblePlugins.length,
+                      itemBuilder: (context, index) {
+                        return _JSPluginCard(plugin: visiblePlugins[index]);
+                      },
+                    );
+                  },
+                ),
             ],
           ),
         );
       },
       loading: () => const SizedBox.shrink(),
       error: (_, _) => const SizedBox.shrink(),
+    );
+  }
+
+  void _showVisibilitySheet(BuildContext context, List<JSPlugin> plugins) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _PluginVisibilitySheet(plugins: plugins),
+    );
+  }
+}
+
+class _PluginVisibilitySheet extends ConsumerWidget {
+  final List<JSPlugin> plugins;
+
+  const _PluginVisibilitySheet({required this.plugins});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final hiddenEntriesAsync = ref.watch(homePluginHiddenEntriesProvider);
+    final hiddenEntries = hiddenEntriesAsync.value ?? const <String>{};
+
+    return SafeArea(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 620),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 12, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '选择首页快捷入口',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '隐藏后插件仍保持启用，可随时重新显示',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: hiddenEntries.isEmpty
+                        ? null
+                        : () => ref
+                              .read(homePluginHiddenEntriesProvider.notifier)
+                              .showAll(),
+                    child: const Text('全部显示'),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Flexible(
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemCount: plugins.length,
+                separatorBuilder: (_, _) =>
+                    const Divider(height: 1, indent: 76),
+                itemBuilder: (context, index) {
+                  final plugin = plugins[index];
+                  final entryPath = plugin.entryPath!;
+                  final visible = !hiddenEntries.contains(entryPath);
+                  return SwitchListTile(
+                    value: visible,
+                    onChanged: hiddenEntriesAsync.isLoading
+                        ? null
+                        : (value) => ref
+                              .read(homePluginHiddenEntriesProvider.notifier)
+                              .setVisible(entryPath, visible: value),
+                    secondary: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      alignment: Alignment.center,
+                      child: PluginIcon(
+                        iconUrl: plugin.iconUrl,
+                        displayName: plugin.displayName,
+                        size: 34,
+                      ),
+                    ),
+                    title: Text(
+                      plugin.displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: plugin.version == null
+                        ? null
+                        : Text('v${plugin.version}'),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -204,8 +398,9 @@ class _JSPluginCard extends StatelessWidget {
 
     final url =
         '${AppConfig.baseUrl}${AppConfig.basePath}/api/v1/jsplugin/${plugin.entryPath}';
-    final theme =
-        Theme.of(context).brightness == Brightness.dark ? 'dark' : 'light';
+    final theme = Theme.of(context).brightness == Brightness.dark
+        ? 'dark'
+        : 'light';
 
     if (kIsWeb) {
       final token = SecureStorageService.cachedAccessToken ?? '';
