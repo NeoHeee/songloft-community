@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/responsive.dart';
+import '../../core/theme/theme_tokens.dart';
 import 'adaptive_scaffold.dart';
 
 /// 新版桌面/平板应用外壳。
@@ -30,6 +31,7 @@ class RedesignedDesktopShell extends StatelessWidget {
     final screenType = context.screenType;
     final isDesktop = screenType == ScreenType.desktop;
     final colorScheme = Theme.of(context).colorScheme;
+    final tokens = SongloftThemeTokens.of(context);
 
     return Scaffold(
       body: Container(
@@ -38,9 +40,9 @@ class RedesignedDesktopShell extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              colorScheme.primary.withValues(alpha: 0.055),
+              tokens.playerGradient[0].withValues(alpha: 0.07),
               Theme.of(context).scaffoldBackgroundColor,
-              colorScheme.tertiary.withValues(alpha: 0.035),
+              tokens.playerGradient[1].withValues(alpha: 0.05),
             ],
           ),
         ),
@@ -67,7 +69,11 @@ class RedesignedDesktopShell extends StatelessWidget {
                               0,
                             ),
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(26),
+                              borderRadius: BorderRadius.circular(
+                                (tokens.cardRadius + 4)
+                                    .clamp(14, 40)
+                                    .toDouble(),
+                              ),
                               child: ColoredBox(
                                 color: colorScheme.surface.withValues(
                                   alpha: 0.72,
@@ -116,13 +122,16 @@ class _Sidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final tokens = SongloftThemeTokens.of(context);
 
     return Container(
       width: compact ? 94 : 256,
       margin: const EdgeInsets.fromLTRB(12, 10, 0, 14),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(
+          (tokens.cardRadius + 6).clamp(16, 40).toDouble(),
+        ),
         border: Border.all(
           color: colorScheme.outlineVariant.withValues(alpha: 0.22),
         ),
@@ -200,6 +209,7 @@ class _BrandHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final tokens = SongloftThemeTokens.of(context);
 
     return Padding(
       padding: EdgeInsets.fromLTRB(compact ? 17 : 20, 22, compact ? 17 : 20, 8),
@@ -215,7 +225,7 @@ class _BrandHeader extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [colorScheme.primary, colorScheme.tertiary],
+                colors: tokens.playerGradient,
               ),
               borderRadius: BorderRadius.circular(17),
               boxShadow: [

@@ -40,10 +40,7 @@ class SongloftThemeTokens extends ThemeExtension<SongloftThemeTokens> {
   }
 
   @override
-  SongloftThemeTokens lerp(
-    covariant SongloftThemeTokens? other,
-    double t,
-  ) {
+  SongloftThemeTokens lerp(covariant SongloftThemeTokens? other, double t) {
     if (other == null) return this;
     return SongloftThemeTokens(
       playerGradient: [

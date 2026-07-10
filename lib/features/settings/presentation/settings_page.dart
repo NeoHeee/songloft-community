@@ -32,6 +32,7 @@ import 'widgets/scan_manager.dart';
 import 'widgets/section_card.dart';
 import 'widgets/settings_master_detail.dart';
 import 'widgets/theme_selector.dart';
+import 'widgets/theme_pack_manager.dart';
 import 'widgets/frontend_upgrade_dialog.dart';
 import 'widgets/upgrade_dialog.dart';
 import 'providers/settings_provider.dart';
@@ -287,6 +288,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ),
             child: ThemeSelector(),
           ),
+          Divider(height: 1),
+          ThemePackManager(),
         ],
       ),
       SectionCard(

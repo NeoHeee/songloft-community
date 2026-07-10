@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/theme_tokens.dart';
 import '../../../../core/utils/url_helper.dart';
 import '../../../dlna/presentation/providers/dlna_provider.dart';
 import '../providers/player_provider.dart';
@@ -21,6 +22,7 @@ class MiniPlayer extends ConsumerWidget {
     final notifier = ref.read(playerStateProvider.notifier);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final tokens = SongloftThemeTokens.of(context);
 
     if (!state.hasSong) {
       return const SizedBox.shrink();
@@ -39,7 +41,7 @@ class MiniPlayer extends ConsumerWidget {
         color: colorScheme.surfaceContainerHigh,
         elevation: 10,
         shadowColor: Colors.black.withValues(alpha: 0.22),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(tokens.cardRadius),
         clipBehavior: Clip.antiAlias,
         child: Semantics(
           label: '展开播放器',

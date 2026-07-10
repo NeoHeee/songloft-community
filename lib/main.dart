@@ -27,6 +27,7 @@ import 'core/storage/secure_storage.dart';
 import 'core/tracely/tracely_client.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/responsive.dart';
+import 'core/theme/theme_pack_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/utils/file_logger.dart';
 import 'core/utils/platform_utils.dart';
@@ -466,12 +467,13 @@ class SongloftApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final themePack = ref.watch(themePackProvider).selectedPack;
     return MaterialApp.router(
       title: 'Songloft',
       debugShowCheckedModeBanner: false,
       scrollBehavior: _AppScrollBehavior(),
-      theme: AppTheme.lightTheme(),
-      darkTheme: AppTheme.darkTheme(),
+      theme: AppTheme.lightTheme(themePack: themePack),
+      darkTheme: AppTheme.darkTheme(themePack: themePack),
       themeMode: themeMode,
       routerConfig: router,
       builder: (context, child) {
@@ -481,8 +483,11 @@ class SongloftApp extends ConsumerWidget {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return Theme(
           data: isDark
-              ? AppTheme.darkTheme(screenType: screenType)
-              : AppTheme.lightTheme(screenType: screenType),
+              ? AppTheme.darkTheme(screenType: screenType, themePack: themePack)
+              : AppTheme.lightTheme(
+                  screenType: screenType,
+                  themePack: themePack,
+                ),
           child: child!,
         );
       },

@@ -45,10 +45,7 @@ class SongloftThemePalette {
     required String path,
   }) {
     final seedColor = _parseColor(json['seed'], '$path.seed');
-    final backgroundColor = _parseColor(
-      json['background'],
-      '$path.background',
-    );
+    final backgroundColor = _parseColor(json['background'], '$path.background');
     final surfaceColor = _parseColor(json['surface'], '$path.surface');
     final secondaryColor = _parseOptionalColor(
       json['secondary'],
@@ -63,16 +60,10 @@ class SongloftThemePalette {
     final gradient = <Color>[];
     if (gradientValue != null) {
       if (gradientValue is! List || gradientValue.length != 2) {
-        throw ThemePackFormatException(
-          '$path.playerGradient 必须是包含两个颜色的数组',
-        );
+        throw ThemePackFormatException('$path.playerGradient 必须是包含两个颜色的数组');
       }
-      gradient.add(
-        _parseColor(gradientValue[0], '$path.playerGradient[0]'),
-      );
-      gradient.add(
-        _parseColor(gradientValue[1], '$path.playerGradient[1]'),
-      );
+      gradient.add(_parseColor(gradientValue[0], '$path.playerGradient[0]'));
+      gradient.add(_parseColor(gradientValue[1], '$path.playerGradient[1]'));
     } else {
       gradient.add(seedColor);
       gradient.add(tertiaryColor ?? secondaryColor ?? seedColor);
@@ -382,11 +373,7 @@ String _colorToHex(Color color) {
   return '#${color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';
 }
 
-String _requiredString(
-  Object? value,
-  String field, {
-  required int maxLength,
-}) {
+String _requiredString(Object? value, String field, {required int maxLength}) {
   if (value is! String || value.trim().isEmpty) {
     throw ThemePackFormatException('$field 不能为空');
   }
@@ -397,11 +384,7 @@ String _requiredString(
   return result;
 }
 
-String _optionalString(
-  Object? value,
-  String field, {
-  required int maxLength,
-}) {
+String _optionalString(Object? value, String field, {required int maxLength}) {
   if (value == null) return '';
   if (value is! String) {
     throw ThemePackFormatException('$field 必须是字符串');

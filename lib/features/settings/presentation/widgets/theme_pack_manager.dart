@@ -94,7 +94,9 @@ class ThemePackManager extends ConsumerWidget {
           child: state.isLoading
               ? const Center(child: CircularProgressIndicator())
               : ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                  ),
                   scrollDirection: Axis.horizontal,
                   itemCount: state.packs.length,
                   separatorBuilder: (_, _) =>
@@ -255,13 +257,9 @@ class ThemePackManager extends ConsumerWidget {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   const _GuideLine(text: 'schemaVersion 当前固定为 1'),
-                  const _GuideLine(
-                    text: 'id 使用小写字母、数字、点、下划线或短横线，长度 3-64',
-                  ),
+                  const _GuideLine(text: 'id 使用小写字母、数字、点、下划线或短横线，长度 3-64'),
                   const _GuideLine(text: 'light 和 dark 必须同时提供'),
-                  const _GuideLine(
-                    text: '颜色使用 #RRGGBB 或 #AARRGGBB；圆角范围为 0-40',
-                  ),
+                  const _GuideLine(text: '颜色使用 #RRGGBB 或 #AARRGGBB；圆角范围为 0-40'),
                   const _GuideLine(text: '单个主题包最大 128 KB，最多安装 32 个'),
                   const SizedBox(height: AppSpacing.md),
                   Container(
@@ -271,9 +269,9 @@ class ThemePackManager extends ConsumerWidget {
                       color: Theme.of(context).colorScheme.surfaceContainerLow,
                       borderRadius: AppRadius.mdAll,
                     ),
-                    child: SelectableText(
+                    child: const SelectableText(
                       themePackTemplate,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'monospace',
                         fontSize: 12,
                         height: 1.45,
@@ -291,9 +289,9 @@ class ThemePackManager extends ConsumerWidget {
                   const ClipboardData(text: themePackTemplate),
                 );
                 if (!dialogContext.mounted) return;
-                ScaffoldMessenger.of(dialogContext).showSnackBar(
-                  const SnackBar(content: Text('模板已复制')),
-                );
+                ScaffoldMessenger.of(
+                  dialogContext,
+                ).showSnackBar(const SnackBar(content: Text('模板已复制')));
               },
               icon: const Icon(Icons.copy_rounded),
               label: const Text('复制模板'),
@@ -379,7 +377,10 @@ class _ThemePackCard extends StatelessWidget {
                         padding: EdgeInsets.zero,
                         onPressed: onDelete,
                         tooltip: '删除主题包',
-                        icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                        icon: const Icon(
+                          Icons.delete_outline_rounded,
+                          size: 18,
+                        ),
                       ),
                     ),
                 ],
