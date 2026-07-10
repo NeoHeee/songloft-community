@@ -68,6 +68,11 @@ text = text.replace(
 )
 catalog_dialog.write_text(text, encoding='utf-8')
 
+catalog_repository = Path('lib/core/theme/theme_catalog_repository.dart')
+text = catalog_repository.read_text(encoding='utf-8')
+text = text.replace("import 'dart:typed_data';\n", '', 1)
+catalog_repository.write_text(text, encoding='utf-8')
+
 pubspec = Path('pubspec.yaml')
 text = pubspec.read_text(encoding='utf-8')
 asset_target = '''  assets:
