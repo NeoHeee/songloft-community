@@ -32,21 +32,22 @@ jobs:
           cache: true
 
       - name: Apply integration patch
+        run: python scripts/apply-theme-pack-feature.py
+
+      - name: Fix theme guide const lint
         run: |
-          python scripts/apply-theme-pack-feature.py
           python - <<'PY'
           from pathlib import Path
           path = Path('lib/features/settings/presentation/widgets/theme_pack_manager.dart')
           text = path.read_text(encoding='utf-8')
-          old = """                    child: SelectableText(
-                      themePackTemplate,
-                      style: const TextStyle("""
-          new = """                    child: const SelectableText(
-                      themePackTemplate,
-                      style: TextStyle("""
-          if old not in text:
-              raise SystemExit('Theme guide const target not found')
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          marker = 'child: SelectableText('
+          if marker not in text:
+              raise SystemExit('Theme guide SelectableText target not found')
+          text = text.replace(marker, 'child: const SelectableText(', 1)
+          const_style = 'style: const TextStyle('
+          if const_style in text:
+              text = text.replace(const_style, 'style: TextStyle(', 1)
+          path.write_text(text, encoding='utf-8')
           PY
 
       - name: Format changed sources
