@@ -13,7 +13,7 @@ on:
       - '.github/workflows/apply-theme-pack-feature.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   apply:
@@ -32,7 +32,22 @@ jobs:
           cache: true
 
       - name: Apply integration patch
-        run: python scripts/apply-theme-pack-feature.py
+        run: |
+          python scripts/apply-theme-pack-feature.py
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('lib/features/settings/presentation/widgets/theme_pack_manager.dart')
+          text = path.read_text(encoding='utf-8')
+          old = """                    child: SelectableText(
+                      themePackTemplate,
+                      style: const TextStyle("""
+          new = """                    child: const SelectableText(
+                      themePackTemplate,
+                      style: TextStyle("""
+          if old not in text:
+              raise SystemExit('Theme guide const target not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
 
       - name: Format changed sources
         run: |
@@ -51,37 +66,28 @@ jobs:
         run: flutter pub get
 
       - name: Analyze
+        run: flutter analyze
+
+      - name: Commit theme feature sources
         shell: bash
         run: |
-          set +e
-          flutter analyze > theme-pack-analyze.log 2>&1
-          status=$?
-          cat theme-pack-analyze.log
-          exit "$status"
-
-      - name: Upload analyzer diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: theme-pack-analyzer-diagnostics
-          path: theme-pack-analyze.log
-          if-no-files-found: warn
-          retention-days: 7
-
-      - name: Upload integrated sources
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: theme-pack-integrated-sources
-          path: |
-            lib/main.dart
-            lib/core/theme/app_theme.dart
-            lib/core/theme/theme_pack.dart
-            lib/core/theme/theme_pack_provider.dart
-            lib/core/theme/theme_tokens.dart
-            lib/features/settings/presentation/settings_page.dart
-            lib/features/settings/presentation/widgets/theme_pack_manager.dart
-            lib/shared/layouts/redesigned_desktop_shell.dart
-            lib/features/player/presentation/widgets/mini_player.dart
-          if-no-files-found: error
-          retention-days: 7
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            lib/main.dart \
+            lib/core/theme/app_theme.dart \
+            lib/core/theme/theme_pack.dart \
+            lib/core/theme/theme_pack_provider.dart \
+            lib/core/theme/theme_tokens.dart \
+            lib/features/settings/presentation/settings_page.dart \
+            lib/features/settings/presentation/widgets/theme_pack_manager.dart \
+            lib/shared/layouts/redesigned_desktop_shell.dart \
+            lib/features/player/presentation/widgets/mini_player.dart \
+            docs/theme-packs.md \
+            examples/themes/aurora-purple.songloft-theme
+          if git diff --cached --quiet; then
+            echo "Theme feature is already integrated"
+            exit 0
+          fi
+          git commit -m "feat(theme): add custom theme pack support [platform-build]"
+          git push origin ui-redesign
