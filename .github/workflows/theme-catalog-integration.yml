@@ -59,7 +59,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lib test pubspec.yaml .github/workflows/ui-redesign-check.yml
+          git add lib test pubspec.yaml
           if git diff --cached --quiet; then
             echo "No integration changes"
             exit 0
@@ -67,4 +67,4 @@ jobs:
           git commit -m "feat(theme): integrate verified online catalog [platform-build]"
           git push origin ui-redesign
 
-# rerun after removing redundant import
+# workflow updates are committed separately through the GitHub connector
