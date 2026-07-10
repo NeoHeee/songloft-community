@@ -28,7 +28,9 @@ jobs:
           cache: true
 
       - name: Apply source changes
-        run: python scripts/apply_android_back_navigation.py
+        run: |
+          python scripts/apply_android_back_navigation.py
+          python scripts/limit_android_back_to_mobile.py
 
       - name: Format and validate
         run: |
@@ -50,5 +52,5 @@ jobs:
           git add \
             lib/shared/layouts/shell_layout.dart \
             lib/features/settings/presentation/settings_page.dart
-          git commit -m "fix(navigation): make Android back behavior predictable"
+          git commit -m "fix(navigation): keep Android back handling mobile-only"
           git push origin HEAD:ui-redesign
