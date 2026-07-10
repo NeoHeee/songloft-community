@@ -6,12 +6,20 @@ on:
       - ui-redesign
     paths:
       - '.github/workflows/build-android-now.yml'
+  pull_request:
+    branches:
+      - main
+    types:
+      - edited
 
 permissions:
   contents: read
 
 jobs:
   build-android:
+    if: >-
+      github.event_name == 'push' ||
+      github.event.pull_request.head.ref == 'ui-redesign'
     name: Build Android release APKs
     runs-on: ubuntu-latest
     timeout-minutes: 45
