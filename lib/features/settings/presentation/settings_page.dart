@@ -33,7 +33,6 @@ import 'widgets/section_card.dart';
 import 'widgets/settings_master_detail.dart';
 import 'widgets/theme_selector.dart';
 import 'widgets/theme_pack_manager.dart';
-import 'widgets/frontend_upgrade_dialog.dart';
 import 'widgets/upgrade_dialog.dart';
 import 'providers/settings_provider.dart';
 
@@ -601,10 +600,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         icon: Icons.system_update_outlined,
         children: [
           _buildServerVersionTile(),
-          if (!AppConfig.isEmbedded) ...[
-            const Divider(height: 1),
-            _buildFrontendUpdateTile(),
-          ],
           const Divider(height: 1),
           _buildLogLevelTile(),
           const Divider(height: 1),
@@ -850,57 +845,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         : '$versionText (${details.join(', ')})';
   }
 
-  Widget _buildFrontendUpdateTile() {
-    final frontendCheck = ref.watch(frontendVersionCheckProvider);
-    final versionDisplay = AppConfig.frontendVersionDisplay;
-
-    return frontendCheck.when(
-      data: (check) {
-        final subtitle = check.hasUpdate
-            ? '发现新版本: ${check.latestVersionDisplay}'
-            : '当前版本: $versionDisplay (已是最新)';
-
-        return ListTile(
-          leading: const Icon(Icons.phone_android),
-          title: const Text('检查客户端更新'),
-          subtitle: Text(
-            subtitle,
-            style: check.hasUpdate
-                ? TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  )
-                : null,
-          ),
-          trailing: check.hasUpdate
-              ? Icon(
-                  Icons.chevron_right,
-                  color: Theme.of(context).colorScheme.primary,
-                )
-              : const Icon(Icons.chevron_right),
-          onTap: () => FrontendUpgradeDialog.show(context),
-        );
-      },
-      loading: () => ListTile(
-        leading: const Icon(Icons.phone_android),
-        title: const Text('检查客户端更新'),
-        subtitle: Text('当前版本: $versionDisplay'),
-        trailing: const SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      ),
-      error: (_, _) => ListTile(
-        leading: const Icon(Icons.phone_android),
-        title: const Text('检查客户端更新'),
-        subtitle: Text('当前版本: $versionDisplay'),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => FrontendUpgradeDialog.show(context),
-      ),
-    );
-  }
-
   Widget _buildHlsProxyTile() {
     final enabledAsync = ref.watch(hlsProxyEnabledProvider);
     final enabled = enabledAsync.value ?? false;
@@ -1107,7 +1051,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     showAboutDialog(
       context: context,
       applicationName: 'Songloft',
-      applicationVersion: version,
+      applicationVersion: '$version · 社区魔改版',
       applicationIcon: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Image.asset(
