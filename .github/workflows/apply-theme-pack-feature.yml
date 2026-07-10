@@ -66,3 +66,5 @@ jobs:
             examples/themes/aurora-purple.songloft-theme
           git commit -m "feat(theme): add custom theme pack support [platform-build]"
           git push origin ui-redesign
+
+# one-shot integration trigger
