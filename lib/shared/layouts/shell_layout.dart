@@ -148,6 +148,17 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
       );
     }
 
+    if (screenType != ScreenType.mobile) {
+      return AdaptiveScaffold(
+        body: body,
+        currentIndex: currentIndex,
+        destinations: activeDest.destinations,
+        onDestinationSelected: onDestinationSelected,
+        bottomPlayer: bottomPlayer,
+        playlistDrawer: playlistDrawer,
+      );
+    }
+
     final routerCanPop = GoRouter.of(context).canPop();
     final childHandlesBack = location == '/settings';
     if (location != '/') {
