@@ -47,13 +47,7 @@ extension ResponsiveContext on BuildContext {
   bool get isWideScreen => screenWidth >= ResponsiveBreakpoints.tablet;
 
   /// 根据屏幕类型返回不同值
-  T responsive<T>({
-    required T mobile,
-    T? tablet,
-    T? desktop,
-    T? auto_,
-    T? tv,
-  }) {
+  T responsive<T>({required T mobile, T? tablet, T? desktop, T? auto_, T? tv}) {
     switch (screenType) {
       case ScreenType.tv:
         return tv ?? desktop ?? tablet ?? mobile;

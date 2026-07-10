@@ -436,8 +436,10 @@ class _SleepTimerOverlayPanel extends StatelessWidget {
     final spaceBelow =
         screenSize.height - anchorPosition.dy - anchorSize.height - 16;
     final preferAbove = spaceAbove >= 240 || spaceAbove >= spaceBelow;
-    final availableHeight =
-        (preferAbove ? spaceAbove : spaceBelow).clamp(120.0, _maxPanelHeight);
+    final availableHeight = (preferAbove ? spaceAbove : spaceBelow).clamp(
+      120.0,
+      _maxPanelHeight,
+    );
 
     return Stack(
       children: [
@@ -455,9 +457,7 @@ class _SleepTimerOverlayPanel extends StatelessWidget {
           left: left,
           top: preferAbove ? null : anchorPosition.dy + anchorSize.height + 8,
           bottom:
-              preferAbove
-                  ? screenSize.height - anchorPosition.dy + 8
-                  : null,
+              preferAbove ? screenSize.height - anchorPosition.dy + 8 : null,
           child: Material(
             elevation: 8,
             borderRadius: BorderRadius.circular(12),
@@ -530,8 +530,7 @@ class SleepTimerContent extends StatelessWidget {
   // 时长档位不高亮：倒计时会让 remaining 秒级递减，与档位的稳定值不再相等；
   // 用户选完档位浮层即关闭，反馈通过顶部状态条「剩余 X:XX」给出。
   bool _isSongCountSelected(int n) =>
-      status?.mode == SleepTimerMode.afterSongs &&
-      status?.remainingSongs == n;
+      status?.mode == SleepTimerMode.afterSongs && status?.remainingSongs == n;
 
   @override
   Widget build(BuildContext context) {
@@ -548,8 +547,11 @@ class SleepTimerContent extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 4, 8, 4),
             child: Row(
               children: [
-                Icon(Icons.alarm_on_rounded,
-                    size: 18, color: colorScheme.primary),
+                Icon(
+                  Icons.alarm_on_rounded,
+                  size: 18,
+                  color: colorScheme.primary,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -584,9 +586,7 @@ class SleepTimerContent extends StatelessWidget {
               for (final d in _durationOptions)
                 ChoiceChip(
                   label: Text(
-                    d.inMinutes >= 60
-                        ? '${d.inHours} 小时'
-                        : '${d.inMinutes} 分钟',
+                    d.inMinutes >= 60 ? '${d.inHours} 小时' : '${d.inMinutes} 分钟',
                   ),
                   selected: false,
                   onSelected: (_) => onSetDuration(d),

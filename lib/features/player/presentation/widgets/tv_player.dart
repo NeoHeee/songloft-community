@@ -733,113 +733,117 @@ class _TvFocusableProgressBarState extends State<_TvFocusableProgressBar> {
         child: GestureDetector(
           onTap: () => _focusNode.requestFocus(),
           child: AnimatedContainer(
-          duration: TvTheme.focusAnimationDuration,
-          curve: TvTheme.focusAnimationCurve,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color:
-                  _isFocused ? theme.colorScheme.primary : Colors.transparent,
-              width: 2,
+            duration: TvTheme.focusAnimationDuration,
+            curve: TvTheme.focusAnimationCurve,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color:
+                    _isFocused ? theme.colorScheme.primary : Colors.transparent,
+                width: 2,
+              ),
+              boxShadow:
+                  _isFocused
+                      ? [
+                        BoxShadow(
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.2,
+                          ),
+                          blurRadius: 12,
+                          spreadRadius: 2,
+                        ),
+                      ]
+                      : null,
             ),
-            boxShadow:
-                _isFocused
-                    ? [
-                      BoxShadow(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                        blurRadius: 12,
-                        spreadRadius: 2,
-                      ),
-                    ]
-                    : null,
-          ),
-          child: Column(
-            children: [
-              // 焦点时显示快进/快退提示
-              AnimatedOpacity(
-                opacity: _isFocused ? 1.0 : 0.0,
-                duration: TvTheme.focusAnimationDuration,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(
-                    '← → 快进/快退',
-                    style: TextStyle(
-                      fontSize: TvTheme.fontSizeCaption,
-                      color: theme.colorScheme.primary.withValues(alpha: 0.8),
-                    ),
-                  ),
-                ),
-              ),
-              // 进度滑块
-              SliderTheme(
-                data: SliderTheme.of(context).copyWith(
-                  trackHeight: _isFocused ? 8 : 6,
-                  thumbShape: const RoundSliderThumbShape(
-                    enabledThumbRadius: 10,
-                    pressedElevation: 6,
-                  ),
-                  overlayShape: const RoundSliderOverlayShape(
-                    overlayRadius: 20,
-                  ),
-                  activeTrackColor: theme.colorScheme.primary,
-                  inactiveTrackColor: theme.colorScheme.surfaceContainerHighest,
-                  thumbColor: theme.colorScheme.primary,
-                  overlayColor: theme.colorScheme.primary.withValues(
-                    alpha: 0.2,
-                  ),
-                ),
-                child: Slider(
-                  value: state.progress,
-                  onChanged: (value) {
-                    final newPosition = Duration(
-                      milliseconds:
-                          (value * state.duration.inMilliseconds).round(),
-                    );
-                    widget.notifier.seek(newPosition);
-                  },
-                  semanticFormatterCallback: (value) {
-                    final pos = Duration(
-                      milliseconds: (value * state.duration.inMilliseconds).round(),
-                    );
-                    return '${Formatters.formatDuration(pos.inSeconds.toDouble())} / ${Formatters.formatDuration(state.duration.inSeconds.toDouble())}';
-                  },
-                ),
-              ),
-              const SizedBox(height: TvTheme.spacingSmall),
-              // 时间显示
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      Formatters.formatDuration(
-                        state.currentTime.inSeconds.toDouble(),
-                      ),
-                      style: TvTheme.captionStyle(context).copyWith(
-                        fontWeight:
-                            _isFocused ? FontWeight.w600 : FontWeight.normal,
-                        color: _isFocused ? theme.colorScheme.primary : null,
+            child: Column(
+              children: [
+                // 焦点时显示快进/快退提示
+                AnimatedOpacity(
+                  opacity: _isFocused ? 1.0 : 0.0,
+                  duration: TvTheme.focusAnimationDuration,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      '← → 快进/快退',
+                      style: TextStyle(
+                        fontSize: TvTheme.fontSizeCaption,
+                        color: theme.colorScheme.primary.withValues(alpha: 0.8),
                       ),
                     ),
-                    Text(
-                      Formatters.formatDuration(
-                        state.duration.inSeconds.toDouble(),
-                      ),
-                      style: TvTheme.captionStyle(context).copyWith(
-                        fontWeight:
-                            _isFocused ? FontWeight.w600 : FontWeight.normal,
-                        color: _isFocused ? theme.colorScheme.primary : null,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+                // 进度滑块
+                SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: _isFocused ? 8 : 6,
+                    thumbShape: const RoundSliderThumbShape(
+                      enabledThumbRadius: 10,
+                      pressedElevation: 6,
+                    ),
+                    overlayShape: const RoundSliderOverlayShape(
+                      overlayRadius: 20,
+                    ),
+                    activeTrackColor: theme.colorScheme.primary,
+                    inactiveTrackColor:
+                        theme.colorScheme.surfaceContainerHighest,
+                    thumbColor: theme.colorScheme.primary,
+                    overlayColor: theme.colorScheme.primary.withValues(
+                      alpha: 0.2,
+                    ),
+                  ),
+                  child: Slider(
+                    value: state.progress,
+                    onChanged: (value) {
+                      final newPosition = Duration(
+                        milliseconds:
+                            (value * state.duration.inMilliseconds).round(),
+                      );
+                      widget.notifier.seek(newPosition);
+                    },
+                    semanticFormatterCallback: (value) {
+                      final pos = Duration(
+                        milliseconds:
+                            (value * state.duration.inMilliseconds).round(),
+                      );
+                      return '${Formatters.formatDuration(pos.inSeconds.toDouble())} / ${Formatters.formatDuration(state.duration.inSeconds.toDouble())}';
+                    },
+                  ),
+                ),
+                const SizedBox(height: TvTheme.spacingSmall),
+                // 时间显示
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        Formatters.formatDuration(
+                          state.currentTime.inSeconds.toDouble(),
+                        ),
+                        style: TvTheme.captionStyle(context).copyWith(
+                          fontWeight:
+                              _isFocused ? FontWeight.w600 : FontWeight.normal,
+                          color: _isFocused ? theme.colorScheme.primary : null,
+                        ),
+                      ),
+                      Text(
+                        Formatters.formatDuration(
+                          state.duration.inSeconds.toDouble(),
+                        ),
+                        style: TvTheme.captionStyle(context).copyWith(
+                          fontWeight:
+                              _isFocused ? FontWeight.w600 : FontWeight.normal,
+                          color: _isFocused ? theme.colorScheme.primary : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }

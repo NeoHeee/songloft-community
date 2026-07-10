@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "community-warm-amber",
+  "name": "暖纸琥珀",
+  "version": "1.0.0",
+  "author": "Songloft Community",
+  "description": "米白纸张、琥珀与砖红组成的温暖阅读型主题。",
+  "light": {
+    "seed": "#B86B16",
+    "background": "#FFF9EF",
+    "surface": "#FFFCF7",
+    "secondary": "#C94F38",
+    "tertiary": "#7E6B3A",
+    "playerGradient": ["#D58524", "#C94F38"],
+    "cardRadius": 20,
+    "controlRadius": 14,
+    "navigationRadius": 15
+  },
+  "dark": {
+    "seed": "#F1AA52",
+    "background": "#17110A",
+    "surface": "#241A10",
+    "secondary": "#F07A61",
+    "tertiary": "#C7B16C",
+    "playerGradient": ["#C57927", "#B94F3C"],
+    "cardRadius": 20,
+    "controlRadius": 14,
+    "navigationRadius": 15
+  }
+}

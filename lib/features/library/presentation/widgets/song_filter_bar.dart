@@ -17,69 +17,89 @@ class SongFilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          // 筛选 Chips（可滚动）
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _FilterChip(
-                    label: '全部',
-                    isSelected: currentType == null,
-                    onTap: () => onTypeChanged(null),
-                  ),
-                  const SizedBox(width: 8),
-                  _FilterChip(
-                    label: '本地',
-                    isSelected: currentType == AppConstants.songTypeLocal,
-                    onTap: () => onTypeChanged(AppConstants.songTypeLocal),
-                  ),
-                  const SizedBox(width: 8),
-                  _FilterChip(
-                    label: '网络',
-                    isSelected: currentType == AppConstants.songTypeRemote,
-                    onTap: () => onTypeChanged(AppConstants.songTypeRemote),
-                  ),
-                  const SizedBox(width: 8),
-                  _FilterChip(
-                    label: '电台',
-                    isSelected: currentType == AppConstants.songTypeRadio,
-                    onTap: () => onTypeChanged(AppConstants.songTypeRadio),
-                  ),
-                ],
-              ),
-            ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.24),
           ),
-          // 歌曲总数
-          if (songCount > 0)
-            Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: Text(
-                '$songCount首',
-                style: textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _FilterChip(
+                      icon: Icons.apps_rounded,
+                      label: '全部',
+                      isSelected: currentType == null,
+                      onTap: () => onTypeChanged(null),
+                    ),
+                    _FilterChip(
+                      icon: Icons.storage_rounded,
+                      label: '本地',
+                      isSelected: currentType == AppConstants.songTypeLocal,
+                      onTap: () => onTypeChanged(AppConstants.songTypeLocal),
+                    ),
+                    _FilterChip(
+                      icon: Icons.cloud_rounded,
+                      label: '网络',
+                      isSelected: currentType == AppConstants.songTypeRemote,
+                      onTap: () => onTypeChanged(AppConstants.songTypeRemote),
+                    ),
+                    _FilterChip(
+                      icon: Icons.radio_rounded,
+                      label: '电台',
+                      isSelected: currentType == AppConstants.songTypeRadio,
+                      onTap: () => onTypeChanged(AppConstants.songTypeRadio),
+                    ),
+                  ],
                 ),
               ),
             ),
-        ],
+            if (songCount > 0)
+              Container(
+                margin: const EdgeInsets.only(left: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 11,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: colorScheme.secondaryContainer.withValues(alpha: 0.52),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Text(
+                  '$songCount 首',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: colorScheme.onSecondaryContainer,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _FilterChip extends StatelessWidget {
+  final IconData icon;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _FilterChip({
+    required this.icon,
     required this.label,
     required this.isSelected,
     required this.onTap,
@@ -88,41 +108,42 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Material(
-      color: isSelected ? colorScheme.secondaryContainer : Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(100),
-        side: isSelected
-            ? BorderSide.none
-            : BorderSide(color: colorScheme.outline),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(100),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (isSelected) ...[
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 5),
+      child: Material(
+        color: isSelected ? colorScheme.primaryContainer : Colors.transparent,
+        borderRadius: BorderRadius.circular(13),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(13),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 Icon(
-                  Icons.check,
-                  size: 16,
-                  color: colorScheme.onSecondaryContainer,
+                  icon,
+                  size: 17,
+                  color:
+                      isSelected
+                          ? colorScheme.primary
+                          : colorScheme.onSurfaceVariant,
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 7),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color:
+                        isSelected
+                            ? colorScheme.onPrimaryContainer
+                            : colorScheme.onSurfaceVariant,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                  ),
+                ),
               ],
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isSelected
-                      ? colorScheme.onSecondaryContainer
-                      : colorScheme.onSurfaceVariant,
-                  fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

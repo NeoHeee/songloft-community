@@ -391,9 +391,10 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
           PopupMenuButton<String>(
             icon: Icon(
               Icons.more_horiz_rounded,
-              color: state.sleepTimer != null
-                  ? Theme.of(context).colorScheme.primary
-                  : topBarColor,
+              color:
+                  state.sleepTimer != null
+                      ? Theme.of(context).colorScheme.primary
+                      : topBarColor,
             ),
             onSelected: (value) {
               switch (value) {
@@ -477,9 +478,10 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
       decoration: BoxDecoration(
         borderRadius: AppRadius.xlAll,
         color: theme.colorScheme.surfaceContainerHighest,
-        boxShadow: glowColor != null
-            ? AppEffects.primaryGlow(glowColor)
-            : AppEffects.softGlow(theme.colorScheme.onSurface),
+        boxShadow:
+            glowColor != null
+                ? AppEffects.primaryGlow(glowColor)
+                : AppEffects.softGlow(theme.colorScheme.onSurface),
       ),
       clipBehavior: Clip.antiAlias,
       child:
@@ -567,8 +569,7 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          if (!kIsWeb)
-            const CastButton(iconSize: 20),
+          if (!kIsWeb) const CastButton(iconSize: 20),
           PopupVolumeControl(
             volume: state.volume,
             onVolumeChanged: notifier.setVolume,

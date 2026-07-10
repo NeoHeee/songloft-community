@@ -582,6 +582,32 @@ class PlaylistNotifier extends Notifier<AsyncValue<void>> {
     }
   }
 
+  /// 批量设置歌单可见性，只在全部请求结束后统一刷新列表。
+  Future<int> batchSetPlaylistVisibility(
+    Iterable<int> ids, {
+    required bool hidden,
+  }) async {
+    final playlistIds = ids.toSet();
+    if (playlistIds.isEmpty) return 0;
+
+    state = const AsyncValue.loading();
+    var updated = 0;
+    try {
+      for (final id in playlistIds) {
+        await _repository.setPlaylistVisibility(id, hidden: hidden);
+        ref.invalidate(playlistDetailProvider(id));
+        updated++;
+      }
+      state = const AsyncValue.data(null);
+      ref.invalidate(playlistListProvider);
+      return updated;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      ref.invalidate(playlistListProvider);
+      return updated;
+    }
+  }
+
   /// 更新歌单最后访问时间
   Future<void> touchPlaylist(int id) async {
     try {

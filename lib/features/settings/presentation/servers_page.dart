@@ -43,9 +43,7 @@ class ServersPage extends ConsumerWidget {
         error: (e, _) => Center(child: Text('加载失败: $e')),
         data: (servers) {
           const showLocalMode = !kIsWeb && AppConfig.hasEmbeddedBackend;
-          const localModeCard = showLocalMode
-              ? _LocalModeCard()
-              : null;
+          const localModeCard = showLocalMode ? _LocalModeCard() : null;
 
           if (servers.isEmpty) {
             return ListView(
@@ -98,7 +96,9 @@ class ServersPage extends ConsumerWidget {
                   padding: const EdgeInsets.only(bottom: 96),
                   itemCount: servers.length,
                   onReorder: (oldIndex, newIndex) {
-                    ref.read(serversProvider.notifier).reorder(oldIndex, newIndex);
+                    ref
+                        .read(serversProvider.notifier)
+                        .reorder(oldIndex, newIndex);
                   },
                   itemBuilder: (context, index) {
                     final entry = servers[index];
@@ -111,9 +111,11 @@ class ServersPage extends ConsumerWidget {
                       isCurrent: isCurrent,
                       status: status,
                       onEdit: () => _showEditDialog(context, ref, entry),
-                      onDelete: () => _confirmDelete(context, ref, entry, isCurrent),
+                      onDelete:
+                          () => _confirmDelete(context, ref, entry, isCurrent),
                       onTest: () => _probeOne(context, ref, entry),
-                      onSwitchTo: () => _switchTo(context, ref, entry, isCurrent),
+                      onSwitchTo:
+                          () => _switchTo(context, ref, entry, isCurrent),
                     );
                   },
                 ),
@@ -122,11 +124,14 @@ class ServersPage extends ConsumerWidget {
           );
         },
       ),
-      floatingActionButton: isLocal ? null : FloatingActionButton(
-        onPressed: () => _showEditDialog(context, ref, null),
-        tooltip: '添加服务器',
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton:
+          isLocal
+              ? null
+              : FloatingActionButton(
+                onPressed: () => _showEditDialog(context, ref, null),
+                tooltip: '添加服务器',
+                child: const Icon(Icons.add),
+              ),
     );
   }
 
@@ -157,76 +162,77 @@ class ServersPage extends ConsumerWidget {
 
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(existing == null ? '添加服务器' : '编辑服务器'),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: '名称（可选）',
-                    hintText: '局域网 / 广域网 / 备用',
-                    border: OutlineInputBorder(),
-                  ),
+      builder:
+          (ctx) => AlertDialog(
+            title: Text(existing == null ? '添加服务器' : '编辑服务器'),
+            content: Form(
+              key: formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: '名称（可选）',
+                        hintText: '局域网 / 广域网 / 备用',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: urlController,
+                      keyboardType: TextInputType.url,
+                      decoration: const InputDecoration(
+                        labelText: 'API 地址',
+                        hintText: 'http://192.168.1.10:58091',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (v) {
+                        try {
+                          ServerEntry.normalizeUrl(v ?? '');
+                          return null;
+                        } on FormatException catch (e) {
+                          return e.message;
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: usernameController,
+                      decoration: const InputDecoration(
+                        labelText: '用户名',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: passwordController,
+                      obscureText: true,
+                      decoration: const InputDecoration(
+                        labelText: '密码',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: urlController,
-                  keyboardType: TextInputType.url,
-                  decoration: const InputDecoration(
-                    labelText: 'API 地址',
-                    hintText: 'http://192.168.1.10:58091',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (v) {
-                    try {
-                      ServerEntry.normalizeUrl(v ?? '');
-                      return null;
-                    } on FormatException catch (e) {
-                      return e.message;
-                    }
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: usernameController,
-                  decoration: const InputDecoration(
-                    labelText: '用户名',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: '密码',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ],
+              ),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('取消'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  if (formKey.currentState!.validate()) {
+                    Navigator.pop(ctx, true);
+                  }
+                },
+                child: const Text('保存'),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('取消'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                Navigator.pop(ctx, true);
-              }
-            },
-            child: const Text('保存'),
-          ),
-        ],
-      ),
     );
 
     if (ok != true) return;
@@ -234,10 +240,12 @@ class ServersPage extends ConsumerWidget {
     try {
       final url = ServerEntry.normalizeUrl(urlController.text);
       final name = nameController.text.trim();
-      final username = usernameController.text.trim().isEmpty
-          ? null : usernameController.text.trim();
-      final password = passwordController.text.isEmpty
-          ? null : passwordController.text;
+      final username =
+          usernameController.text.trim().isEmpty
+              ? null
+              : usernameController.text.trim();
+      final password =
+          passwordController.text.isEmpty ? null : passwordController.text;
       final notifier = ref.read(serversProvider.notifier);
       if (existing == null) {
         await notifier.add(
@@ -250,12 +258,14 @@ class ServersPage extends ConsumerWidget {
           ),
         );
       } else {
-        await notifier.editEntry(existing.copyWith(
-          name: name,
-          url: url,
-          usernameOverride: () => username,
-          passwordOverride: () => password,
-        ));
+        await notifier.editEntry(
+          existing.copyWith(
+            name: name,
+            url: url,
+            usernameOverride: () => username,
+            passwordOverride: () => password,
+          ),
+        );
       }
     } catch (e) {
       if (context.mounted) {
@@ -272,27 +282,28 @@ class ServersPage extends ConsumerWidget {
   ) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('删除服务器'),
-        content: Text(
-          isCurrent
-              ? '此为当前正在使用的服务器，删除后下次启动将重新探测列表中其他项。是否继续？'
-              : '确定要删除「${entry.displayName}」吗？',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('取消'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('删除服务器'),
+            content: Text(
+              isCurrent
+                  ? '此为当前正在使用的服务器，删除后下次启动将重新探测列表中其他项。是否继续？'
+                  : '确定要删除「${entry.displayName}」吗？',
             ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('删除'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('取消'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                ),
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('删除'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
     if (ok != true) return;
     await ref.read(serversProvider.notifier).remove(entry.id);
@@ -309,9 +320,8 @@ class ServersPage extends ConsumerWidget {
     if (context.mounted) {
       ResponsiveSnackBar.show(
         context,
-        message: result.ok
-            ? '${entry.displayName} 可达'
-            : '${entry.displayName} 不可达',
+        message:
+            result.ok ? '${entry.displayName} 可达' : '${entry.displayName} 不可达',
       );
     }
   }
@@ -424,15 +434,13 @@ class _ServerTile extends StatelessWidget {
                   onSwitchTo();
               }
             },
-            itemBuilder: (_) => [
-              const PopupMenuItem(value: 'switch', child: Text('切换到此项')),
-              const PopupMenuItem(value: 'test', child: Text('测试连接')),
-              const PopupMenuItem(value: 'edit', child: Text('编辑')),
-              const PopupMenuItem(
-                value: 'delete',
-                child: Text('删除'),
-              ),
-            ],
+            itemBuilder:
+                (_) => [
+                  const PopupMenuItem(value: 'switch', child: Text('切换到此项')),
+                  const PopupMenuItem(value: 'test', child: Text('测试连接')),
+                  const PopupMenuItem(value: 'edit', child: Text('编辑')),
+                  const PopupMenuItem(value: 'delete', child: Text('删除')),
+                ],
           ),
           ReorderableDragStartListener(
             index: index,
@@ -512,9 +520,8 @@ class _LocalModeCardState extends ConsumerState<_LocalModeCard> {
                 ),
                 Switch(
                   value: isLocal,
-                  onChanged: _isSwitching
-                      ? null
-                      : (value) => _handleToggle(value),
+                  onChanged:
+                      _isSwitching ? null : (value) => _handleToggle(value),
                 ),
               ],
             ),
@@ -522,8 +529,8 @@ class _LocalModeCardState extends ConsumerState<_LocalModeCard> {
             Text(
               '开启后在设备上运行后端，无需网络即可播放本地音乐。',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
             if (_isSwitching) ...[
               const SizedBox(height: 8),
@@ -546,11 +553,14 @@ class _LocalModeCardState extends ConsumerState<_LocalModeCard> {
                         const SizedBox(height: 4),
                         Text(
                           musicDir ?? '未选择',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: musicDir != null
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodySmall?.copyWith(
+                            color:
+                                musicDir != null
                                     ? colorScheme.onSurface
                                     : colorScheme.error,
-                              ),
+                          ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -630,14 +640,15 @@ class _LocalModeCardState extends ConsumerState<_LocalModeCard> {
     dio.close();
 
     // 尝试恢复本地 session
-    final restored = await storage.restoreWallet(SecureStorageService.localWalletKey);
+    final restored = await storage.restoreWallet(
+      SecureStorageService.localWalletKey,
+    );
     if (restored && !await storage.isAccessTokenExpired()) {
       ref.read(authStateProvider.notifier).setAuthenticated();
     } else {
-      await ref.read(authStateProvider.notifier).login(
-        username: 'admin',
-        password: 'admin',
-      );
+      await ref
+          .read(authStateProvider.notifier)
+          .login(username: 'admin', password: 'admin');
     }
 
     if (mounted) {
@@ -658,7 +669,9 @@ class _LocalModeCardState extends ConsumerState<_LocalModeCard> {
     if (servers.isNotEmpty) {
       final target = servers.first;
       ref.read(baseUrlProvider.notifier).set(target.url);
-      final restored = await storage.restoreWallet(SecureStorageService.walletKey(target.url));
+      final restored = await storage.restoreWallet(
+        SecureStorageService.walletKey(target.url),
+      );
       if (restored && !await storage.isAccessTokenExpired()) {
         ref.read(authStateProvider.notifier).setAuthenticated();
         return;

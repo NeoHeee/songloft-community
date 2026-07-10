@@ -58,9 +58,34 @@ class AdaptiveScaffold extends StatelessWidget {
   static const int _mobileMaxVisible = 5;
   static const int _mobileRealSlots = 4;
 
-  /// Mobile: 底部导航栏布局
+  List<int> _mobileVisibleIndices() {
+    if (destinations.length <= _mobileMaxVisible) {
+      return List<int>.generate(destinations.length, (index) => index);
+    }
+
+    final settingsIndex = destinations.length - 1;
+    final visible = <int>[0];
+    for (
+      var index = 1;
+      index < settingsIndex && visible.length < _mobileRealSlots - 1;
+      index++
+    ) {
+      visible.add(index);
+    }
+    if (!visible.contains(settingsIndex)) {
+      visible.add(settingsIndex);
+    }
+    return visible;
+  }
+
+  /// Mobile: 底部导航栏布局。首页与设置始终保留，超出的插件入口收进“更多”。
   Widget _buildMobileLayout(BuildContext context) {
-    final hasOverflow = destinations.length > _mobileMaxVisible;
+    final visibleIndices = _mobileVisibleIndices();
+    final overflowIndices = <int>[
+      for (var index = 0; index < destinations.length; index++)
+        if (!visibleIndices.contains(index)) index,
+    ];
+    final hasOverflow = overflowIndices.isNotEmpty;
 
     if (!hasOverflow) {
       return Scaffold(
@@ -86,9 +111,10 @@ class AdaptiveScaffold extends StatelessWidget {
       );
     }
 
-    final barSelectedIndex = currentIndex < _mobileRealSlots
-        ? currentIndex
-        : _mobileRealSlots;
+    final visibleSelectedIndex = visibleIndices.indexOf(currentIndex);
+    final moreIndex = visibleIndices.length;
+    final barSelectedIndex =
+        visibleSelectedIndex >= 0 ? visibleSelectedIndex : moreIndex;
 
     return Scaffold(
       body: body,
@@ -99,22 +125,22 @@ class AdaptiveScaffold extends StatelessWidget {
           NavigationBar(
             selectedIndex: barSelectedIndex,
             onDestinationSelected: (index) {
-              if (index < _mobileRealSlots) {
-                onDestinationSelected(index);
+              if (index < visibleIndices.length) {
+                onDestinationSelected(visibleIndices[index]);
               } else {
-                _showOverflowSheet(context);
+                _showOverflowSheet(context, overflowIndices);
               }
             },
             destinations: [
-              for (var i = 0; i < _mobileRealSlots; i++)
+              for (final originalIndex in visibleIndices)
                 NavigationDestination(
-                  icon: destinations[i].icon,
-                  selectedIcon: destinations[i].selectedIcon,
-                  label: destinations[i].label,
+                  icon: destinations[originalIndex].icon,
+                  selectedIcon: destinations[originalIndex].selectedIcon,
+                  label: destinations[originalIndex].label,
                 ),
               const NavigationDestination(
-                icon: Icon(Icons.more_horiz),
-                selectedIcon: Icon(Icons.more_horiz),
+                icon: Icon(Icons.apps_outlined),
+                selectedIcon: Icon(Icons.apps_rounded),
                 label: '更多',
               ),
             ],
@@ -124,38 +150,35 @@ class AdaptiveScaffold extends StatelessWidget {
     );
   }
 
-  void _showOverflowSheet(BuildContext context) {
+  void _showOverflowSheet(BuildContext context, List<int> overflowIndices) {
     final colorScheme = Theme.of(context).colorScheme;
-    final overflowDests = destinations.sublist(_mobileRealSlots);
 
     showModalBottomSheet(
       context: context,
+      showDragHandle: true,
+      useSafeArea: true,
       builder: (sheetContext) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Container(
-                  width: 32,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+        return ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 2, 8, 10),
+              child: Text(
+                '更多功能',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
-              for (var i = 0; i < overflowDests.length; i++)
-                _buildOverflowTile(
-                  sheetContext,
-                  overflowDests[i],
-                  _mobileRealSlots + i,
-                  colorScheme,
-                ),
-              const SizedBox(height: 8),
-            ],
-          ),
+            ),
+            for (final originalIndex in overflowIndices)
+              _buildOverflowTile(
+                sheetContext,
+                destinations[originalIndex],
+                originalIndex,
+                colorScheme,
+              ),
+          ],
         );
       },
     );
@@ -171,9 +194,8 @@ class AdaptiveScaffold extends StatelessWidget {
     return ListTile(
       leading: IconTheme(
         data: IconThemeData(
-          color: isSelected
-              ? colorScheme.primary
-              : colorScheme.onSurfaceVariant,
+          color:
+              isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
         ),
         child: isSelected ? dest.selectedIcon : dest.icon,
       ),
@@ -186,9 +208,7 @@ class AdaptiveScaffold extends StatelessWidget {
       ),
       selected: isSelected,
       selectedTileColor: colorScheme.primaryContainer.withValues(alpha: 0.3),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       onTap: () {
         Navigator.pop(sheetContext);
         onDestinationSelected(originalIndex);
@@ -295,9 +315,7 @@ class AdaptiveScaffold extends StatelessWidget {
                                       ? colorScheme.primary
                                       : colorScheme.onSurfaceVariant,
                             ),
-                            child: isSelected
-                                ? dest.selectedIcon
-                                : dest.icon,
+                            child: isSelected ? dest.selectedIcon : dest.icon,
                           ),
                           title: Text(
                             dest.label,
@@ -681,9 +699,10 @@ class _AutoDock extends StatelessWidget {
                 final dest = destinations[index];
                 final isSelected = index == currentIndex;
                 return Material(
-                  color: isSelected
-                      ? colorScheme.secondaryContainer
-                      : Colors.transparent,
+                  color:
+                      isSelected
+                          ? colorScheme.secondaryContainer
+                          : Colors.transparent,
                   borderRadius: BorderRadius.circular(16),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(16),
@@ -696,24 +715,25 @@ class _AutoDock extends StatelessWidget {
                           IconTheme(
                             data: IconThemeData(
                               size: 26,
-                              color: isSelected
-                                  ? colorScheme.onSecondaryContainer
-                                  : colorScheme.onSurfaceVariant,
+                              color:
+                                  isSelected
+                                      ? colorScheme.onSecondaryContainer
+                                      : colorScheme.onSurfaceVariant,
                             ),
-                            child: isSelected
-                                ? dest.selectedIcon
-                                : dest.icon,
+                            child: isSelected ? dest.selectedIcon : dest.icon,
                           ),
                           const SizedBox(height: 2),
                           Text(
                             dest.label,
                             style: theme.textTheme.labelSmall?.copyWith(
-                              color: isSelected
-                                  ? colorScheme.onSecondaryContainer
-                                  : colorScheme.onSurfaceVariant,
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
+                              color:
+                                  isSelected
+                                      ? colorScheme.onSecondaryContainer
+                                      : colorScheme.onSurfaceVariant,
+                              fontWeight:
+                                  isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

@@ -17,20 +17,22 @@ class AndroidEqualizerService implements EqualizerService {
   Future<void> initialize() async {
     // AndroidEqualizer.parameters 的 Completer 在首次加载 audio source 后才 complete。
     // 不 await，注册回调等 parameters 就绪后缓存，并自动 apply 之前挂起的 setting。
-    _equalizer.parameters.then((params) {
-      _params = params;
-      debugPrint(
-        '[EQ-Android] Parameters ready: ${params.bands.length} bands, '
-        '${params.minDecibels}~${params.maxDecibels} dB',
-      );
-      final pending = _pendingSetting;
-      if (pending != null) {
-        _pendingSetting = null;
-        apply(pending);
-      }
-    }).catchError((e) {
-      debugPrint('[EQ-Android] Failed to get parameters: $e');
-    });
+    _equalizer.parameters
+        .then((params) {
+          _params = params;
+          debugPrint(
+            '[EQ-Android] Parameters ready: ${params.bands.length} bands, '
+            '${params.minDecibels}~${params.maxDecibels} dB',
+          );
+          final pending = _pendingSetting;
+          if (pending != null) {
+            _pendingSetting = null;
+            apply(pending);
+          }
+        })
+        .catchError((e) {
+          debugPrint('[EQ-Android] Failed to get parameters: $e');
+        });
   }
 
   @override
@@ -79,8 +81,7 @@ class AndroidEqualizerService implements EqualizerService {
       }
     }
 
-    final scaled =
-        _scaleGain(gainDB, params.minDecibels, params.maxDecibels);
+    final scaled = _scaleGain(gainDB, params.minDecibels, params.maxDecibels);
     await systemBands[closest].setGain(scaled);
   }
 
@@ -108,11 +109,7 @@ class AndroidEqualizerService implements EqualizerService {
     return 0;
   }
 
-  double _scaleGain(
-    double gainDB,
-    double minDecibels,
-    double maxDecibels,
-  ) {
+  double _scaleGain(double gainDB, double minDecibels, double maxDecibels) {
     final range = maxDecibels - minDecibels;
     final mid = (minDecibels + maxDecibels) / 2;
     final scaled = mid + (gainDB / EqualizerSetting.maxGain) * (range / 2);

@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "name": "Songloft 社区主题",
+  "description": "由 Songloft 维护的安全主题目录快照。所有主题安装前都会进行完整性和身份校验。",
+  "generatedAt": "2026-07-10T00:00:00Z",
+  "themes": [
+    {
+      "themeSchemaVersion": 1,
+      "id": "community-aurora-purple",
+      "name": "极光紫",
+      "version": "1.0.0",
+      "author": "Songloft Community",
+      "description": "紫色、靛蓝与青色渐变组成的示例主题包。",
+      "featured": true,
+      "tags": ["精选", "紫色", "渐变"],
+      "downloadUrl": "https://raw.githubusercontent.com/NeoHeee/songloft-player/main/assets/theme_catalog/themes/community-aurora-purple.songloft-theme",
+      "bundledAsset": "assets/theme_catalog/themes/community-aurora-purple.songloft-theme",
+      "sha256": "284f210ca063e1160377b2e8d3c5f72bbc6e8a3602480b5454d9606891724a2b",
+      "light": {
+        "seed": "#7057FF",
+        "background": "#F6F4FF",
+        "surface": "#FFFFFF",
+        "secondary": "#3C7DFF",
+        "tertiary": "#00AFC7",
+        "playerGradient": ["#7057FF", "#00AFC7"],
+        "cardRadius": 24,
+        "controlRadius": 16,
+        "navigationRadius": 17
+      },
+      "dark": {
+        "seed": "#A18DFF",
+        "background": "#0A0B14",
+        "surface": "#151725",
+        "secondary": "#75A5FF",
+        "tertiary": "#56D7E5",
+        "playerGradient": ["#8169FF", "#16A8C3"],
+        "cardRadius": 24,
+        "controlRadius": 16,
+        "navigationRadius": 17
+      }
+    },
+    {
+      "themeSchemaVersion": 1,
+      "id": "community-warm-amber",
+      "name": "暖纸琥珀",
+      "version": "1.0.0",
+      "author": "Songloft Community",
+      "description": "米白纸张、琥珀与砖红组成的温暖阅读型主题。",
+      "featured": false,
+      "tags": ["暖色", "阅读", "琥珀"],
+      "downloadUrl": "https://raw.githubusercontent.com/NeoHeee/songloft-player/main/assets/theme_catalog/themes/community-warm-amber.songloft-theme",
+      "bundledAsset": "assets/theme_catalog/themes/community-warm-amber.songloft-theme",
+      "sha256": "63cf776f9eb1652fa713d943024d140727ae9ef18b89bc920baac72a56754ddd",
+      "light": {
+        "seed": "#B86B16",
+        "background": "#FFF9EF",
+        "surface": "#FFFCF7",
+        "secondary": "#C94F38",
+        "tertiary": "#7E6B3A",
+        "playerGradient": ["#D58524", "#C94F38"],
+        "cardRadius": 20,
+        "controlRadius": 14,
+        "navigationRadius": 15
+      },
+      "dark": {
+        "seed": "#F1AA52",
+        "background": "#17110A",
+        "surface": "#241A10",
+        "secondary": "#F07A61",
+        "tertiary": "#C7B16C",
+        "playerGradient": ["#C57927", "#B94F3C"],
+        "cardRadius": 20,
+        "controlRadius": 14,
+        "navigationRadius": 15
+      }
+    }
+  ]
+}

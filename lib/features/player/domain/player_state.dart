@@ -215,9 +215,10 @@ class PlayerState {
       errorMessage:
           clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
       isRetrying: isRetrying ?? this.isRetrying,
-      sourcePlaylistId: clearSourcePlaylistId
-          ? null
-          : (sourcePlaylistId ?? this.sourcePlaylistId),
+      sourcePlaylistId:
+          clearSourcePlaylistId
+              ? null
+              : (sourcePlaylistId ?? this.sourcePlaylistId),
     );
   }
 

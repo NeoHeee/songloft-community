@@ -3,10 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum RunMode {
-  remote,
-  local,
-}
+enum RunMode { remote, local }
 
 const _kRunModeKey = 'songloft_run_mode';
 const _kLocalMusicDirKey = 'songloft_local_music_dir';

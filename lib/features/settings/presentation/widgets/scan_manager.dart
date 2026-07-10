@@ -279,7 +279,8 @@ class _ScanManagerState extends ConsumerState<ScanManager> {
             '正在切分整轨(CUE)${progress.cueSplitSources > 0 ? ': 已处理 ${progress.cueSplitSources} 个来源' : '...'}',
             style: Theme.of(context).textTheme.bodySmall,
           ),
-          if (progress.currentFile != null && progress.currentFile!.isNotEmpty) ...[
+          if (progress.currentFile != null &&
+              progress.currentFile!.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
               progress.currentFile!,
@@ -400,7 +401,9 @@ class _ScanManagerState extends ConsumerState<ScanManager> {
           color:
               autoCreateEnabled
                   ? colorScheme.onSurfaceVariant
-                  : colorScheme.onSurfaceVariant.withValues(alpha: disabledAlpha),
+                  : colorScheme.onSurfaceVariant.withValues(
+                    alpha: disabledAlpha,
+                  ),
         ),
         title: Text(
           '歌单创建方式',
@@ -423,7 +426,9 @@ class _ScanManagerState extends ConsumerState<ScanManager> {
             color:
                 autoCreateEnabled
                     ? colorScheme.onSurfaceVariant
-                    : colorScheme.onSurfaceVariant.withValues(alpha: disabledAlpha),
+                    : colorScheme.onSurfaceVariant.withValues(
+                      alpha: disabledAlpha,
+                    ),
           ),
         ),
         trailing: DropdownButton<String>(

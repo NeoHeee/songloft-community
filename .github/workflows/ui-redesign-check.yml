@@ -1,0 +1,176 @@
+name: UI Redesign Check
+
+on:
+  push:
+    branches:
+      - ui-redesign
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'assets/theme_catalog/**'
+      - 'web/**'
+      - 'android/**'
+      - 'windows/**'
+      - 'examples/themes/**'
+      - 'docs/theme-packs.md'
+      - 'pubspec.yaml'
+      - '.github/workflows/ui-redesign-check.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'assets/theme_catalog/**'
+      - 'web/**'
+      - 'android/**'
+      - 'windows/**'
+      - 'examples/themes/**'
+      - 'docs/theme-packs.md'
+      - 'pubspec.yaml'
+      - '.github/workflows/ui-redesign-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ui-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Flutter analyze and theme system tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui-redesign
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Check formatting
+        run: dart format -o none --set-exit-if-changed lib test
+      - name: Run theme system tests
+        run: flutter test test/core/theme
+      - name: Analyze
+        run: flutter analyze
+
+  build-web:
+    name: Build Flutter Web
+    needs: analyze
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui-redesign
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build release web app
+        run: flutter build web --release --base-href /
+      - name: Upload web preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-web-preview
+          path: build/web
+          if-no-files-found: error
+          retention-days: 14
+
+  build-android:
+    name: Build Android preview APKs
+    needs: analyze
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
+      contains(github.event.head_commit.message, '[platform-build]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui-redesign
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build release APKs
+        run: flutter build apk --release --split-per-abi
+      - name: Upload Android clients
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-android-preview
+          path: build/app/outputs/flutter-apk/*-release.apk
+          retention-days: 14
+          if-no-files-found: error
+
+  build-windows:
+    name: Build complete Windows x64 bundle
+    needs: analyze
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
+      contains(github.event.head_commit.message, '[platform-build]')
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout redesigned player
+        uses: actions/checkout@v4
+        with:
+          ref: ui-redesign
+      - name: Checkout Songloft backend
+        uses: actions/checkout@v4
+        with:
+          repository: NeoHeee/songloft
+          ref: main
+          path: _server
+          submodules: recursive
+          fetch-depth: 1
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+          cache: true
+          cache-dependency-path: _server/go.sum
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build bundled Go backend
+        working-directory: _server
+        shell: pwsh
+        run: |
+          $env:CGO_ENABLED = '0'
+          $env:GOAMD64 = 'v1'
+          go build -tags lite -o "$env:GITHUB_WORKSPACE\windows\runner\songloft-server.exe" .
+      - name: Build Windows release
+        run: >-
+          flutter build windows --release
+          --dart-define=HAS_BACKEND=true
+      - name: Package portable client
+        shell: pwsh
+        run: Compress-Archive -Path 'build\windows\x64\runner\Release\*' -DestinationPath 'songloft-windows-x64.zip'
+      - name: Upload Windows client
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-windows-preview
+          path: songloft-windows-x64.zip
+          retention-days: 14
+          if-no-files-found: error
+
+# verifies theme packs, trusted catalog, sharing and formatted release sources

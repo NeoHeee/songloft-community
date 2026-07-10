@@ -489,38 +489,39 @@ class _SongPickerModalState extends ConsumerState<SongPickerModal> {
                 button: true,
                 label: '全选',
                 child: InkWell(
-                onTap: _isSelectingAll ? null : _toggleSelectAll,
-                borderRadius: BorderRadius.circular(8),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    children: [
-                      Checkbox(
-                        value: _selectAllCheckboxValue(),
-                        tristate: true,
-                        onChanged: _isSelectingAll
-                            ? null
-                            : (_) => _toggleSelectAll(),
-                      ),
-                      Expanded(
-                        child: Text(
-                          _isSelectingAll
-                              ? '正在选择全部...'
-                              : (_selectedIds.length >= _total && _total > 0
-                                  ? '取消全选（已选 ${_selectedIds.length}）'
-                                  : '全选 $_total 首'),
+                  onTap: _isSelectingAll ? null : _toggleSelectAll,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        Checkbox(
+                          value: _selectAllCheckboxValue(),
+                          tristate: true,
+                          onChanged:
+                              _isSelectingAll
+                                  ? null
+                                  : (_) => _toggleSelectAll(),
                         ),
-                      ),
-                      if (_isSelectingAll)
-                        const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                        Expanded(
+                          child: Text(
+                            _isSelectingAll
+                                ? '正在选择全部...'
+                                : (_selectedIds.length >= _total && _total > 0
+                                    ? '取消全选（已选 ${_selectedIds.length}）'
+                                    : '全选 $_total 首'),
+                          ),
                         ),
-                    ],
+                        if (_isSelectingAll)
+                          const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
               ),
             ),
 
@@ -580,7 +581,7 @@ class _SongPickerModalState extends ConsumerState<SongPickerModal> {
                                 const SizedBox(width: 8),
                                 CoverImage(
                                   coverUrl: song.coverUrl,
-                                  
+
                                   size: 48,
                                   borderRadius: 8,
                                 ),
@@ -661,13 +662,9 @@ class _FolderFilterButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
           side: BorderSide(
-            color: active
-                ? colorScheme.primary
-                : colorScheme.outlineVariant,
+            color: active ? colorScheme.primary : colorScheme.outlineVariant,
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
     );

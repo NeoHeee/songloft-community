@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/constants.dart';
-import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/responsive.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/url_helper.dart';
@@ -15,8 +14,8 @@ class SongListTile extends ConsumerWidget {
   final int index;
   final bool isSelected;
   final bool isSelectionMode;
-  final bool isNarrow; // 窄屏模式（隐藏专辑列）
-  final bool isCurrentSong; // 当前正在播放的歌曲
+  final bool isNarrow;
+  final bool isCurrentSong;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final VoidCallback? onSelect;
@@ -44,163 +43,235 @@ class SongListTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // 使用实际可用宽度判断，而非屏幕宽度，避免在窄容器中溢出
         if (context.isMobile ||
             constraints.maxWidth < ResponsiveBreakpoints.tablet) {
           return _buildMobileLayout(context);
-        } else {
-          return _buildDesktopLayout(context);
         }
+        return _buildDesktopLayout(context);
       },
     );
   }
 
   Widget _buildMobileLayout(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final coverUrl = song.coverUrl;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    return ListTile(
-      tileColor: isCurrentSong ? colorScheme.secondaryContainer : null,
-      shape: isCurrentSong
-          ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
-          : null,
-      leading:
-          isSelectionMode
-              ? Checkbox(value: isSelected, onChanged: (_) => onSelect?.call())
-              : _buildCoverImage(coverUrl, 48),
-      title: Text(
-        song.title,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: isCurrentSong
-            ? TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w600)
-            : null,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+      child: Material(
+        color:
+            isCurrentSong
+                ? colorScheme.primaryContainer.withValues(alpha: 0.62)
+                : colorScheme.surfaceContainerLow.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(18),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: isSelectionMode ? onSelect : onTap,
+          onLongPress: isSelectionMode ? null : onLongPress,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
+            child: Row(
+              children: [
+                if (isSelectionMode)
+                  Checkbox(
+                    value: isSelected,
+                    onChanged: (_) => onSelect?.call(),
+                  )
+                else
+                  _buildCoverImage(song.coverUrl, 52),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          if (isCurrentSong) ...[
+                            Icon(
+                              Icons.equalizer_rounded,
+                              size: 17,
+                              color: colorScheme.primary,
+                            ),
+                            const SizedBox(width: 6),
+                          ],
+                          Expanded(
+                            child: Text(
+                              song.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color:
+                                    isCurrentSong
+                                        ? colorScheme.primary
+                                        : colorScheme.onSurface,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              song.artist ?? '未知艺术家',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            Formatters.formatDuration(song.duration),
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                _buildTrailingActions(context),
+              ],
+            ),
+          ),
+        ),
       ),
-      subtitle: Text(
-        song.artist ?? '未知艺术家',
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: colorScheme.onSurfaceVariant),
-      ),
-      trailing: _buildTrailingActions(context),
-      onTap: isSelectionMode ? onSelect : onTap,
-      onLongPress: isSelectionMode ? null : onLongPress,
     );
   }
 
   Widget _buildDesktopLayout(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final coverUrl = song.coverUrl;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
-    return InkWell(
-      onTap: isSelectionMode ? onSelect : onTap,
-      onLongPress: isSelectionMode ? null : onLongPress,
-      hoverColor: colorScheme.surfaceContainerHigh,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isCurrentSong ? colorScheme.secondaryContainer : null,
-          borderRadius: isCurrentSong ? BorderRadius.circular(12) : null,
-          border: isCurrentSong
-              ? null
-              : Border(
-                  bottom: BorderSide(
-                    color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-                    width: 0.5,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      child: Material(
+        color:
+            isCurrentSong
+                ? colorScheme.primaryContainer.withValues(alpha: 0.5)
+                : Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: isSelectionMode ? onSelect : onTap,
+          onLongPress: isSelectionMode ? null : onLongPress,
+          hoverColor: colorScheme.surfaceContainerHigh.withValues(alpha: 0.78),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border:
+                  isCurrentSong
+                      ? Border.all(
+                        color: colorScheme.primary.withValues(alpha: 0.18),
+                      )
+                      : null,
+            ),
+            child: Row(
+              children: [
+                if (isSelectionMode)
+                  Checkbox(
+                    value: isSelected,
+                    onChanged: (_) => onSelect?.call(),
+                  )
+                else
+                  SizedBox(
+                    width: 40,
+                    child:
+                        isCurrentSong
+                            ? Icon(
+                              Icons.equalizer_rounded,
+                              size: 20,
+                              color: colorScheme.primary,
+                            )
+                            : Text(
+                              '${index + 1}',
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                  ),
+                const SizedBox(width: 10),
+                _buildCoverImage(song.coverUrl, 44),
+                const SizedBox(width: 13),
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    song.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: isCurrentSong ? colorScheme.primary : null,
+                      fontWeight:
+                          isCurrentSong ? FontWeight.w700 : FontWeight.w600,
+                    ),
                   ),
                 ),
-        ),
-        child: Row(
-          children: [
-            // 多选复选框
-            if (isSelectionMode)
-              Checkbox(value: isSelected, onChanged: (_) => onSelect?.call())
-            else
-              SizedBox(
-                width: 40,
-                child: isCurrentSong
-                    ? Icon(
-                        Icons.equalizer_rounded,
-                        size: 20,
-                        color: colorScheme.primary,
-                      )
-                    : Text(
-                        '${index + 1}',
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-              ),
-            const SizedBox(width: 12),
-            // 封面
-            _buildCoverImage(coverUrl, 40),
-            const SizedBox(width: 12),
-            // 标题
-            Expanded(
-              flex: 3,
-              child: Text(
-                song.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: isCurrentSong
-                    ? TextStyle(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                      )
-                    : null,
-              ),
-            ),
-            const SizedBox(width: 16),
-            // 艺术家
-            Expanded(
-              flex: 2,
-              child: Text(
-                song.artist ?? '未知艺术家',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: colorScheme.onSurfaceVariant),
-              ),
-            ),
-            const SizedBox(width: 16),
-            // 专辑（窄屏隐藏）
-            if (!isNarrow) ...[
-              Expanded(
-                flex: 2,
-                child: Text(
-                  song.album ?? '未知专辑',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: colorScheme.onSurfaceVariant),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    song.artist ?? '未知艺术家',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: colorScheme.onSurfaceVariant),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-            ],
-            // 类型标签
-            SizedBox(width: 60, child: _buildTypeChip(context)),
-            const SizedBox(width: 16),
-            // 时长
-            SizedBox(
-              width: 60,
-              child: Text(
-                Formatters.formatDuration(song.duration),
-                style: TextStyle(color: colorScheme.onSurfaceVariant),
-                textAlign: TextAlign.right,
-              ),
+                const SizedBox(width: 16),
+                if (!isNarrow) ...[
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      song.album ?? '未知专辑',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: colorScheme.onSurfaceVariant),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                ],
+                SizedBox(width: 60, child: _buildTypeChip(context)),
+                const SizedBox(width: 16),
+                SizedBox(
+                  width: 60,
+                  child: Text(
+                    Formatters.formatDuration(song.duration),
+                    style: TextStyle(color: colorScheme.onSurfaceVariant),
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(width: 140, child: _buildDesktopActions(context)),
+              ],
             ),
-            const SizedBox(width: 8),
-            // 操作按钮
-            SizedBox(width: 140, child: _buildDesktopActions(context)),
-          ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildCoverImage(String? coverUrl, double size) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.sm),
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(size > 48 ? 15 : 12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
       child:
           coverUrl != null
               ? ExcludeSemantics(
@@ -220,14 +291,21 @@ class SongListTile extends ConsumerWidget {
     return Builder(
       builder: (context) {
         final colorScheme = Theme.of(context).colorScheme;
-        return Container(
-          width: size,
-          height: size,
-          color: colorScheme.surfaceContainerHighest,
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                colorScheme.primaryContainer,
+                colorScheme.tertiaryContainer,
+              ],
+            ),
+          ),
           child: Icon(
             _getTypeIcon(),
-            size: size * 0.5,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            size: size * 0.48,
+            color: colorScheme.onPrimaryContainer.withValues(alpha: 0.72),
           ),
         );
       },
@@ -237,18 +315,18 @@ class SongListTile extends ConsumerWidget {
   IconData _getTypeIcon() {
     switch (song.type) {
       case AppConstants.songTypeRadio:
-        return Icons.radio;
+        return Icons.radio_rounded;
       case AppConstants.songTypeRemote:
-        return Icons.cloud;
+        return Icons.cloud_rounded;
       default:
-        return Icons.music_note;
+        return Icons.graphic_eq_rounded;
     }
   }
 
   Widget _buildTypeChip(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    String label;
-    Color color;
+    late final String label;
+    late final Color color;
 
     switch (song.type) {
       case AppConstants.songTypeRadio:
@@ -265,14 +343,18 @@ class SongListTile extends ConsumerWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 12, color: color),
+        style: TextStyle(
+          fontSize: 12,
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
         textAlign: TextAlign.center,
       ),
     );
@@ -286,7 +368,7 @@ class SongListTile extends ConsumerWidget {
       children: [
         FavoriteButton(songId: song.id, songType: song.type, size: 20),
         PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert),
+          icon: const Icon(Icons.more_horiz_rounded),
           onSelected: (value) {
             switch (value) {
               case 'play':
@@ -308,7 +390,7 @@ class SongListTile extends ConsumerWidget {
                 const PopupMenuItem(
                   value: 'play',
                   child: ListTile(
-                    leading: Icon(Icons.play_arrow),
+                    leading: Icon(Icons.play_arrow_rounded),
                     title: Text('播放'),
                     contentPadding: EdgeInsets.zero,
                   ),
@@ -317,7 +399,7 @@ class SongListTile extends ConsumerWidget {
                   const PopupMenuItem(
                     value: 'edit',
                     child: ListTile(
-                      leading: Icon(Icons.edit),
+                      leading: Icon(Icons.edit_rounded),
                       title: Text('编辑'),
                       contentPadding: EdgeInsets.zero,
                     ),
@@ -325,7 +407,7 @@ class SongListTile extends ConsumerWidget {
                 const PopupMenuItem(
                   value: 'add_to_playlist',
                   child: ListTile(
-                    leading: Icon(Icons.playlist_add),
+                    leading: Icon(Icons.playlist_add_rounded),
                     title: Text('添加到歌单'),
                     contentPadding: EdgeInsets.zero,
                   ),
@@ -333,7 +415,7 @@ class SongListTile extends ConsumerWidget {
                 const PopupMenuItem(
                   value: 'delete',
                   child: ListTile(
-                    leading: Icon(Icons.delete),
+                    leading: Icon(Icons.delete_outline_rounded),
                     title: Text('删除'),
                     contentPadding: EdgeInsets.zero,
                   ),
@@ -353,7 +435,7 @@ class SongListTile extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          icon: const Icon(Icons.play_arrow),
+          icon: const Icon(Icons.play_arrow_rounded),
           tooltip: '播放',
           onPressed: onTap,
           iconSize: 20,
@@ -363,7 +445,7 @@ class SongListTile extends ConsumerWidget {
         FavoriteButton(songId: song.id, songType: song.type, size: 20),
         if (song.type != AppConstants.songTypeLocal)
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.edit_rounded),
             tooltip: '编辑',
             onPressed: onEdit,
             iconSize: 20,
@@ -371,7 +453,7 @@ class SongListTile extends ConsumerWidget {
             constraints: constraints,
           ),
         IconButton(
-          icon: const Icon(Icons.playlist_add),
+          icon: const Icon(Icons.playlist_add_rounded),
           tooltip: '添加到歌单',
           onPressed: onAddToPlaylist,
           iconSize: 20,
@@ -379,7 +461,7 @@ class SongListTile extends ConsumerWidget {
           constraints: constraints,
         ),
         IconButton(
-          icon: const Icon(Icons.delete_outline),
+          icon: const Icon(Icons.delete_outline_rounded),
           tooltip: '删除',
           onPressed: onDelete,
           iconSize: 20,

@@ -13,10 +13,8 @@ class DlnaService {
   bool _hasStartedPlaying = false;
   bool _suppressCompletion = false; // 重新投歌期间抑制完成误判
 
-  final _devicesController =
-      StreamController<List<DlnaDeviceInfo>>.broadcast();
-  final _positionController =
-      StreamController<PositionParser>.broadcast();
+  final _devicesController = StreamController<List<DlnaDeviceInfo>>.broadcast();
+  final _positionController = StreamController<PositionParser>.broadcast();
   final _completionController = StreamController<void>.broadcast();
 
   Stream<List<DlnaDeviceInfo>> get devicesStream => _devicesController.stream;
@@ -29,15 +27,16 @@ class DlnaService {
   Future<void> startDiscovery() async {
     _deviceManager = await _manager.start();
     _deviceManager!.devices.stream.listen((deviceMap) {
-      final devices = deviceMap.values
-          .map(
-            (d) => DlnaDeviceInfo(
-              id: d.info.URLBase,
-              name: d.info.friendlyName,
-              location: d.info.URLBase,
-            ),
-          )
-          .toList();
+      final devices =
+          deviceMap.values
+              .map(
+                (d) => DlnaDeviceInfo(
+                  id: d.info.URLBase,
+                  name: d.info.friendlyName,
+                  location: d.info.URLBase,
+                ),
+              )
+              .toList();
       _devicesController.add(devices);
     });
   }
@@ -47,11 +46,7 @@ class DlnaService {
     _deviceManager = null;
   }
 
-  Future<void> castTo(
-    String deviceId,
-    String url, {
-    String title = '',
-  }) async {
+  Future<void> castTo(String deviceId, String url, {String title = ''}) async {
     final device = _deviceManager?.deviceList[deviceId];
     if (device == null) throw Exception('Device not found: $deviceId');
 
@@ -83,15 +78,13 @@ class DlnaService {
     Future<String> Function() action, {
     int retries = 3,
   }) async {
-    for (var attempt = 0;; attempt++) {
+    for (var attempt = 0; ; attempt++) {
       try {
         await action();
         return;
       } catch (_) {
         if (attempt >= retries) rethrow;
-        await Future<void>.delayed(
-          Duration(milliseconds: 400 * (attempt + 1)),
-        );
+        await Future<void>.delayed(Duration(milliseconds: 400 * (attempt + 1)));
       }
     }
   }

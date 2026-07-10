@@ -130,9 +130,8 @@ class PlayControls extends StatelessWidget {
       duration: const Duration(milliseconds: 300),
       decoration: BoxDecoration(
         borderRadius: borderRadius,
-        boxShadow: isPlaying
-            ? AppEffects.primaryGlow(theme.colorScheme.primary)
-            : [],
+        boxShadow:
+            isPlaying ? AppEffects.primaryGlow(theme.colorScheme.primary) : [],
       ),
       child: button,
     );

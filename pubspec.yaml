@@ -103,6 +103,8 @@ flutter:
   uses-material-design: true
   assets:
     - assets/icons/app_icon.png
+    - assets/theme_catalog/catalog.json
+    - assets/theme_catalog/themes/
     - windows/runner/resources/app_icon.ico
   fonts:
     - family: NotoSansSC

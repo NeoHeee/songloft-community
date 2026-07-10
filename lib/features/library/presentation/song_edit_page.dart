@@ -235,9 +235,10 @@ class _SongEditPageState extends ConsumerState<SongEditPage> {
               // 封面预览
               Builder(
                 builder: (context) {
-                  final previewUrl = isEditMode
-                      ? (widget.song?.coverUrl ?? '')
-                      : _coverUrlController.text;
+                  final previewUrl =
+                      isEditMode
+                          ? (widget.song?.coverUrl ?? '')
+                          : _coverUrlController.text;
                   if (previewUrl.isEmpty) return const SizedBox.shrink();
                   return Column(
                     children: [

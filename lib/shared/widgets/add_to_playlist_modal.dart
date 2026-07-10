@@ -104,9 +104,10 @@ class _AddToPlaylistModalState extends ConsumerState<AddToPlaylistModal> {
         ResponsiveSnackBar.showError(context, message: '添加失败');
       } else {
         Navigator.of(context).pop();
-        final msg = result.skipped > 0
-            ? '已添加 ${result.added} 首到「${playlist.name}」，跳过 ${result.skipped} 首'
-            : '已添加 ${result.added} 首歌曲到「${playlist.name}」';
+        final msg =
+            result.skipped > 0
+                ? '已添加 ${result.added} 首到「${playlist.name}」，跳过 ${result.skipped} 首'
+                : '已添加 ${result.added} 首歌曲到「${playlist.name}」';
         ResponsiveSnackBar.show(context, message: msg);
       }
     } catch (e) {
@@ -181,9 +182,10 @@ class _AddToPlaylistModalState extends ConsumerState<AddToPlaylistModal> {
         if (!mounted) return;
         if (result != null) {
           Navigator.of(context).pop();
-          final msg = result.skipped > 0
-              ? '已创建歌单「$name」并添加 ${result.added} 首，跳过 ${result.skipped} 首'
-              : '已创建歌单「$name」并添加 ${result.added} 首歌曲';
+          final msg =
+              result.skipped > 0
+                  ? '已创建歌单「$name」并添加 ${result.added} 首，跳过 ${result.skipped} 首'
+                  : '已创建歌单「$name」并添加 ${result.added} 首歌曲';
           ResponsiveSnackBar.show(context, message: msg);
         }
       } else if (mounted) {
@@ -289,7 +291,7 @@ class _AddToPlaylistModalState extends ConsumerState<AddToPlaylistModal> {
                           return ListTile(
                             leading: CoverImage(
                               coverUrl: playlist.coverImageUrl,
-                              
+
                               size: 48,
                               placeholderIcon: Icons.playlist_play,
                             ),

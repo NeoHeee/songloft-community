@@ -194,9 +194,7 @@ class AuthNotifier extends Notifier<AuthState> {
 
     // 通知服务端吊销 token：尽力而为，失败忽略，不阻塞登出
     final repository = ref.read(authRepositoryProvider);
-    unawaited(
-      repository.logout(accessToken: accessToken).catchError((_) {}),
-    );
+    unawaited(repository.logout(accessToken: accessToken).catchError((_) {}));
   }
 
   /// 直接设置为已登录态（wallet 恢复后使用，不发请求）

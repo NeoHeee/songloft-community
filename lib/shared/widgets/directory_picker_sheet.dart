@@ -116,9 +116,7 @@ class _DirectoryPickerSheetState extends ConsumerState<DirectoryPickerSheet> {
             ),
           ),
           const Divider(height: 1),
-          Expanded(
-            child: _buildBody(theme),
-          ),
+          Expanded(child: _buildBody(theme)),
         ],
       ),
     );
@@ -193,7 +191,10 @@ class _AllRow extends StatelessWidget {
               Icon(
                 Icons.all_inbox,
                 size: 20,
-                color: selected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                color:
+                    selected
+                        ? colorScheme.primary
+                        : colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -288,27 +289,29 @@ class _DirectoryNodeState extends ConsumerState<_DirectoryNode> {
                 // 展开/折叠按钮（仅当有子目录）
                 SizedBox(
                   width: 28,
-                  child: widget.entry.hasChildren
-                      ? IconButton(
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          icon: Icon(
-                            _isExpanded
-                                ? Icons.keyboard_arrow_down
-                                : Icons.keyboard_arrow_right,
-                            size: 20,
-                          ),
-                          tooltip: _isExpanded ? '收起' : '展开',
-                          onPressed: _toggleExpand,
-                        )
-                      : const SizedBox.shrink(),
+                  child:
+                      widget.entry.hasChildren
+                          ? IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: Icon(
+                              _isExpanded
+                                  ? Icons.keyboard_arrow_down
+                                  : Icons.keyboard_arrow_right,
+                              size: 20,
+                            ),
+                            tooltip: _isExpanded ? '收起' : '展开',
+                            onPressed: _toggleExpand,
+                          )
+                          : const SizedBox.shrink(),
                 ),
                 Icon(
                   _isExpanded ? Icons.folder_open : Icons.folder_outlined,
                   size: 20,
-                  color: _isSelected
-                      ? colorScheme.primary
-                      : colorScheme.onSurfaceVariant,
+                  color:
+                      _isSelected
+                          ? colorScheme.primary
+                          : colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 10),
                 Expanded(

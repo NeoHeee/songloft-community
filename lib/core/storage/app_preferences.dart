@@ -19,6 +19,7 @@ class AppPreferences {
   static const _currentIndexKey = 'player_current_index';
   static const _positionMsKey = 'player_position_ms';
   static const _sourcePlaylistIdKey = 'player_source_playlist_id';
+  static const _hiddenHomePluginEntriesKey = 'hidden_home_plugin_entries';
 
   final SharedPreferences _prefs;
 
@@ -246,7 +247,9 @@ class AppPreferences {
   }
 
   Future<bool> setSourcePlaylistId(int? id) {
-    if (id == null) return _prefs.remove(_sourcePlaylistIdKey).then((_) => true);
+    if (id == null) {
+      return _prefs.remove(_sourcePlaylistIdKey).then((_) => true);
+    }
     return _prefs.setInt(_sourcePlaylistIdKey, id);
   }
 
@@ -254,6 +257,29 @@ class AppPreferences {
     await _prefs.remove(_currentIndexKey);
     await _prefs.remove(_positionMsKey);
     await _prefs.remove(_sourcePlaylistIdKey);
+  }
+
+  /// 获取首页隐藏的插件入口。使用 entryPath 而不是数据库 ID，
+  /// 确保插件更新或重新安装后仍能保留用户选择。
+  Set<String> getHiddenHomePluginEntries() {
+    final entries =
+        _prefs.getStringList(_hiddenHomePluginEntriesKey) ?? const <String>[];
+    return entries
+        .map((entry) => entry.trim())
+        .where((entry) => entry.isNotEmpty)
+        .toSet();
+  }
+
+  /// 保存首页隐藏的插件入口。排序后写入，避免无意义的顺序变化。
+  Future<bool> setHiddenHomePluginEntries(Set<String> entryPaths) {
+    final entries =
+        entryPaths
+            .map((entry) => entry.trim())
+            .where((entry) => entry.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
+    return _prefs.setStringList(_hiddenHomePluginEntriesKey, entries);
   }
 
   /// 清除所有偏好设置

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_dimensions.dart';
-
+/// 设置页分组卡片
 class SectionCard extends StatelessWidget {
   final String title;
   final IconData icon;
@@ -16,44 +15,54 @@ class SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Group label (small uppercase style)
-        Padding(
-          padding: const EdgeInsets.only(
-            left: AppSpacing.sm + 2,
-            bottom: AppSpacing.sm,
-          ),
-          child: Text(
-            title.toUpperCase(),
-            style: textTheme.labelSmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              letterSpacing: 1.5,
-              fontWeight: FontWeight.w500,
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.24),
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 15, 16, 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer.withValues(alpha: 0.72),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: Icon(icon, size: 20, color: colorScheme.primary),
+                ),
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-        // Card container
-        Container(
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainer,
-            borderRadius: AppRadius.lgAll,
-            border: Border.all(
-              color: colorScheme.outlineVariant,
-              width: 1,
-            ),
+          Divider(
+            height: 1,
+            color: colorScheme.outlineVariant.withValues(alpha: 0.28),
           ),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: children,
-          ),
-        ),
-      ],
+          ...children,
+        ],
+      ),
     );
   }
 }

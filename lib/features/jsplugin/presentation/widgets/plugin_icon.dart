@@ -22,24 +22,25 @@ class PluginIcon extends StatelessWidget {
       final isSvg = url.toLowerCase().endsWith('.svg');
       return ClipRRect(
         borderRadius: BorderRadius.circular(size / 5),
-        child: isSvg
-            ? SvgPicture.network(
-                url,
-                width: size,
-                height: size,
-                fit: BoxFit.contain,
-                placeholderBuilder: (_) => _buildFallback(),
-                errorBuilder: (_, _, _) => _buildFallback(),
-              )
-            : ExcludeSemantics(
-              child: Image.network(
+        child:
+            isSvg
+                ? SvgPicture.network(
                   url,
                   width: size,
                   height: size,
-                  fit: BoxFit.cover,
+                  fit: BoxFit.contain,
+                  placeholderBuilder: (_) => _buildFallback(),
                   errorBuilder: (_, _, _) => _buildFallback(),
+                )
+                : ExcludeSemantics(
+                  child: Image.network(
+                    url,
+                    width: size,
+                    height: size,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => _buildFallback(),
+                  ),
                 ),
-              ),
       );
     }
     return _buildFallback();
@@ -69,40 +70,78 @@ class PluginNavIcon extends StatelessWidget {
   final String? iconUrl;
   final double size;
   final Widget fallbackIcon;
+  final bool selected;
 
   const PluginNavIcon({
     super.key,
     this.iconUrl,
     this.size = 24,
     required this.fallbackIcon,
+    this.selected = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (iconUrl == null || iconUrl!.isEmpty) return fallbackIcon;
-    final url = iconUrl!;
-    final isSvg = url.toLowerCase().endsWith('.svg');
-    return SizedBox(
-      width: size,
-      height: size,
-      child: isSvg
-          ? SvgPicture.network(
-              url,
-              width: size,
-              height: size,
-              fit: BoxFit.contain,
-              placeholderBuilder: (_) => fallbackIcon,
-              errorBuilder: (_, _, _) => fallbackIcon,
-            )
-          : ExcludeSemantics(
-            child: Image.network(
+    final colorScheme = Theme.of(context).colorScheme;
+    final iconColor =
+        selected ? colorScheme.primary : colorScheme.onSurfaceVariant;
+    final fallback = IconTheme.merge(
+      data: IconThemeData(color: iconColor, size: size),
+      child: fallbackIcon,
+    );
+
+    Widget content = fallback;
+    if (iconUrl != null && iconUrl!.isNotEmpty) {
+      final url = iconUrl!;
+      final isSvg = url.toLowerCase().endsWith('.svg');
+      content =
+          isSvg
+              ? SvgPicture.network(
                 url,
                 width: size,
                 height: size,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => fallbackIcon,
-              ),
-            ),
+                fit: BoxFit.contain,
+                placeholderBuilder: (_) => fallback,
+                errorBuilder: (_, _, _) => fallback,
+              )
+              : ExcludeSemantics(
+                child: Image.network(
+                  url,
+                  width: size,
+                  height: size,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => fallback,
+                ),
+              );
+    }
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+      width: size + 10,
+      height: size + 10,
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        color:
+            selected
+                ? colorScheme.primaryContainer.withValues(alpha: 0.72)
+                : colorScheme.surfaceContainerHighest.withValues(alpha: 0.62),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color:
+              selected
+                  ? colorScheme.primary.withValues(alpha: 0.34)
+                  : colorScheme.outlineVariant.withValues(alpha: 0.24),
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: Center(child: content),
+        ),
+      ),
     );
   }
 }

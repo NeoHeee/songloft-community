@@ -12,15 +12,15 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          playlistListProvider(null).overrideWith(
-            () => _EmptyPlaylistsNotifier(null),
-          ),
-          playlistListProvider('normal').overrideWith(
-            () => _EmptyPlaylistsNotifier('normal'),
-          ),
-          playlistListProvider('radio').overrideWith(
-            () => _EmptyPlaylistsNotifier('radio'),
-          ),
+          playlistListProvider(
+            null,
+          ).overrideWith(() => _EmptyPlaylistsNotifier(null)),
+          playlistListProvider(
+            'normal',
+          ).overrideWith(() => _EmptyPlaylistsNotifier('normal')),
+          playlistListProvider(
+            'radio',
+          ).overrideWith(() => _EmptyPlaylistsNotifier('radio')),
           playerStateProvider.overrideWith(
             () => throw UnimplementedError('mock'),
           ),

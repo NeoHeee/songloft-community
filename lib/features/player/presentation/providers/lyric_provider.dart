@@ -97,9 +97,9 @@ class LyricNotifier extends Notifier<LyricState> {
         state.currentLyricText,
         state.nextLyricText,
       );
-      ref.read(audioHandlerProvider).updateNowPlayingLyric(
-        state.currentLyricText,
-      );
+      ref
+          .read(audioHandlerProvider)
+          .updateNowPlayingLyric(state.currentLyricText);
     }
   }
 
@@ -134,9 +134,9 @@ class LyricNotifier extends Notifier<LyricState> {
         state.currentLyricText,
         state.nextLyricText,
       );
-      ref.read(audioHandlerProvider).updateNowPlayingLyric(
-        state.currentLyricText,
-      );
+      ref
+          .read(audioHandlerProvider)
+          .updateNowPlayingLyric(state.currentLyricText);
       return;
     }
 
@@ -164,9 +164,9 @@ class LyricNotifier extends Notifier<LyricState> {
         state.currentLyricText,
         state.nextLyricText,
       );
-      ref.read(audioHandlerProvider).updateNowPlayingLyric(
-        state.currentLyricText,
-      );
+      ref
+          .read(audioHandlerProvider)
+          .updateNowPlayingLyric(state.currentLyricText);
 
       if (lyricText.isNotEmpty) {
         await LyricCacheService().put(lyricUrl, lyricText);

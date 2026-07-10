@@ -343,7 +343,8 @@ class _QueueSongItem extends StatelessWidget {
                             placeholder:
                                 (_, _) => _buildCoverPlaceholder(colorScheme),
                             errorWidget:
-                                (_, _, _) => _buildCoverPlaceholder(colorScheme),
+                                (_, _, _) =>
+                                    _buildCoverPlaceholder(colorScheme),
                           ),
                         )
                       else

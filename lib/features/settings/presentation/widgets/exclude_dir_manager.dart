@@ -40,7 +40,8 @@ class _ExcludeDirManagerState extends ConsumerState<ExcludeDirManager> {
 
   // 输入控制器
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _autoCreateExcludeController = TextEditingController();
+  final TextEditingController _autoCreateExcludeController =
+      TextEditingController();
 
   @override
   void initState() {
@@ -66,7 +67,9 @@ class _ExcludeDirManagerState extends ConsumerState<ExcludeDirManager> {
         _musicPath = setting.path;
         _excludeDirs = List<String>.from(setting.excludeDirs);
         _excludePaths = List<String>.from(setting.excludePaths);
-        _autoCreateExcludeDirs = List<String>.from(setting.autoCreateExcludeDirs);
+        _autoCreateExcludeDirs = List<String>.from(
+          setting.autoCreateExcludeDirs,
+        );
         _isLoading = false;
       });
 
@@ -238,13 +241,14 @@ class _ExcludeDirManagerState extends ConsumerState<ExcludeDirManager> {
           width: double.infinity,
           child: FilledButton.icon(
             onPressed: _isSaving ? null : _saveConfig,
-            icon: _isSaving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.save),
+            icon:
+                _isSaving
+                    ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                    : const Icon(Icons.save),
             label: Text(_isSaving ? '保存中...' : '保存排除配置'),
           ),
         ),
@@ -287,10 +291,13 @@ class _ExcludeDirManagerState extends ConsumerState<ExcludeDirManager> {
             if (textEditingValue.text.isEmpty) {
               return const Iterable<String>.empty();
             }
-            return _allDirNames.where((name) =>
-                name.toLowerCase().contains(
-                    textEditingValue.text.toLowerCase()) &&
-                !_excludeDirs.contains(name));
+            return _allDirNames.where(
+              (name) =>
+                  name.toLowerCase().contains(
+                    textEditingValue.text.toLowerCase(),
+                  ) &&
+                  !_excludeDirs.contains(name),
+            );
           },
           onSelected: _addExcludeDir,
           fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
@@ -342,14 +349,15 @@ class _ExcludeDirManagerState extends ConsumerState<ExcludeDirManager> {
           Wrap(
             spacing: 8,
             runSpacing: 4,
-            children: _excludeDirs.map((name) {
-              return InputChip(
-                label: Text(name),
-                avatar: const Icon(Icons.folder_outlined, size: 18),
-                onDeleted: () => _removeExcludeDir(name),
-                deleteIconColor: colorScheme.onSurfaceVariant,
-              );
-            }).toList(),
+            children:
+                _excludeDirs.map((name) {
+                  return InputChip(
+                    label: Text(name),
+                    avatar: const Icon(Icons.folder_outlined, size: 18),
+                    onDeleted: () => _removeExcludeDir(name),
+                    deleteIconColor: colorScheme.onSurfaceVariant,
+                  );
+                }).toList(),
           ),
         ],
 
@@ -439,18 +447,20 @@ class _ExcludeDirManagerState extends ConsumerState<ExcludeDirManager> {
           Wrap(
             spacing: 8,
             runSpacing: 4,
-            children: _excludePaths.map((path) {
-              // 显示相对于音乐目录的路径
-              final displayPath = path.startsWith(_musicPath)
-                  ? path.substring(_musicPath.length)
-                  : path;
-              return InputChip(
-                label: Text(displayPath.isEmpty ? '/' : displayPath),
-                avatar: const Icon(Icons.folder_off_outlined, size: 18),
-                onDeleted: () => _removeExcludePath(path),
-                deleteIconColor: colorScheme.onSurfaceVariant,
-              );
-            }).toList(),
+            children:
+                _excludePaths.map((path) {
+                  // 显示相对于音乐目录的路径
+                  final displayPath =
+                      path.startsWith(_musicPath)
+                          ? path.substring(_musicPath.length)
+                          : path;
+                  return InputChip(
+                    label: Text(displayPath.isEmpty ? '/' : displayPath),
+                    avatar: const Icon(Icons.folder_off_outlined, size: 18),
+                    onDeleted: () => _removeExcludePath(path),
+                    deleteIconColor: colorScheme.onSurfaceVariant,
+                  );
+                }).toList(),
           ),
         ],
       ],
@@ -500,14 +510,15 @@ class _ExcludeDirManagerState extends ConsumerState<ExcludeDirManager> {
           Wrap(
             spacing: 8,
             runSpacing: 4,
-            children: _autoCreateExcludeDirs.map((name) {
-              return InputChip(
-                label: Text(name),
-                avatar: const Icon(Icons.folder_outlined, size: 18),
-                onDeleted: () => _removeAutoCreateExcludeDir(name),
-                deleteIconColor: colorScheme.onSurfaceVariant,
-              );
-            }).toList(),
+            children:
+                _autoCreateExcludeDirs.map((name) {
+                  return InputChip(
+                    label: Text(name),
+                    avatar: const Icon(Icons.folder_outlined, size: 18),
+                    onDeleted: () => _removeAutoCreateExcludeDir(name),
+                    deleteIconColor: colorScheme.onSurfaceVariant,
+                  );
+                }).toList(),
           ),
         ],
 
@@ -591,29 +602,35 @@ class _DirectoryTreeState extends ConsumerState<_DirectoryTree> {
     if (_error != null) {
       return Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
-        child: Text('加载目录失败: $_error',
-            style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        child: Text(
+          '加载目录失败: $_error',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
       );
     }
 
     if (_rootDirs == null || _rootDirs!.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
-        child: Text('目录为空',
-            style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        child: Text(
+          '目录为空',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
       );
     }
 
     return Column(
-      children: _rootDirs!.map((dir) {
-        return _DirectoryTreeNode(
-          entry: dir,
-          excludePaths: widget.excludePaths,
-          onTogglePath: widget.onTogglePath,
-          depth: 0,
-        );
-      }).toList(),
+      children:
+          _rootDirs!.map((dir) {
+            return _DirectoryTreeNode(
+              entry: dir,
+              excludePaths: widget.excludePaths,
+              onTogglePath: widget.onTogglePath,
+              depth: 0,
+            );
+          }).toList(),
     );
   }
 }
@@ -633,8 +650,7 @@ class _DirectoryTreeNode extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<_DirectoryTreeNode> createState() =>
-      _DirectoryTreeNodeState();
+  ConsumerState<_DirectoryTreeNode> createState() => _DirectoryTreeNodeState();
 }
 
 class _DirectoryTreeNodeState extends ConsumerState<_DirectoryTreeNode> {
@@ -649,8 +665,7 @@ class _DirectoryTreeNodeState extends ConsumerState<_DirectoryTreeNode> {
     setState(() => _isLoadingChildren = true);
     try {
       final directoryApi = ref.read(directoryApiProvider);
-      final result =
-          await directoryApi.getDirectories(path: widget.entry.path);
+      final result = await directoryApi.getDirectories(path: widget.entry.path);
       setState(() {
         _children = result.directories;
         _isLoadingChildren = false;
@@ -697,8 +712,7 @@ class _DirectoryTreeNodeState extends ConsumerState<_DirectoryTreeNode> {
                   child: Checkbox(
                     value: _isExcluded,
                     onChanged: (value) {
-                      widget.onTogglePath(
-                          widget.entry.path, value ?? false);
+                      widget.onTogglePath(widget.entry.path, value ?? false);
                     },
                   ),
                 ),
@@ -711,9 +725,10 @@ class _DirectoryTreeNodeState extends ConsumerState<_DirectoryTreeNode> {
                           ? Icons.folder_open
                           : Icons.folder_outlined),
                   size: 20,
-                  color: _isExcluded
-                      ? colorScheme.onSurfaceVariant
-                      : colorScheme.primary,
+                  color:
+                      _isExcluded
+                          ? colorScheme.onSurfaceVariant
+                          : colorScheme.primary,
                 ),
                 const SizedBox(width: 8),
                 // 目录名称
@@ -721,9 +736,10 @@ class _DirectoryTreeNodeState extends ConsumerState<_DirectoryTreeNode> {
                   child: Text(
                     widget.entry.name,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: _isExcluded
-                          ? colorScheme.onSurfaceVariant
-                          : colorScheme.onSurface,
+                      color:
+                          _isExcluded
+                              ? colorScheme.onSurfaceVariant
+                              : colorScheme.onSurface,
                       decoration:
                           _isExcluded ? TextDecoration.lineThrough : null,
                     ),
@@ -732,9 +748,7 @@ class _DirectoryTreeNodeState extends ConsumerState<_DirectoryTreeNode> {
                 // 展开/折叠箭头
                 if (widget.entry.hasChildren)
                   Icon(
-                    _isExpanded
-                        ? Icons.expand_less
-                        : Icons.expand_more,
+                    _isExpanded ? Icons.expand_less : Icons.expand_more,
                     size: 20,
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -743,8 +757,7 @@ class _DirectoryTreeNodeState extends ConsumerState<_DirectoryTreeNode> {
                   const SizedBox(
                     width: 16,
                     height: 16,
-                    child:
-                        CircularProgressIndicator(strokeWidth: 2),
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   ),
               ],
             ),

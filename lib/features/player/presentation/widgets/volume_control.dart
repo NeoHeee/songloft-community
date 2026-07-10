@@ -427,64 +427,68 @@ class _VolumeOverlayPanelState extends State<_VolumeOverlayPanel> {
               child: FocusScope(
                 autofocus: true,
                 child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // 顶部：音量百分比
-                  Text(
-                    '${_currentVolume.round()}%',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // 顶部：音量百分比
+                    Text(
+                      '${_currentVolume.round()}%',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  // 中间：垂直滑块
-                  Expanded(
-                    child: RotatedBox(
-                      quarterTurns: 3, // 旋转270度，让滑块垂直显示
-                      child: SliderTheme(
-                        data: SliderTheme.of(context).copyWith(
-                          trackHeight: trackHeight,
-                          thumbShape: RoundSliderThumbShape(
-                            enabledThumbRadius: thumbRadius,
+                    const SizedBox(height: 8),
+                    // 中间：垂直滑块
+                    Expanded(
+                      child: RotatedBox(
+                        quarterTurns: 3, // 旋转270度，让滑块垂直显示
+                        child: SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            trackHeight: trackHeight,
+                            thumbShape: RoundSliderThumbShape(
+                              enabledThumbRadius: thumbRadius,
+                            ),
+                            overlayShape: RoundSliderOverlayShape(
+                              overlayRadius: overlayRadius,
+                            ),
+                            activeTrackColor: theme.colorScheme.primary,
+                            inactiveTrackColor:
+                                theme.colorScheme.surfaceContainerHighest,
+                            thumbColor: theme.colorScheme.primary,
+                            overlayColor: theme.colorScheme.primary.withValues(
+                              alpha: 0.2,
+                            ),
                           ),
-                          overlayShape: RoundSliderOverlayShape(
-                            overlayRadius: overlayRadius,
+                          child: Slider(
+                            value: _currentVolume,
+                            min: 0,
+                            max: 100,
+                            onChanged: (value) {
+                              setState(() => _currentVolume = value);
+                              widget.onVolumeChanged(value);
+                            },
+                            semanticFormatterCallback:
+                                (value) => '音量 ${value.round()}%',
                           ),
-                          activeTrackColor: theme.colorScheme.primary,
-                          inactiveTrackColor:
-                              theme.colorScheme.surfaceContainerHighest,
-                          thumbColor: theme.colorScheme.primary,
-                          overlayColor: theme.colorScheme.primary.withValues(
-                            alpha: 0.2,
-                          ),
-                        ),
-                        child: Slider(
-                          value: _currentVolume,
-                          min: 0,
-                          max: 100,
-                          onChanged: (value) {
-                            setState(() => _currentVolume = value);
-                            widget.onVolumeChanged(value);
-                          },
-                          semanticFormatterCallback: (value) => '音量 ${value.round()}%',
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  // 底部：静音按钮
-                  IconButton(
-                    onPressed: widget.onToggleMute,
-                    icon: Icon(_volumeIcon, color: theme.colorScheme.onSurface),
-                    iconSize: iconSize,
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    tooltip: _currentVolume > 0 ? '静音' : '恢复音量',
-                  ),
-                ],
-              ),
+                    const SizedBox(height: 8),
+                    // 底部：静音按钮
+                    IconButton(
+                      onPressed: widget.onToggleMute,
+                      icon: Icon(
+                        _volumeIcon,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                      iconSize: iconSize,
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: _currentVolume > 0 ? '静音' : '恢复音量',
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

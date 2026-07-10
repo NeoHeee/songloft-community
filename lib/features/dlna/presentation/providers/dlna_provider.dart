@@ -15,8 +15,9 @@ final dlnaServiceProvider = Provider<DlnaService>((ref) {
   return service;
 });
 
-final dlnaStateProvider =
-    NotifierProvider<DlnaNotifier, DlnaState>(DlnaNotifier.new);
+final dlnaStateProvider = NotifierProvider<DlnaNotifier, DlnaState>(
+  DlnaNotifier.new,
+);
 
 class DlnaNotifier extends Notifier<DlnaState> {
   StreamSubscription? _devicesSub;
@@ -47,10 +48,7 @@ class DlnaNotifier extends Notifier<DlnaState> {
         state = state.copyWith(devices: devices);
       });
     } catch (e) {
-      state = state.copyWith(
-        isDiscovering: false,
-        error: () => e.toString(),
-      );
+      state = state.copyWith(isDiscovering: false, error: () => e.toString());
     }
   }
 
@@ -82,8 +80,9 @@ class DlnaNotifier extends Notifier<DlnaState> {
       });
 
       _completionSub?.cancel();
-      _completionSub =
-          _service.completionStream.listen((_) => _onDeviceCompleted());
+      _completionSub = _service.completionStream.listen(
+        (_) => _onDeviceCompleted(),
+      );
 
       _listenSongChanges();
 
@@ -139,8 +138,10 @@ class DlnaNotifier extends Notifier<DlnaState> {
       case PlayMode.single:
         final song = playerState.currentSong;
         if (song?.url != null) {
-          final url =
-              UrlHelper.buildSongUrl(song!.url!, songFormat: song.format);
+          final url = UrlHelper.buildSongUrl(
+            song!.url!,
+            songFormat: song.format,
+          );
           unawaited(_safeCast(url, song.title));
         }
         return;

@@ -11,7 +11,10 @@ void main() {
           text: 'world',
         ),
       ];
-      expect(LyricParser.stringify(lines), '[00:01.500]hello\n[01:23.456]world\n');
+      expect(
+        LyricParser.stringify(lines),
+        '[00:01.500]hello\n[01:23.456]world\n',
+      );
     });
 
     test('sorts lines before serializing', () {
@@ -23,9 +26,7 @@ void main() {
     });
 
     test('clamps negative times to zero', () {
-      const lines = [
-        LyricLine(time: Duration(seconds: -3), text: 'x'),
-      ];
+      const lines = [LyricLine(time: Duration(seconds: -3), text: 'x')];
       expect(LyricParser.stringify(lines), '[00:00.000]x\n');
     });
 
@@ -33,8 +34,10 @@ void main() {
       const original = '[00:01.500]hello\n[01:23.456]world\n';
       final parsed = LyricParser.parse(original);
       final out = LyricParser.stringify(parsed);
-      expect(LyricParser.parse(out).map((l) => l.time.inMilliseconds).toList(),
-          [1500, 83456]);
+      expect(
+        LyricParser.parse(out).map((l) => l.time.inMilliseconds).toList(),
+        [1500, 83456],
+      );
     });
 
     test('returns empty string for empty input', () {
@@ -48,7 +51,10 @@ void main() {
         LyricLine(time: Duration(seconds: 1), text: 'a'),
         LyricLine(time: Duration(seconds: 2), text: 'b'),
       ];
-      final shifted = LyricParser.applyOffset(lines, const Duration(milliseconds: 500));
+      final shifted = LyricParser.applyOffset(
+        lines,
+        const Duration(milliseconds: 500),
+      );
       expect(shifted[0].time, const Duration(milliseconds: 1500));
       expect(shifted[1].time, const Duration(milliseconds: 2500));
     });
@@ -58,16 +64,20 @@ void main() {
         LyricLine(time: Duration(milliseconds: 200), text: 'a'),
         LyricLine(time: Duration(seconds: 5), text: 'b'),
       ];
-      final shifted =
-          LyricParser.applyOffset(lines, const Duration(seconds: -1));
+      final shifted = LyricParser.applyOffset(
+        lines,
+        const Duration(seconds: -1),
+      );
       expect(shifted[0].time, Duration.zero);
       expect(shifted[1].time, const Duration(seconds: 4));
     });
 
     test('preserves text', () {
       const lines = [LyricLine(time: Duration(seconds: 1), text: 'hello')];
-      final shifted =
-          LyricParser.applyOffset(lines, const Duration(milliseconds: 100));
+      final shifted = LyricParser.applyOffset(
+        lines,
+        const Duration(milliseconds: 100),
+      );
       expect(shifted.single.text, 'hello');
     });
   });

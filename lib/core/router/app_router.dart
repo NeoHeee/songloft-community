@@ -109,9 +109,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: AppRoutes.home,
             pageBuilder:
                 (context, state) => NoTransitionPage(
-                  child: AppConfig.isTvMode
-                      ? const TvHomePage()
-                      : const HomePage(),
+                  child:
+                      AppConfig.isTvMode
+                          ? const TvHomePage()
+                          : const HomePage(),
                 ),
           ),
 
