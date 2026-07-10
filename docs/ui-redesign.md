@@ -45,29 +45,43 @@
 - Docker 容器启动后验证首页、部署模式、主程序 JS 与 CanvasKit 均可访问。
 - 输出可通过 `docker load` 导入的 NAS 测试镜像包。
 
+## 第六阶段：自定义主题包（已完成）
+
+- 将“浅色 / 深色 / 跟随系统”与主题包选择分离，同一主题包可同时提供浅色和深色配色。
+- 内置 Songloft 经典、深海蓝、森林绿和暮色玫瑰四套主题。
+- 支持导入声明式 `.songloft-theme` / JSON 主题包，并进行版本、ID、颜色、圆角和文件大小校验。
+- 导入前显示主题名称、作者、版本、主题 ID、描述及浅色/深色预览。
+- 检测到相同自定义主题 ID 时明确提示覆盖更新，确认后才写入并启用。
+- 支持查看主题详情、复制标准 JSON、导出指定主题以及一键导出当前主题。
+- 支持删除自定义主题，内置主题保持只读。
+- 完善主题包制作、发布、命名、版本更新和安全规范。
+- 增加主题包解析、默认值、导出回环和非法输入自动测试。
+
 ## 工程验证
 
-- GitHub Actions 自动执行依赖安装、Dart 格式检查和 `flutter analyze`。
-- 静态分析报告会作为工作流附件保存。
+- GitHub Actions 自动执行依赖安装、严格 Dart 格式检查、主题包测试和 `flutter analyze`。
 - Flutter Web Release 已完成编译验证，并上传 `songloft-web-preview`。
 - Android Release 已完成三种 ABI 构建：`arm64-v8a`、`armeabi-v7a`、`x86_64`。
-- Windows x64 Release 已完成编译并生成便携 ZIP。
+- Windows x64 Release 已完成编译并生成包含内置 Go 后端的便携 ZIP。
 - 嵌入式 Web 已通过本地 CanvasKit、字体、部署模式和 Brotli/Gzip 资源完整性验证。
 - Linux AMD64 Go 完整版已成功嵌入新版 Web UI。
 - Docker 镜像已成功构建、启动并通过 HTTP 冒烟测试。
 - Web、Android、Windows、Linux 和 Docker 预览产物默认保留 14 天。
 - Android 与 Windows 构建采用按需触发，避免普通 UI 提交重复消耗构建资源。
+- 最新主题分享完整验证：GitHub Actions Run `29066765978`，提交 `dad8b0ca4fe8428b49a3b31cb137d4269fde5208`。
 
 ## 后续阶段
 
 1. 使用真实音乐库完成手机、平板、桌面端视觉回归和交互细节修正。
 2. 根据最终确认的品牌素材统一 Android、iOS、Windows、macOS 与 Web 图标。
-3. 优化 iOS 启动页和 Windows 可执行文件内部名称等发行元数据。
-4. 整理合并策略，并在确认后分别合并客户端和服务端集成 PR。
+3. 在严格白名单、大小和路径校验下评估主题包壁纸资源支持。
+4. 评估带签名元数据的在线主题目录，仍由用户主动确认安装。
+5. 整理合并策略，并在确认后分别合并客户端和服务端集成 PR。
 
 ## 设计原则
 
 - UI 与业务状态解耦，尽量复用现有 Riverpod Provider。
 - 不改变现有 REST API 和插件协议。
 - 桌面、平板、手机和 TV 保持响应式能力。
+- 主题包只允许声明式白名单字段，不执行脚本、CSS、HTML 或远程代码。
 - 每个阶段独立提交，便于回滚和跟进上游更新。
