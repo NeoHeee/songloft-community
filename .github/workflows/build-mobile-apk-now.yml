@@ -1,6 +1,11 @@
 name: Build latest mobile APKs
 
 on:
+  push:
+    branches:
+      - ui-redesign
+    paths:
+      - '.github/workflows/build-mobile-apk-now.yml'
   pull_request:
     branches:
       - main
@@ -12,7 +17,9 @@ permissions:
 
 jobs:
   build:
-    if: github.event.pull_request.head.ref == 'ui-redesign'
+    if: >-
+      github.event_name == 'push' ||
+      github.event.pull_request.head.ref == 'ui-redesign'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
