@@ -1,6 +1,11 @@
 name: Apply mobile metric row
 
 on:
+  push:
+    branches:
+      - ui-redesign
+    paths:
+      - '.github/workflows/apply-metric-row-mobile.yml'
   pull_request:
     branches:
       - main
@@ -12,7 +17,9 @@ permissions:
 
 jobs:
   apply:
-    if: github.event.pull_request.head.ref == 'ui-redesign'
+    if: >-
+      github.event_name == 'push' ||
+      github.event.pull_request.head.ref == 'ui-redesign'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
