@@ -47,12 +47,29 @@ jobs:
             lib/shared/layouts/redesigned_desktop_shell.dart \
             lib/features/player/presentation/widgets/mini_player.dart
 
-      - name: Install dependencies and analyze
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        shell: bash
         run: |
-          flutter pub get
-          flutter analyze
+          set +e
+          flutter analyze > theme-pack-analyze.log 2>&1
+          status=$?
+          cat theme-pack-analyze.log
+          exit "$status"
+
+      - name: Upload analyzer diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: theme-pack-analyzer-diagnostics
+          path: theme-pack-analyze.log
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Upload integrated sources
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: theme-pack-integrated-sources
