@@ -7,6 +7,7 @@ on:
     paths:
       - 'lib/**'
       - 'test/**'
+      - 'assets/theme_catalog/**'
       - 'web/**'
       - 'android/**'
       - 'windows/**'
@@ -20,6 +21,7 @@ on:
     paths:
       - 'lib/**'
       - 'test/**'
+      - 'assets/theme_catalog/**'
       - 'web/**'
       - 'android/**'
       - 'windows/**'
@@ -38,7 +40,7 @@ concurrency:
 
 jobs:
   analyze:
-    name: Flutter analyze and theme tests
+    name: Flutter analyze and theme system tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -54,8 +56,8 @@ jobs:
         run: flutter pub get
       - name: Check formatting
         run: dart format -o none --set-exit-if-changed lib test
-      - name: Run theme pack tests
-        run: flutter test test/core/theme/theme_pack_test.dart
+      - name: Run theme system tests
+        run: flutter test test/core/theme
       - name: Analyze
         run: flutter analyze
 
@@ -171,4 +173,4 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
-# verifies theme preview, export, sharing, tests and formatted release sources
+# verifies theme packs, trusted catalog, sharing and formatted release sources
