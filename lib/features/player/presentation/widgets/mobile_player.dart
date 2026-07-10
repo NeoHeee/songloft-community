@@ -30,18 +30,17 @@ class MobilePlayer extends ConsumerStatefulWidget {
     return Navigator.of(context).push(
       PageRouteBuilder(
         opaque: true,
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const MobilePlayer(),
+        pageBuilder:
+            (context, animation, secondaryAnimation) => const MobilePlayer(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           // 从下往上滑入动画
           return SlideTransition(
-            position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
-                .animate(
-                  CurvedAnimation(
-                    parent: animation,
-                    curve: Curves.easeOutCubic,
-                  ),
-                ),
+            position: Tween<Offset>(
+              begin: const Offset(0, 1),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            ),
             child: child,
           );
         },
@@ -137,9 +136,10 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
                   child: Image.network(
                     UrlHelper.buildCoverUrl(coverUrl),
                     fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => Container(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                    ),
+                    errorBuilder:
+                        (_, _, _) => Container(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                        ),
                   ),
                 ),
               ),
@@ -337,9 +337,10 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
           margin: const EdgeInsets.symmetric(horizontal: 4),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isActive
-                ? theme.colorScheme.primary
-                : theme.colorScheme.onSurface.withValues(alpha: 0.3),
+            color:
+                isActive
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.3),
           ),
         );
       }),
@@ -390,9 +391,10 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
           PopupMenuButton<String>(
             icon: Icon(
               Icons.more_horiz_rounded,
-              color: state.sleepTimer != null
-                  ? Theme.of(context).colorScheme.primary
-                  : topBarColor,
+              color:
+                  state.sleepTimer != null
+                      ? Theme.of(context).colorScheme.primary
+                      : topBarColor,
             ),
             onSelected: (value) {
               switch (value) {
@@ -476,20 +478,22 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
       decoration: BoxDecoration(
         borderRadius: AppRadius.xlAll,
         color: theme.colorScheme.surfaceContainerHighest,
-        boxShadow: glowColor != null
-            ? AppEffects.primaryGlow(glowColor)
-            : AppEffects.softGlow(theme.colorScheme.onSurface),
+        boxShadow:
+            glowColor != null
+                ? AppEffects.primaryGlow(glowColor)
+                : AppEffects.softGlow(theme.colorScheme.onSurface),
       ),
       clipBehavior: Clip.antiAlias,
-      child: coverUrl != null
-          ? ExcludeSemantics(
-              child: Image.network(
-                UrlHelper.buildCoverUrl(coverUrl),
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => _buildPlaceholder(theme, size),
-              ),
-            )
-          : _buildPlaceholder(theme, size),
+      child:
+          coverUrl != null
+              ? ExcludeSemantics(
+                child: Image.network(
+                  UrlHelper.buildCoverUrl(coverUrl),
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => _buildPlaceholder(theme, size),
+                ),
+              )
+              : _buildPlaceholder(theme, size),
     );
   }
 

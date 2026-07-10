@@ -95,9 +95,10 @@ class ThemePackNotifier extends Notifier<ThemePackState> {
       ]);
       final storedId =
           prefs.getString(_selectedThemePackKey) ?? defaultThemePackId;
-      final selectedId = packs.any((pack) => pack.id == storedId)
-          ? storedId
-          : defaultThemePackId;
+      final selectedId =
+          packs.any((pack) => pack.id == storedId)
+              ? storedId
+              : defaultThemePackId;
 
       state = ThemePackState(packs: packs, selectedId: selectedId);
     } catch (e) {
@@ -171,9 +172,8 @@ class ThemePackNotifier extends Notifier<ThemePackState> {
     }
 
     final custom = state.customPacks.where((pack) => pack.id != id).toList();
-    final selectedId = state.selectedId == id
-        ? defaultThemePackId
-        : state.selectedId;
+    final selectedId =
+        state.selectedId == id ? defaultThemePackId : state.selectedId;
     final packs = List<SongloftThemePack>.unmodifiable([
       ...SongloftThemePacks.builtIn,
       ...custom,

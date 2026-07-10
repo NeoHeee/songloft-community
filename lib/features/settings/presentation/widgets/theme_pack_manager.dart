@@ -91,27 +91,29 @@ class ThemePackManager extends ConsumerWidget {
         ),
         SizedBox(
           height: 184,
-          child: state.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : ListView.separated(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
+          child:
+              state.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ListView.separated(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                    ),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: state.packs.length,
+                    separatorBuilder:
+                        (_, _) => const SizedBox(width: AppSpacing.sm),
+                    itemBuilder: (context, index) {
+                      final pack = state.packs[index];
+                      return _ThemePackCard(
+                        pack: pack,
+                        selected: pack.id == state.selectedId,
+                        onSelected: () => _selectTheme(context, ref, pack),
+                        onAction:
+                            (action) =>
+                                _handlePackAction(context, ref, pack, action),
+                      );
+                    },
                   ),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: state.packs.length,
-                  separatorBuilder: (_, _) =>
-                      const SizedBox(width: AppSpacing.sm),
-                  itemBuilder: (context, index) {
-                    final pack = state.packs[index];
-                    return _ThemePackCard(
-                      pack: pack,
-                      selected: pack.id == state.selectedId,
-                      onSelected: () => _selectTheme(context, ref, pack),
-                      onAction: (action) =>
-                          _handlePackAction(context, ref, pack, action),
-                    );
-                  },
-                ),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(
@@ -130,9 +132,10 @@ class ThemePackManager extends ConsumerWidget {
                 label: const Text('导入主题包'),
               ),
               OutlinedButton.icon(
-                onPressed: state.isLoading
-                    ? null
-                    : () => _exportThemePack(context, state.selectedPack),
+                onPressed:
+                    state.isLoading
+                        ? null
+                        : () => _exportThemePack(context, state.selectedPack),
                 icon: const Icon(Icons.ios_share_rounded),
                 label: const Text('导出当前主题'),
               ),
@@ -210,11 +213,12 @@ class ThemePackManager extends ConsumerWidget {
       if (!context.mounted) return;
       final confirmed = await showDialog<bool>(
         context: context,
-        builder: (dialogContext) => _ThemeImportPreviewDialog(
-          pack: pack,
-          fileName: file.name,
-          isUpdate: isUpdate,
-        ),
+        builder:
+            (dialogContext) => _ThemeImportPreviewDialog(
+              pack: pack,
+              fileName: file.name,
+              isUpdate: isUpdate,
+            ),
       );
       if (confirmed != true || !context.mounted) return;
 
@@ -224,9 +228,10 @@ class ThemePackManager extends ConsumerWidget {
       if (!context.mounted) return;
       ResponsiveSnackBar.showSuccess(
         context,
-        message: isUpdate
-            ? '主题包“${installed.name}”已更新并启用'
-            : '主题包“${installed.name}”已安装并启用',
+        message:
+            isUpdate
+                ? '主题包“${installed.name}”已更新并启用'
+                : '主题包“${installed.name}”已安装并启用',
       );
     } catch (e) {
       if (!context.mounted) return;
@@ -302,20 +307,21 @@ class ThemePackManager extends ConsumerWidget {
     if (pack.isBuiltIn) return;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('删除主题包'),
-        content: Text('确定删除“${pack.name}”吗？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('取消'),
+      builder:
+          (dialogContext) => AlertDialog(
+            title: const Text('删除主题包'),
+            content: Text('确定删除“${pack.name}”吗？'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: const Text('取消'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: const Text('删除'),
+              ),
+            ],
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('删除'),
-          ),
-        ],
-      ),
     );
     if (confirmed != true) return;
 
@@ -433,14 +439,16 @@ class _ThemePackCard extends StatelessWidget {
           width: 218,
           padding: const EdgeInsets.all(AppSpacing.sm),
           decoration: BoxDecoration(
-            color: selected
-                ? colorScheme.primaryContainer.withValues(alpha: 0.38)
-                : colorScheme.surfaceContainerLow,
+            color:
+                selected
+                    ? colorScheme.primaryContainer.withValues(alpha: 0.38)
+                    : colorScheme.surfaceContainerLow,
             borderRadius: AppRadius.lgAll,
             border: Border.all(
-              color: selected
-                  ? colorScheme.primary
-                  : colorScheme.outlineVariant.withValues(alpha: 0.45),
+              color:
+                  selected
+                      ? colorScheme.primary
+                      : colorScheme.outlineVariant.withValues(alpha: 0.45),
               width: selected ? 2 : 1,
             ),
           ),
@@ -471,37 +479,38 @@ class _ThemePackCard extends StatelessWidget {
                     tooltip: '主题操作',
                     padding: EdgeInsets.zero,
                     onSelected: onAction,
-                    itemBuilder: (_) => [
-                      const PopupMenuItem(
-                        value: _ThemePackAction.details,
-                        child: ListTile(
-                          leading: Icon(Icons.info_outline_rounded),
-                          title: Text('查看详情'),
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: _ThemePackAction.copyJson,
-                        child: ListTile(
-                          leading: Icon(Icons.copy_all_rounded),
-                          title: Text('复制 JSON'),
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: _ThemePackAction.export,
-                        child: ListTile(
-                          leading: Icon(Icons.ios_share_rounded),
-                          title: Text('导出主题包'),
-                        ),
-                      ),
-                      if (!pack.isBuiltIn)
-                        const PopupMenuItem(
-                          value: _ThemePackAction.delete,
-                          child: ListTile(
-                            leading: Icon(Icons.delete_outline_rounded),
-                            title: Text('删除'),
+                    itemBuilder:
+                        (_) => [
+                          const PopupMenuItem(
+                            value: _ThemePackAction.details,
+                            child: ListTile(
+                              leading: Icon(Icons.info_outline_rounded),
+                              title: Text('查看详情'),
+                            ),
                           ),
-                        ),
-                    ],
+                          const PopupMenuItem(
+                            value: _ThemePackAction.copyJson,
+                            child: ListTile(
+                              leading: Icon(Icons.copy_all_rounded),
+                              title: Text('复制 JSON'),
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: _ThemePackAction.export,
+                            child: ListTile(
+                              leading: Icon(Icons.ios_share_rounded),
+                              title: Text('导出主题包'),
+                            ),
+                          ),
+                          if (!pack.isBuiltIn)
+                            const PopupMenuItem(
+                              value: _ThemePackAction.delete,
+                              child: ListTile(
+                                leading: Icon(Icons.delete_outline_rounded),
+                                title: Text('删除'),
+                              ),
+                            ),
+                        ],
                     icon: const Icon(Icons.more_vert_rounded, size: 20),
                   ),
                 ],
@@ -770,9 +779,9 @@ class _PalettePreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final foreground =
         ThemeData.estimateBrightnessForColor(palette.backgroundColor) ==
-            Brightness.dark
-        ? Colors.white
-        : const Color(0xFF17171D);
+                Brightness.dark
+            ? Colors.white
+            : const Color(0xFF17171D);
     return ColoredBox(
       color: palette.backgroundColor,
       child: Padding(
@@ -796,15 +805,16 @@ class _PalettePreview extends StatelessWidget {
                   gradient: LinearGradient(colors: palette.playerGradient),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: expanded
-                    ? const Center(
-                        child: Icon(
-                          Icons.graphic_eq_rounded,
-                          color: Colors.white,
-                          size: 30,
-                        ),
-                      )
-                    : null,
+                child:
+                    expanded
+                        ? const Center(
+                          child: Icon(
+                            Icons.graphic_eq_rounded,
+                            color: Colors.white,
+                            size: 30,
+                          ),
+                        )
+                        : null,
               ),
             ),
             const SizedBox(height: 7),
@@ -885,11 +895,8 @@ class _ColorChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hex = color
-        .toARGB32()
-        .toRadixString(16)
-        .padLeft(8, '0')
-        .toUpperCase();
+    final hex =
+        color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
       decoration: BoxDecoration(

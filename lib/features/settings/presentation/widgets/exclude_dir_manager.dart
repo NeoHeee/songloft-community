@@ -241,13 +241,14 @@ class _ExcludeDirManagerState extends ConsumerState<ExcludeDirManager> {
           width: double.infinity,
           child: FilledButton.icon(
             onPressed: _isSaving ? null : _saveConfig,
-            icon: _isSaving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.save),
+            icon:
+                _isSaving
+                    ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                    : const Icon(Icons.save),
             label: Text(_isSaving ? '保存中...' : '保存排除配置'),
           ),
         ),
@@ -348,14 +349,15 @@ class _ExcludeDirManagerState extends ConsumerState<ExcludeDirManager> {
           Wrap(
             spacing: 8,
             runSpacing: 4,
-            children: _excludeDirs.map((name) {
-              return InputChip(
-                label: Text(name),
-                avatar: const Icon(Icons.folder_outlined, size: 18),
-                onDeleted: () => _removeExcludeDir(name),
-                deleteIconColor: colorScheme.onSurfaceVariant,
-              );
-            }).toList(),
+            children:
+                _excludeDirs.map((name) {
+                  return InputChip(
+                    label: Text(name),
+                    avatar: const Icon(Icons.folder_outlined, size: 18),
+                    onDeleted: () => _removeExcludeDir(name),
+                    deleteIconColor: colorScheme.onSurfaceVariant,
+                  );
+                }).toList(),
           ),
         ],
 
@@ -445,18 +447,20 @@ class _ExcludeDirManagerState extends ConsumerState<ExcludeDirManager> {
           Wrap(
             spacing: 8,
             runSpacing: 4,
-            children: _excludePaths.map((path) {
-              // 显示相对于音乐目录的路径
-              final displayPath = path.startsWith(_musicPath)
-                  ? path.substring(_musicPath.length)
-                  : path;
-              return InputChip(
-                label: Text(displayPath.isEmpty ? '/' : displayPath),
-                avatar: const Icon(Icons.folder_off_outlined, size: 18),
-                onDeleted: () => _removeExcludePath(path),
-                deleteIconColor: colorScheme.onSurfaceVariant,
-              );
-            }).toList(),
+            children:
+                _excludePaths.map((path) {
+                  // 显示相对于音乐目录的路径
+                  final displayPath =
+                      path.startsWith(_musicPath)
+                          ? path.substring(_musicPath.length)
+                          : path;
+                  return InputChip(
+                    label: Text(displayPath.isEmpty ? '/' : displayPath),
+                    avatar: const Icon(Icons.folder_off_outlined, size: 18),
+                    onDeleted: () => _removeExcludePath(path),
+                    deleteIconColor: colorScheme.onSurfaceVariant,
+                  );
+                }).toList(),
           ),
         ],
       ],
@@ -506,14 +510,15 @@ class _ExcludeDirManagerState extends ConsumerState<ExcludeDirManager> {
           Wrap(
             spacing: 8,
             runSpacing: 4,
-            children: _autoCreateExcludeDirs.map((name) {
-              return InputChip(
-                label: Text(name),
-                avatar: const Icon(Icons.folder_outlined, size: 18),
-                onDeleted: () => _removeAutoCreateExcludeDir(name),
-                deleteIconColor: colorScheme.onSurfaceVariant,
-              );
-            }).toList(),
+            children:
+                _autoCreateExcludeDirs.map((name) {
+                  return InputChip(
+                    label: Text(name),
+                    avatar: const Icon(Icons.folder_outlined, size: 18),
+                    onDeleted: () => _removeAutoCreateExcludeDir(name),
+                    deleteIconColor: colorScheme.onSurfaceVariant,
+                  );
+                }).toList(),
           ),
         ],
 
@@ -617,14 +622,15 @@ class _DirectoryTreeState extends ConsumerState<_DirectoryTree> {
     }
 
     return Column(
-      children: _rootDirs!.map((dir) {
-        return _DirectoryTreeNode(
-          entry: dir,
-          excludePaths: widget.excludePaths,
-          onTogglePath: widget.onTogglePath,
-          depth: 0,
-        );
-      }).toList(),
+      children:
+          _rootDirs!.map((dir) {
+            return _DirectoryTreeNode(
+              entry: dir,
+              excludePaths: widget.excludePaths,
+              onTogglePath: widget.onTogglePath,
+              depth: 0,
+            );
+          }).toList(),
     );
   }
 }
@@ -716,12 +722,13 @@ class _DirectoryTreeNodeState extends ConsumerState<_DirectoryTreeNode> {
                   _isExcluded
                       ? Icons.folder_off_outlined
                       : (_isExpanded
-                            ? Icons.folder_open
-                            : Icons.folder_outlined),
+                          ? Icons.folder_open
+                          : Icons.folder_outlined),
                   size: 20,
-                  color: _isExcluded
-                      ? colorScheme.onSurfaceVariant
-                      : colorScheme.primary,
+                  color:
+                      _isExcluded
+                          ? colorScheme.onSurfaceVariant
+                          : colorScheme.primary,
                 ),
                 const SizedBox(width: 8),
                 // 目录名称
@@ -729,12 +736,12 @@ class _DirectoryTreeNodeState extends ConsumerState<_DirectoryTreeNode> {
                   child: Text(
                     widget.entry.name,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: _isExcluded
-                          ? colorScheme.onSurfaceVariant
-                          : colorScheme.onSurface,
-                      decoration: _isExcluded
-                          ? TextDecoration.lineThrough
-                          : null,
+                      color:
+                          _isExcluded
+                              ? colorScheme.onSurfaceVariant
+                              : colorScheme.onSurface,
+                      decoration:
+                          _isExcluded ? TextDecoration.lineThrough : null,
                     ),
                   ),
                 ),

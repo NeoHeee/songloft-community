@@ -62,9 +62,10 @@ class TokenInfo {
       tokenType: json['token_type'] as String,
       clientInfo: json['client_info'] as String?,
       expiresAt: DateTime.parse(json['expires_at'] as String),
-      revokedAt: json['revoked_at'] != null
-          ? DateTime.parse(json['revoked_at'] as String)
-          : null,
+      revokedAt:
+          json['revoked_at'] != null
+              ? DateTime.parse(json['revoked_at'] as String)
+              : null,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
@@ -101,9 +102,10 @@ class TokenListResponse {
   factory TokenListResponse.fromJson(Map<String, dynamic> json) {
     final tokensList = json['tokens'] as List<dynamic>;
     return TokenListResponse(
-      tokens: tokensList
-          .map((e) => TokenInfo.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      tokens:
+          tokensList
+              .map((e) => TokenInfo.fromJson(e as Map<String, dynamic>))
+              .toList(),
       total: (json['total'] as int?) ?? tokensList.length,
     );
   }

@@ -170,20 +170,21 @@ class _UpgradeDialogState extends ConsumerState<UpgradeDialog> {
     // 二次确认
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('确认回退'),
-        content: const Text('确定要回退到 Docker 镜像的底包版本吗？\n\n回退后服务将自动重启。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('确认回退'),
+            content: const Text('确定要回退到 Docker 镜像的底包版本吗？\n\n回退后服务将自动重启。'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('取消'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('确认回退'),
+              ),
+            ],
           ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('确认回退'),
-          ),
-        ],
-      ),
     );
 
     if (confirmed != true || !mounted) return;
@@ -404,12 +405,13 @@ class _UpgradeDialogState extends ConsumerState<UpgradeDialog> {
                       '${update.label} (${update.version})',
                       style: theme.textTheme.bodyMedium,
                     ),
-                    subtitle: update.buildTime != null
-                        ? Text(
-                            '构建时间: ${update.buildTime}',
-                            style: theme.textTheme.bodySmall,
-                          )
-                        : null,
+                    subtitle:
+                        update.buildTime != null
+                            ? Text(
+                              '构建时间: ${update.buildTime}',
+                              style: theme.textTheme.bodySmall,
+                            )
+                            : null,
                     value: index,
                     dense: true,
                     contentPadding: EdgeInsets.zero,
@@ -485,13 +487,14 @@ class _UpgradeDialogState extends ConsumerState<UpgradeDialog> {
   Widget _buildResetButton(ThemeData theme) {
     return OutlinedButton.icon(
       onPressed: _isResetting ? null : _resetToBaseImage,
-      icon: _isResetting
-          ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : const Icon(Icons.restore, size: 18),
+      icon:
+          _isResetting
+              ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+              : const Icon(Icons.restore, size: 18),
       label: Text(_isResetting ? '正在回退...' : '回退到底包版本'),
       style: OutlinedButton.styleFrom(
         foregroundColor: theme.colorScheme.error,
@@ -699,13 +702,14 @@ class _UpgradeDialogState extends ConsumerState<UpgradeDialog> {
           style: FilledButton.styleFrom(
             minimumSize: context.responsiveButtonMinSize,
           ),
-          child: _isStarting
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('立即升级'),
+          child:
+              _isStarting
+                  ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                  : const Text('立即升级'),
         ),
       ];
     }

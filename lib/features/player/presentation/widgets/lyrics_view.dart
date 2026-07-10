@@ -198,19 +198,21 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
                         height: _lineHeight,
                         padding: const EdgeInsets.symmetric(horizontal: 18),
                         decoration: BoxDecoration(
-                          color: isCurrent
-                              ? colorScheme.primaryContainer.withValues(
-                                  alpha: 0.68,
-                                )
-                              : Colors.transparent,
+                          color:
+                              isCurrent
+                                  ? colorScheme.primaryContainer.withValues(
+                                    alpha: 0.68,
+                                  )
+                                  : Colors.transparent,
                           borderRadius: BorderRadius.circular(18),
-                          border: isCurrent
-                              ? Border.all(
-                                  color: colorScheme.primary.withValues(
-                                    alpha: 0.22,
-                                  ),
-                                )
-                              : null,
+                          border:
+                              isCurrent
+                                  ? Border.all(
+                                    color: colorScheme.primary.withValues(
+                                      alpha: 0.22,
+                                    ),
+                                  )
+                                  : null,
                         ),
                         child: Row(
                           children: [
@@ -231,15 +233,17 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
                                 overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.left,
                                 style: theme.textTheme.bodyLarge?.copyWith(
-                                  color: isCurrent
-                                      ? colorScheme.onPrimaryContainer
-                                      : colorScheme.onSurface.withValues(
-                                          alpha: 0.46,
-                                        ),
+                                  color:
+                                      isCurrent
+                                          ? colorScheme.onPrimaryContainer
+                                          : colorScheme.onSurface.withValues(
+                                            alpha: 0.46,
+                                          ),
                                   fontSize: isCurrent ? 19 : 15,
-                                  fontWeight: isCurrent
-                                      ? FontWeight.w800
-                                      : FontWeight.w500,
+                                  fontWeight:
+                                      isCurrent
+                                          ? FontWeight.w800
+                                          : FontWeight.w500,
                                   height: 1.25,
                                 ),
                               ),
@@ -383,16 +387,17 @@ class _LyricsStatus extends StatelessWidget {
               borderRadius: BorderRadius.circular(24),
             ),
             alignment: Alignment.center,
-            child: loading
-                ? SizedBox(
-                    width: 26,
-                    height: 26,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: colorScheme.primary,
-                    ),
-                  )
-                : Icon(icon, size: 32, color: colorScheme.primary),
+            child:
+                loading
+                    ? SizedBox(
+                      width: 26,
+                      height: 26,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: colorScheme.primary,
+                      ),
+                    )
+                    : Icon(icon, size: 32, color: colorScheme.primary),
           ),
           const SizedBox(height: 18),
           Text(

@@ -77,13 +77,14 @@ class _SongEditPageState extends ConsumerState<SongEditPage> {
         actions: [
           TextButton(
             onPressed: _isSubmitting ? null : _onSubmit,
-            child: _isSubmitting
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('保存'),
+            child:
+                _isSubmitting
+                    ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                    : const Text('保存'),
           ),
         ],
       ),
@@ -234,9 +235,10 @@ class _SongEditPageState extends ConsumerState<SongEditPage> {
               // 封面预览
               Builder(
                 builder: (context) {
-                  final previewUrl = isEditMode
-                      ? (widget.song?.coverUrl ?? '')
-                      : _coverUrlController.text;
+                  final previewUrl =
+                      isEditMode
+                          ? (widget.song?.coverUrl ?? '')
+                          : _coverUrlController.text;
                   if (previewUrl.isEmpty) return const SizedBox.shrink();
                   return Column(
                     children: [
@@ -251,12 +253,16 @@ class _SongEditPageState extends ConsumerState<SongEditPage> {
                               width: 150,
                               height: 150,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => Container(
-                                width: 150,
-                                height: 150,
-                                color: Colors.grey[300],
-                                child: const Icon(Icons.broken_image, size: 48),
-                              ),
+                              errorBuilder:
+                                  (_, _, _) => Container(
+                                    width: 150,
+                                    height: 150,
+                                    color: Colors.grey[300],
+                                    child: const Icon(
+                                      Icons.broken_image,
+                                      size: 48,
+                                    ),
+                                  ),
                             ),
                           ),
                         ),
@@ -326,21 +332,23 @@ class _SongEditPageState extends ConsumerState<SongEditPage> {
         await repository.updateSong(
           widget.song!.id,
           title: _titleController.text.trim(),
-          artist: _artistController.text.trim().isEmpty
-              ? null
-              : _artistController.text.trim(),
-          album: isRadio
-              ? null
-              : (_albumController.text.trim().isEmpty
-                    ? null
-                    : _albumController.text.trim()),
+          artist:
+              _artistController.text.trim().isEmpty
+                  ? null
+                  : _artistController.text.trim(),
+          album:
+              isRadio
+                  ? null
+                  : (_albumController.text.trim().isEmpty
+                      ? null
+                      : _albumController.text.trim()),
           url: _urlController.text.trim(),
-          coverUrl: _coverUrlController.text.trim().isEmpty
-              ? null
-              : _coverUrlController.text.trim(),
-          duration: isRadio
-              ? null
-              : (double.tryParse(_durationController.text)),
+          coverUrl:
+              _coverUrlController.text.trim().isEmpty
+                  ? null
+                  : _coverUrlController.text.trim(),
+          duration:
+              isRadio ? null : (double.tryParse(_durationController.text)),
           isLive: null,
         );
 
@@ -368,32 +376,38 @@ class _SongEditPageState extends ConsumerState<SongEditPage> {
         // 创建电台
         await repository.createRadioSong(
           title: _titleController.text.trim(),
-          artist: _artistController.text.trim().isEmpty
-              ? null
-              : _artistController.text.trim(),
+          artist:
+              _artistController.text.trim().isEmpty
+                  ? null
+                  : _artistController.text.trim(),
           url: _urlController.text.trim(),
-          coverUrl: _coverUrlController.text.trim().isEmpty
-              ? null
-              : _coverUrlController.text.trim(),
+          coverUrl:
+              _coverUrlController.text.trim().isEmpty
+                  ? null
+                  : _coverUrlController.text.trim(),
         );
       } else {
         // 创建网络歌曲
         await repository.createRemoteSong(
           title: _titleController.text.trim(),
-          artist: _artistController.text.trim().isEmpty
-              ? null
-              : _artistController.text.trim(),
-          album: _albumController.text.trim().isEmpty
-              ? null
-              : _albumController.text.trim(),
+          artist:
+              _artistController.text.trim().isEmpty
+                  ? null
+                  : _artistController.text.trim(),
+          album:
+              _albumController.text.trim().isEmpty
+                  ? null
+                  : _albumController.text.trim(),
           url: _urlController.text.trim(),
-          coverUrl: _coverUrlController.text.trim().isEmpty
-              ? null
-              : _coverUrlController.text.trim(),
+          coverUrl:
+              _coverUrlController.text.trim().isEmpty
+                  ? null
+                  : _coverUrlController.text.trim(),
           duration: double.tryParse(_durationController.text),
-          lyricRemoteUrl: _lyricUrlController.text.trim().isEmpty
-              ? null
-              : _lyricUrlController.text.trim(),
+          lyricRemoteUrl:
+              _lyricUrlController.text.trim().isEmpty
+                  ? null
+                  : _lyricUrlController.text.trim(),
         );
       }
 

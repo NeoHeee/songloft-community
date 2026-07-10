@@ -150,9 +150,10 @@ void main(List<String> args) async {
     // 检测 <base href> 中的 sub-path（由 Go 服务端运行时注入）
     final uriBasePath = Uri.base.path;
     if (uriBasePath.length > 1) {
-      final trimmed = uriBasePath.endsWith('/')
-          ? uriBasePath.substring(0, uriBasePath.length - 1)
-          : uriBasePath;
+      final trimmed =
+          uriBasePath.endsWith('/')
+              ? uriBasePath.substring(0, uriBasePath.length - 1)
+              : uriBasePath;
       AppConfig.basePath = trimmed;
       AppConfig.apiPrefix = '$trimmed/api/v1';
     }
@@ -482,12 +483,16 @@ class SongloftApp extends ConsumerWidget {
         final screenType = _getScreenType(width);
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return Theme(
-          data: isDark
-              ? AppTheme.darkTheme(screenType: screenType, themePack: themePack)
-              : AppTheme.lightTheme(
-                  screenType: screenType,
-                  themePack: themePack,
-                ),
+          data:
+              isDark
+                  ? AppTheme.darkTheme(
+                    screenType: screenType,
+                    themePack: themePack,
+                  )
+                  : AppTheme.lightTheme(
+                    screenType: screenType,
+                    themePack: themePack,
+                  ),
           child: child!,
         );
       },

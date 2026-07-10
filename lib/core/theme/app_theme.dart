@@ -172,11 +172,12 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: isTv
-              ? const Size(120, 56)
-              : isDesktopOrTv
-              ? const Size(92, 44)
-              : const Size(88, 48),
+          minimumSize:
+              isTv
+                  ? const Size(120, 56)
+                  : isDesktopOrTv
+                  ? const Size(92, 44)
+                  : const Size(88, 48),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(controlRadius),
           ),
@@ -188,11 +189,12 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: isTv
-              ? const Size(120, 56)
-              : isDesktopOrTv
-              ? const Size(92, 44)
-              : const Size(88, 48),
+          minimumSize:
+              isTv
+                  ? const Size(120, 56)
+                  : isDesktopOrTv
+                  ? const Size(92, 44)
+                  : const Size(88, 48),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(controlRadius),
           ),
@@ -201,11 +203,12 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          minimumSize: isTv
-              ? const Size(120, 56)
-              : isDesktopOrTv
-              ? const Size(88, 44)
-              : const Size(80, 44),
+          minimumSize:
+              isTv
+                  ? const Size(120, 56)
+                  : isDesktopOrTv
+                  ? const Size(88, 44)
+                  : const Size(80, 44),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(controlRadius),
           ),
@@ -233,9 +236,8 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: isDark
-            ? const Color(0xFF262A37)
-            : const Color(0xFF252735),
+        backgroundColor:
+            isDark ? const Color(0xFF262A37) : const Color(0xFF252735),
         contentTextStyle: const TextStyle(color: Colors.white),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(
@@ -244,11 +246,12 @@ class AppTheme {
                 : controlRadius,
           ),
         ),
-        insetPadding: isDesktopOrTv
-            ? (isTv
-                  ? const EdgeInsets.symmetric(horizontal: 48, vertical: 24)
-                  : const EdgeInsets.symmetric(horizontal: 24, vertical: 12))
-            : null,
+        insetPadding:
+            isDesktopOrTv
+                ? (isTv
+                    ? const EdgeInsets.symmetric(horizontal: 48, vertical: 24)
+                    : const EdgeInsets.symmetric(horizontal: 24, vertical: 12))
+                : null,
         width: isDesktopOrTv ? (isTv ? 600 : 480) : null,
       ),
       sliderTheme: SliderThemeData(

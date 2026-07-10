@@ -12,8 +12,10 @@ void main() {
       routes: [
         GoRoute(
           path: '/',
-          builder: (context, state) =>
-              const Scaffold(body: Center(child: Text('Songloft app test'))),
+          builder:
+              (context, state) => const Scaffold(
+                body: Center(child: Text('Songloft app test')),
+              ),
         ),
       ],
     );

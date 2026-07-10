@@ -27,15 +27,16 @@ class DlnaService {
   Future<void> startDiscovery() async {
     _deviceManager = await _manager.start();
     _deviceManager!.devices.stream.listen((deviceMap) {
-      final devices = deviceMap.values
-          .map(
-            (d) => DlnaDeviceInfo(
-              id: d.info.URLBase,
-              name: d.info.friendlyName,
-              location: d.info.URLBase,
-            ),
-          )
-          .toList();
+      final devices =
+          deviceMap.values
+              .map(
+                (d) => DlnaDeviceInfo(
+                  id: d.info.URLBase,
+                  name: d.info.friendlyName,
+                  location: d.info.URLBase,
+                ),
+              )
+              .toList();
       _devicesController.add(devices);
     });
   }

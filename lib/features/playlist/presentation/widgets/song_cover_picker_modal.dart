@@ -64,9 +64,10 @@ class SongCoverPickerModal extends ConsumerWidget {
             child: songsAsync.when(
               data: (state) {
                 // 过滤有封面的歌曲
-                final songsWithCover = state.items.where((song) {
-                  return song.coverUrl != null && song.coverUrl!.isNotEmpty;
-                }).toList();
+                final songsWithCover =
+                    state.items.where((song) {
+                      return song.coverUrl != null && song.coverUrl!.isNotEmpty;
+                    }).toList();
 
                 if (songsWithCover.isEmpty && !state.hasMore) {
                   return Center(
@@ -143,20 +144,24 @@ class SongCoverPickerModal extends ConsumerWidget {
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: colorScheme.error,
+              error:
+                  (error, _) => Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: colorScheme.error,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          '加载失败',
+                          style: TextStyle(color: colorScheme.error),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    Text('加载失败', style: TextStyle(color: colorScheme.error)),
-                  ],
-                ),
-              ),
+                  ),
             ),
           ),
         ],
@@ -189,8 +194,11 @@ class SongCoverPickerModal extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Center(
           child: TextButton.icon(
-            onPressed: () =>
-                ref.read(playlistSongsProvider(playlistId).notifier).loadMore(),
+            onPressed:
+                () =>
+                    ref
+                        .read(playlistSongsProvider(playlistId).notifier)
+                        .loadMore(),
             icon: const Icon(Icons.refresh, size: 16),
             label: const Text('加载失败，点击重试'),
           ),
@@ -204,9 +212,11 @@ class SongCoverPickerModal extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(vertical: 16),
           child: Center(
             child: TextButton.icon(
-              onPressed: () => ref
-                  .read(playlistSongsProvider(playlistId).notifier)
-                  .loadMore(),
+              onPressed:
+                  () =>
+                      ref
+                          .read(playlistSongsProvider(playlistId).notifier)
+                          .loadMore(),
               icon: const Icon(Icons.expand_more, size: 16),
               label: const Text('当前页无带封面歌曲，加载更多'),
             ),
@@ -257,33 +267,38 @@ class _CoverGridItem extends StatelessWidget {
             Expanded(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: coverUrl != null
-                    ? ExcludeSemantics(
-                        child: CachedNetworkImage(
-                          imageUrl: UrlHelper.buildCoverUrl(coverUrl),
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            color: colorScheme.surfaceContainerHighest,
-                            child: const Center(
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
+                child:
+                    coverUrl != null
+                        ? ExcludeSemantics(
+                          child: CachedNetworkImage(
+                            imageUrl: UrlHelper.buildCoverUrl(coverUrl),
+                            fit: BoxFit.cover,
+                            placeholder:
+                                (context, url) => Container(
+                                  color: colorScheme.surfaceContainerHighest,
+                                  child: const Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                ),
+                            errorWidget:
+                                (context, url, error) => Container(
+                                  color: colorScheme.surfaceContainerHighest,
+                                  child: Icon(
+                                    Icons.music_note,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
                           ),
-                          errorWidget: (context, url, error) => Container(
-                            color: colorScheme.surfaceContainerHighest,
-                            child: Icon(
-                              Icons.music_note,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
+                        )
+                        : Container(
+                          color: colorScheme.surfaceContainerHighest,
+                          child: Icon(
+                            Icons.music_note,
+                            color: colorScheme.onSurfaceVariant,
                           ),
                         ),
-                      )
-                    : Container(
-                        color: colorScheme.surfaceContainerHighest,
-                        child: Icon(
-                          Icons.music_note,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
               ),
             ),
             const SizedBox(height: 4),

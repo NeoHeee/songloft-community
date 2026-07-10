@@ -98,9 +98,8 @@ class _ThemeOptionCard extends StatelessWidget {
             color: isSelected ? colorScheme.primary : Colors.transparent,
             borderRadius: AppRadius.mdAll,
             border: Border.all(
-              color: isSelected
-                  ? colorScheme.primary
-                  : colorScheme.outlineVariant,
+              color:
+                  isSelected ? colorScheme.primary : colorScheme.outlineVariant,
               width: isSelected ? 0 : 1,
             ),
           ),
@@ -110,9 +109,10 @@ class _ThemeOptionCard extends StatelessWidget {
               Icon(
                 icon,
                 size: 24,
-                color: isSelected
-                    ? colorScheme.onPrimary
-                    : colorScheme.onSurfaceVariant,
+                color:
+                    isSelected
+                        ? colorScheme.onPrimary
+                        : colorScheme.onSurfaceVariant,
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
@@ -120,9 +120,10 @@ class _ThemeOptionCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected
-                      ? colorScheme.onPrimary
-                      : colorScheme.onSurfaceVariant,
+                  color:
+                      isSelected
+                          ? colorScheme.onPrimary
+                          : colorScheme.onSurfaceVariant,
                 ),
               ),
             ],

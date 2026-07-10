@@ -64,12 +64,14 @@ class Song {
       sourceUrl: json['source_url'] as String?,
       sourceCoverUrl: json['source_cover_url'] as String?,
       isLive: json['is_live'] as bool? ?? false,
-      addedAt: json['added_at'] != null
-          ? DateTime.parse(json['added_at'] as String)
-          : DateTime.now(),
-      updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'] as String)
-          : DateTime.now(),
+      addedAt:
+          json['added_at'] != null
+              ? DateTime.parse(json['added_at'] as String)
+              : DateTime.now(),
+      updatedAt:
+          json['updated_at'] != null
+              ? DateTime.parse(json['updated_at'] as String)
+              : DateTime.now(),
     );
   }
 

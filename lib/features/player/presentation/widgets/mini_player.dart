@@ -166,15 +166,16 @@ class MiniPlayer extends ConsumerWidget {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: coverUrl != null && coverUrl.isNotEmpty
-          ? ExcludeSemantics(
-              child: Image.network(
-                UrlHelper.buildCoverUrl(coverUrl),
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => _buildPlaceholder(theme),
-              ),
-            )
-          : _buildPlaceholder(theme),
+      child:
+          coverUrl != null && coverUrl.isNotEmpty
+              ? ExcludeSemantics(
+                child: Image.network(
+                  UrlHelper.buildCoverUrl(coverUrl),
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => _buildPlaceholder(theme),
+                ),
+              )
+              : _buildPlaceholder(theme),
     );
   }
 

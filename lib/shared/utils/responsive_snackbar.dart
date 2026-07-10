@@ -26,10 +26,7 @@ class ResponsiveSnackBar {
     final scaledFontSize = textScaler.scale(defaultFontSize);
 
     final textPainter = TextPainter(
-      text: TextSpan(
-        text: message,
-        style: TextStyle(fontSize: scaledFontSize),
-      ),
+      text: TextSpan(text: message, style: TextStyle(fontSize: scaledFontSize)),
       textDirection: TextDirection.ltr,
       maxLines: 1,
     )..layout(maxWidth: maxWidth);
@@ -54,9 +51,10 @@ class ResponsiveSnackBar {
         style: TextStyle(
           // 显式设置颜色确保对比度
           // 自定义背景色时用白色，默认背景使用 Material 3 的 onInverseSurface
-          color: backgroundColor != null
-              ? Colors.white
-              : Theme.of(context).colorScheme.onInverseSurface,
+          color:
+              backgroundColor != null
+                  ? Colors.white
+                  : Theme.of(context).colorScheme.onInverseSurface,
         ),
       ),
       backgroundColor: backgroundColor,

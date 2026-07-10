@@ -63,18 +63,19 @@ class _PopupPlayModeControlState extends State<PopupPlayModeControl> {
     final size = renderBox.size;
 
     _overlayEntry = OverlayEntry(
-      builder: (context) => _PlayModeOverlayPanel(
-        playMode: widget.playMode,
-        onPlayModeChanged: (mode) {
-          widget.onPlayModeChanged(mode);
-          _removeOverlay();
-        },
-        onDismiss: _removeOverlay,
-        anchorPosition: position,
-        anchorSize: size,
-        getIcon: _getPlayModeIconForMode,
-        getTooltip: _getPlayModeTooltip,
-      ),
+      builder:
+          (context) => _PlayModeOverlayPanel(
+            playMode: widget.playMode,
+            onPlayModeChanged: (mode) {
+              widget.onPlayModeChanged(mode);
+              _removeOverlay();
+            },
+            onDismiss: _removeOverlay,
+            anchorPosition: position,
+            anchorSize: size,
+            getIcon: _getPlayModeIconForMode,
+            getTooltip: _getPlayModeTooltip,
+          ),
     );
 
     Overlay.of(context).insert(_overlayEntry!);
@@ -115,9 +116,10 @@ class _PopupPlayModeControlState extends State<PopupPlayModeControl> {
       icon: Icon(
         _playModeIcon,
         size: 20,
-        color: widget.playMode != PlayMode.order
-            ? theme.colorScheme.primary
-            : null,
+        color:
+            widget.playMode != PlayMode.order
+                ? theme.colorScheme.primary
+                : null,
       ),
       tooltip: _getPlayModeTooltip(widget.playMode),
       visualDensity: VisualDensity.compact,
@@ -242,21 +244,24 @@ class _PlayModeOverlayPanel extends StatelessWidget {
                                 Icon(
                                   getIcon(mode),
                                   size: iconSize,
-                                  color: playMode == mode
-                                      ? theme.colorScheme.primary
-                                      : theme.colorScheme.onSurface,
+                                  color:
+                                      playMode == mode
+                                          ? theme.colorScheme.primary
+                                          : theme.colorScheme.onSurface,
                                 ),
                                 const SizedBox(width: 12),
                                 Text(
                                   getTooltip(mode),
                                   style: TextStyle(
                                     fontSize: fontSize,
-                                    color: playMode == mode
-                                        ? theme.colorScheme.primary
-                                        : theme.colorScheme.onSurface,
-                                    fontWeight: playMode == mode
-                                        ? FontWeight.w500
-                                        : FontWeight.normal,
+                                    color:
+                                        playMode == mode
+                                            ? theme.colorScheme.primary
+                                            : theme.colorScheme.onSurface,
+                                    fontWeight:
+                                        playMode == mode
+                                            ? FontWeight.w500
+                                            : FontWeight.normal,
                                   ),
                                 ),
                               ],
@@ -332,25 +337,26 @@ class _PopupSleepTimerControlState extends State<PopupSleepTimerControl> {
     final size = renderBox.size;
 
     _overlayEntry = OverlayEntry(
-      builder: (overlayContext) => _SleepTimerOverlayPanel(
-        status: widget.status,
-        isLive: widget.isLive,
-        onSetDuration: (d) {
-          widget.onSetDuration(d);
-          _removeOverlay();
-        },
-        onSetAfterSongs: (n) {
-          widget.onSetAfterSongs(n);
-          _removeOverlay();
-        },
-        onCancel: () {
-          widget.onCancel();
-          _removeOverlay();
-        },
-        onDismiss: _removeOverlay,
-        anchorPosition: position,
-        anchorSize: size,
-      ),
+      builder:
+          (overlayContext) => _SleepTimerOverlayPanel(
+            status: widget.status,
+            isLive: widget.isLive,
+            onSetDuration: (d) {
+              widget.onSetDuration(d);
+              _removeOverlay();
+            },
+            onSetAfterSongs: (n) {
+              widget.onSetAfterSongs(n);
+              _removeOverlay();
+            },
+            onCancel: () {
+              widget.onCancel();
+              _removeOverlay();
+            },
+            onDismiss: _removeOverlay,
+            anchorPosition: position,
+            anchorSize: size,
+          ),
     );
 
     Overlay.of(context).insert(_overlayEntry!);
@@ -378,9 +384,10 @@ class _PopupSleepTimerControlState extends State<PopupSleepTimerControl> {
         size: 20,
         color: _hasTimer ? theme.colorScheme.primary : null,
       ),
-      tooltip: widget.status == null
-          ? '睡眠定时'
-          : '睡眠定时：${sleepTimerStatusLabel(widget.status!)}',
+      tooltip:
+          widget.status == null
+              ? '睡眠定时'
+              : '睡眠定时：${sleepTimerStatusLabel(widget.status!)}',
       visualDensity: VisualDensity.compact,
     );
   }
@@ -449,9 +456,8 @@ class _SleepTimerOverlayPanel extends StatelessWidget {
         Positioned(
           left: left,
           top: preferAbove ? null : anchorPosition.dy + anchorSize.height + 8,
-          bottom: preferAbove
-              ? screenSize.height - anchorPosition.dy + 8
-              : null,
+          bottom:
+              preferAbove ? screenSize.height - anchorPosition.dy + 8 : null,
           child: Material(
             elevation: 8,
             borderRadius: BorderRadius.circular(12),

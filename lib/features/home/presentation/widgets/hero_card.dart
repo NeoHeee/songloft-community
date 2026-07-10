@@ -192,26 +192,28 @@ class HeroCard extends StatelessWidget {
       return CachedNetworkImage(
         imageUrl: UrlHelper.buildCoverUrl(coverUrl),
         fit: BoxFit.cover,
-        placeholder: (context, url) => Container(
-          color: colorScheme.surfaceContainerHighest,
-          child: Center(
-            child: Icon(
-              Icons.queue_music_rounded,
-              size: 64,
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+        placeholder:
+            (context, url) => Container(
+              color: colorScheme.surfaceContainerHighest,
+              child: Center(
+                child: Icon(
+                  Icons.queue_music_rounded,
+                  size: 64,
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                ),
+              ),
             ),
-          ),
-        ),
-        errorWidget: (context, url, error) => Container(
-          color: colorScheme.surfaceContainerHighest,
-          child: Center(
-            child: Icon(
-              Icons.queue_music_rounded,
-              size: 64,
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+        errorWidget:
+            (context, url, error) => Container(
+              color: colorScheme.surfaceContainerHighest,
+              child: Center(
+                child: Icon(
+                  Icons.queue_music_rounded,
+                  size: 64,
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                ),
+              ),
             ),
-          ),
-        ),
       );
     }
     return Container(

@@ -128,21 +128,23 @@ class DesktopPlayer extends ConsumerWidget {
                       ],
                     ),
                     clipBehavior: Clip.antiAlias,
-                    child: coverUrl != null
-                        ? ExcludeSemantics(
-                            child: Image.network(
-                              UrlHelper.buildCoverUrl(coverUrl),
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => Icon(
-                                Icons.graphic_eq_rounded,
-                                color: colorScheme.primary,
+                    child:
+                        coverUrl != null
+                            ? ExcludeSemantics(
+                              child: Image.network(
+                                UrlHelper.buildCoverUrl(coverUrl),
+                                fit: BoxFit.cover,
+                                errorBuilder:
+                                    (_, _, _) => Icon(
+                                      Icons.graphic_eq_rounded,
+                                      color: colorScheme.primary,
+                                    ),
                               ),
+                            )
+                            : Icon(
+                              Icons.graphic_eq_rounded,
+                              color: colorScheme.primary,
                             ),
-                          )
-                        : Icon(
-                            Icons.graphic_eq_rounded,
-                            color: colorScheme.primary,
-                          ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -302,9 +304,10 @@ class DesktopPlayer extends ConsumerWidget {
       icon: Icon(
         Icons.lyrics_rounded,
         size: 20,
-        color: hasLyrics
-            ? null
-            : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+        color:
+            hasLyrics
+                ? null
+                : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
       ),
       tooltip: '歌词',
       visualDensity: VisualDensity.compact,
