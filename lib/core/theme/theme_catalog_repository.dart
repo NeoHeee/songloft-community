@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
@@ -29,8 +28,7 @@ class ThemeCatalogRepository {
   static const String remoteCatalogUrl =
       'https://raw.githubusercontent.com/NeoHeee/songloft-player/main/'
       'assets/theme_catalog/catalog.json';
-  static const String bundledCatalogAsset =
-      'assets/theme_catalog/catalog.json';
+  static const String bundledCatalogAsset = 'assets/theme_catalog/catalog.json';
   static const int maxCatalogBytes = 256 * 1024;
 
   final Dio _dio;
@@ -156,10 +154,7 @@ class ThemeCatalogRepository {
     }
   }
 
-  Future<Uint8List> _downloadBytes(
-    Uri uri, {
-    required int maxBytes,
-  }) async {
+  Future<Uint8List> _downloadBytes(Uri uri, {required int maxBytes}) async {
     ThemeCatalogEntry.validateTrustedDownloadUri(uri);
     final response = await _dio.get<List<int>>(
       uri.toString(),

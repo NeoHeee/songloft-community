@@ -9,6 +9,7 @@ import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/theme_pack.dart';
 import '../../../../core/theme/theme_pack_provider.dart';
 import '../../../../shared/utils/responsive_snackbar.dart';
+import 'theme_catalog_dialog.dart';
 
 class ThemePackManager extends ConsumerWidget {
   const ThemePackManager({super.key});
@@ -126,6 +127,11 @@ class ThemePackManager extends ConsumerWidget {
             spacing: AppSpacing.sm,
             runSpacing: AppSpacing.sm,
             children: [
+              FilledButton.tonalIcon(
+                onPressed: () => showThemeCatalogDialog(context),
+                icon: const Icon(Icons.storefront_rounded),
+                label: const Text('在线主题'),
+              ),
               FilledButton.icon(
                 onPressed: () => _importThemePack(context, ref),
                 icon: const Icon(Icons.upload_file_rounded),

@@ -82,7 +82,9 @@ class ThemeCatalog {
       }
       generatedAt = DateTime.tryParse(generatedAtValue);
       if (generatedAt == null) {
-        throw const ThemeCatalogFormatException('generatedAt 不是有效的 ISO 8601 时间');
+        throw const ThemeCatalogFormatException(
+          'generatedAt 不是有效的 ISO 8601 时间',
+        );
       }
     }
 
@@ -115,10 +117,8 @@ class ThemeCatalog {
 @immutable
 class ThemeCatalogEntry {
   static const Set<String> trustedRemoteHosts = {'raw.githubusercontent.com'};
-  static const String trustedRepositoryPathPrefix =
-      '/NeoHeee/songloft-player/';
-  static const String trustedAssetPathPrefix =
-      'assets/theme_catalog/themes/';
+  static const String trustedRepositoryPathPrefix = '/NeoHeee/songloft-player/';
+  static const String trustedAssetPathPrefix = 'assets/theme_catalog/themes/';
 
   final SongloftThemePack previewPack;
   final List<String> tags;
@@ -154,9 +154,7 @@ class ThemeCatalogEntry {
       'dark': json['dark'],
     });
     if (SongloftThemePacks.findBuiltIn(previewPack.id) != null) {
-      throw ThemeCatalogFormatException(
-        '在线主题不能使用内置主题 id：${previewPack.id}',
-      );
+      throw ThemeCatalogFormatException('在线主题不能使用内置主题 id：${previewPack.id}');
     }
 
     final downloadUrl = _requiredString(
@@ -170,11 +168,8 @@ class ThemeCatalogEntry {
     }
     validateTrustedDownloadUri(downloadUri);
 
-    final rawDigest = _requiredString(
-      json['sha256'],
-      'sha256',
-      maxLength: 64,
-    ).toLowerCase();
+    final rawDigest =
+        _requiredString(json['sha256'], 'sha256', maxLength: 64).toLowerCase();
     if (!RegExp(r'^[a-f0-9]{64}$').hasMatch(rawDigest)) {
       throw const ThemeCatalogFormatException('sha256 必须是 64 位十六进制字符串');
     }
@@ -241,11 +236,7 @@ class ThemeCatalogEntry {
   }
 }
 
-String _requiredString(
-  Object? value,
-  String field, {
-  required int maxLength,
-}) {
+String _requiredString(Object? value, String field, {required int maxLength}) {
   if (value is! String || value.trim().isEmpty) {
     throw ThemeCatalogFormatException('$field 不能为空');
   }
@@ -256,11 +247,7 @@ String _requiredString(
   return normalized;
 }
 
-String _optionalString(
-  Object? value,
-  String field, {
-  required int maxLength,
-}) {
+String _optionalString(Object? value, String field, {required int maxLength}) {
   if (value == null) return '';
   if (value is! String) {
     throw ThemeCatalogFormatException('$field 必须是字符串');

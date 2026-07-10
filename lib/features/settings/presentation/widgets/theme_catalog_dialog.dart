@@ -9,8 +9,8 @@ import '../../../../core/theme/theme_pack.dart';
 import '../../../../core/theme/theme_pack_provider.dart';
 import '../../../../shared/utils/responsive_snackbar.dart';
 
-Future<void> showThemeCatalogDialog(BuildContext context) {
-  return showDialog<void>(
+Future<void> showThemeCatalogDialog(BuildContext context) async {
+  await showDialog<void>(
     context: context,
     builder: (_) => const ThemeCatalogDialog(),
   );
@@ -20,8 +20,7 @@ class ThemeCatalogDialog extends ConsumerStatefulWidget {
   const ThemeCatalogDialog({super.key});
 
   @override
-  ConsumerState<ThemeCatalogDialog> createState() =>
-      _ThemeCatalogDialogState();
+  ConsumerState<ThemeCatalogDialog> createState() => _ThemeCatalogDialogState();
 }
 
 class _ThemeCatalogDialogState extends ConsumerState<ThemeCatalogDialog> {
@@ -38,6 +37,7 @@ class _ThemeCatalogDialogState extends ConsumerState<ThemeCatalogDialog> {
   @override
   Widget build(BuildContext context) {
     final catalogState = ref.watch(themeCatalogProvider);
+    ref.watch(themePackProvider);
     final size = MediaQuery.sizeOf(context);
     final compact = size.width < 720;
 
@@ -52,7 +52,8 @@ class _ThemeCatalogDialogState extends ConsumerState<ThemeCatalogDialog> {
       clipBehavior: Clip.antiAlias,
       child: SizedBox(
         width: compact ? size.width : 960,
-        height: compact ? size.height : size.height.clamp(620, 820),
+        height:
+            compact ? size.height : size.height.clamp(620.0, 820.0).toDouble(),
         child: Column(
           children: [
             _buildHeader(context, catalogState, compact),
@@ -93,9 +94,7 @@ class _ThemeCatalogDialogState extends ConsumerState<ThemeCatalogDialog> {
       ),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(color: colorScheme.outlineVariant),
-        ),
+        border: Border(bottom: BorderSide(color: colorScheme.outlineVariant)),
       ),
       child: Row(
         children: [
@@ -117,9 +116,9 @@ class _ThemeCatalogDialogState extends ConsumerState<ThemeCatalogDialog> {
               children: [
                 Text(
                   '在线主题目录',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 Text(
                   '浏览、校验并手动安装社区主题',
@@ -155,9 +154,9 @@ class _ThemeCatalogDialogState extends ConsumerState<ThemeCatalogDialog> {
 
   Widget _buildCatalog(BuildContext context, ThemeCatalog catalog) {
     final entries = _filteredEntries(catalog.entries);
-    final tags = <String>{
-      for (final entry in catalog.entries) ...entry.tags,
-    }.toList()..sort();
+    final tags =
+        <String>{for (final entry in catalog.entries) ...entry.tags}.toList()
+          ..sort();
 
     return Column(
       children: [
@@ -292,24 +291,27 @@ class _ThemeCatalogDialogState extends ConsumerState<ThemeCatalogDialog> {
 
   List<ThemeCatalogEntry> _filteredEntries(List<ThemeCatalogEntry> entries) {
     final query = _searchController.text.trim().toLowerCase();
-    return entries.where((entry) {
-      if (_selectedTag != null && !entry.tags.contains(_selectedTag)) {
-        return false;
-      }
-      if (query.isEmpty) return true;
-      final haystack = [
-        entry.name,
-        entry.author,
-        entry.description,
-        entry.id,
-        ...entry.tags,
-      ].join(' ').toLowerCase();
-      return haystack.contains(query);
-    }).toList(growable: false);
+    return entries
+        .where((entry) {
+          if (_selectedTag != null && !entry.tags.contains(_selectedTag)) {
+            return false;
+          }
+          if (query.isEmpty) return true;
+          final haystack =
+              [
+                entry.name,
+                entry.author,
+                entry.description,
+                entry.id,
+                ...entry.tags,
+              ].join(' ').toLowerCase();
+          return haystack.contains(query);
+        })
+        .toList(growable: false);
   }
 
   SongloftThemePack? _installedPack(String id) {
-    for (final pack in ref.watch(themePackProvider).customPacks) {
+    for (final pack in ref.read(themePackProvider).customPacks) {
       if (pack.id == id) return pack;
     }
     return null;
@@ -490,26 +492,25 @@ class _CatalogThemeCard extends StatelessWidget {
             Wrap(
               spacing: 6,
               runSpacing: 5,
-              children:
-                  entry.tags
-                      .take(3)
-                      .map(
-                        (tag) => Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 7,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colorScheme.surfaceContainerHigh,
-                            borderRadius: AppRadius.smAll,
-                          ),
-                          child: Text(
-                            tag,
-                            style: Theme.of(context).textTheme.labelSmall,
-                          ),
-                        ),
-                      )
-                      .toList(growable: false),
+              children: entry.tags
+                  .take(3)
+                  .map(
+                    (tag) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHigh,
+                        borderRadius: AppRadius.smAll,
+                      ),
+                      child: Text(
+                        tag,
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    ),
+                  )
+                  .toList(growable: false),
             ),
             const SizedBox(height: AppSpacing.md),
             SizedBox(
@@ -633,19 +634,14 @@ class _CatalogInstallDialog extends StatelessWidget {
   final ThemeCatalogDownload download;
   final bool isUpdate;
 
-  const _CatalogInstallDialog({
-    required this.download,
-    required this.isUpdate,
-  });
+  const _CatalogInstallDialog({required this.download, required this.isUpdate});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final pack = download.pack;
     final sourceLabel =
-        download.origin == ThemeCatalogOrigin.remote
-            ? '受信任在线目录'
-            : '内置安全副本';
+        download.origin == ThemeCatalogOrigin.remote ? '受信任在线目录' : '内置安全副本';
 
     return AlertDialog(
       title: Text(isUpdate ? '确认更新主题' : '确认安装主题'),
@@ -688,10 +684,15 @@ class _CatalogInstallDialog extends StatelessWidget {
                     width: 54,
                     height: 54,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: pack.light.playerGradient),
+                      gradient: LinearGradient(
+                        colors: pack.light.playerGradient,
+                      ),
                       borderRadius: AppRadius.mdAll,
                     ),
-                    child: const Icon(Icons.palette_rounded, color: Colors.white),
+                    child: const Icon(
+                      Icons.palette_rounded,
+                      color: Colors.white,
+                    ),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
@@ -700,15 +701,13 @@ class _CatalogInstallDialog extends StatelessWidget {
                       children: [
                         Text(
                           pack.name,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w800),
                         ),
                         Text(
                           '${pack.author} · v${pack.version}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: colorScheme.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -812,9 +811,9 @@ class _CatalogError extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Text(
               '主题目录加载失败',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(

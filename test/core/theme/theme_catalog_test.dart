@@ -24,10 +24,7 @@ void main() {
       final first = _themeSource(id: 'community-first', name: '普通主题');
       final second = _themeSource(id: 'community-second', name: '精选主题');
       final catalog = ThemeCatalog.fromJson(
-        _catalogJson([
-          _entryJson(first),
-          _entryJson(second, featured: true),
-        ]),
+        _catalogJson([_entryJson(first), _entryJson(second, featured: true)]),
       );
 
       expect(catalog.entries.first.id, 'community-second');
@@ -125,10 +122,7 @@ void main() {
       final repository = ThemeCatalogRepository();
 
       expect(
-        () => repository.validateThemeDownload(
-          entry,
-          utf8.encode('$source '),
-        ),
+        () => repository.validateThemeDownload(entry, utf8.encode('$source ')),
         throwsA(
           isA<ThemeCatalogFormatException>().having(
             (error) => error.message,
@@ -169,10 +163,7 @@ Map<String, dynamic> _catalogJson(List<Map<String, dynamic>> entries) {
   };
 }
 
-Map<String, dynamic> _entryJson(
-  String themeSource, {
-  bool featured = false,
-}) {
+Map<String, dynamic> _entryJson(String themeSource, {bool featured = false}) {
   final theme = Map<String, dynamic>.from(jsonDecode(themeSource) as Map);
   return {
     'themeSchemaVersion': theme['schemaVersion'],
@@ -186,8 +177,7 @@ Map<String, dynamic> _entryJson(
     'downloadUrl':
         'https://raw.githubusercontent.com/NeoHeee/songloft-player/main/'
         'assets/theme_catalog/themes/${theme['id']}.songloft-theme',
-    'bundledAsset':
-        'assets/theme_catalog/themes/${theme['id']}.songloft-theme',
+    'bundledAsset': 'assets/theme_catalog/themes/${theme['id']}.songloft-theme',
     'sha256': sha256.convert(utf8.encode(themeSource)).toString(),
     'light': theme['light'],
     'dark': theme['dark'],
