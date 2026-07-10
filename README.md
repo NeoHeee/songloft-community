@@ -1,231 +1,253 @@
-# Songloft Flutter
-
-[English](README.en.md) | 中文
-
-[![Build and Release](https://github.com/songloft-org/songloft-player/actions/workflows/build-and-release.yml/badge.svg)](https://github.com/songloft-org/songloft-player/actions/workflows/build-and-release.yml)
-[![GitHub License](https://img.shields.io/github/license/songloft-org/songloft-player)](https://github.com/songloft-org/songloft-player)
-[![GitHub Release](https://img.shields.io/github/v/release/songloft-org/songloft-player)](https://github.com/songloft-org/songloft-player/releases)
-[![Stars](https://img.shields.io/github/stars/songloft-org/songloft-player)](https://github.com/songloft-org/songloft-player/stargazers)
+# Songloft Community Edition
 
 <p align="center">
-  <strong>🎵 Songloft 跨平台音乐播放器 — 基于 Flutter 构建</strong>
+  <strong>🎵 一个更适合手机、桌面与电视使用的 Songloft 社区魔改版客户端</strong>
 </p>
-
-Songloft 跨平台音乐播放器，基于 Flutter 构建，支持 iOS、Android、macOS、Windows、Linux、Web 六端。支持 **Bundle 本地模式**：内嵌 Go 后端，无需部署服务器即可播放本地音乐。
 
 <p align="center">
-  <a href="https://github.com/songloft-org/songloft-player">🏠 GitHub</a> •
-  <a href="https://github.com/songloft-org/songloft-player/releases">📥 下载</a> •
-  <a href="https://github.com/songloft-org/songloft-player/issues">💬 问题反馈</a>
+  <a href="https://github.com/NeoHeee/songloft-player/actions"><img src="https://img.shields.io/github/actions/workflow/status/NeoHeee/songloft-player/ui-redesign-check.yml?branch=main&label=build" alt="Build"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/NeoHeee/songloft-player" alt="License"></a>
+  <a href="https://github.com/NeoHeee/songloft-player"><img src="https://img.shields.io/github/stars/NeoHeee/songloft-player" alt="Stars"></a>
+  <img src="https://img.shields.io/badge/Flutter-3.41.5-02569B?logo=flutter" alt="Flutter">
 </p>
 
-## 截图
+## 项目介绍
 
-https://github.com/songloft-org/songloft/issues/6
+本项目是在开源音乐服务器项目 [Songloft](https://github.com/songloft-org/songloft) 及其 Flutter 客户端基础上持续改造的 **社区魔改版播放器**。
 
-## 下载安装
+在保留原有服务端接口、认证方式、播放器能力和 JavaScript 插件协议的前提下，本版本重点重做了界面体系、移动端操作逻辑、歌单管理、插件入口和主题系统，使其更适合日常在 Android 手机、Windows 桌面、Web 与 Android TV 上使用。
 
-从 [GitHub Releases](https://github.com/songloft-org/songloft-player/releases/latest) 下载最新版本：
+> 本仓库为社区维护版本，并非 Songloft 官方发行版。原始项目及相关版权归原作者和贡献者所有。
 
-| 平台 | 下载链接 | 说明 |
+## 版本亮点
+
+### 全新响应式界面
+
+- 使用 Material 3 重新统一首页、歌曲库、歌单、播放器、设置和插件页面
+- 手机、平板、桌面和 TV 使用不同的导航与内容布局
+- 手机端采用底部导航，桌面端采用侧边栏，TV 端提供大屏焦点布局
+- 首页欢迎语、数据卡片和快捷入口针对窄屏重新排版
+- 浅色、深色及跟随系统模式均支持完整配色
+
+### 更符合 Android 习惯的返回逻辑
+
+- 二级页面返回上一级
+- 歌曲库、歌单、设置和插件等一级页面返回首页
+- 设置分类详情先返回设置列表
+- 播放队列展开时优先关闭队列
+- 插件网页优先返回网页历史
+- 首页需要在两秒内连续按两次返回键才会退出应用
+
+### 更实用的歌单管理
+
+- 搜索歌单和歌单内歌曲
+- 多选、隐藏和恢复歌单
+- 批量删除歌曲
+- 歌单永久排序
+- 卡片和列表两种展示方式
+- 编辑、删除及响应式详情页
+
+### 插件体验重做
+
+- 首页展示插件快捷入口
+- 可自行控制哪些插件在首页显示或隐藏
+- 隐藏快捷入口不会停用或卸载插件
+- 插件图标、卡片和状态样式统一
+- 手机底部导航最多保留五个入口，多余插件统一进入“更多”
+- 保留原有 JS 插件协议和插件 WebView 能力
+
+### 自定义主题包
+
+- 内置 Songloft 经典、深海蓝、森林绿、暮色玫瑰等主题
+- 支持导入 `.songloft-theme` 或 JSON 主题文件
+- 支持导入前预览、覆盖更新、导出和删除
+- 支持浅色与深色两套配色共同打包
+- 可设置主色、背景、面板、辅助色、播放器渐变及圆角参数
+- 自定义主题设置保存在本地，重启后继续生效
+
+### 在线主题目录
+
+客户端可直接访问本仓库维护的在线主题目录：
+
+- 搜索主题、作者、标签和简介
+- 自动识别未安装、已安装和可更新状态
+- 仅允许受信任的 HTTPS 来源
+- 下载后校验 SHA-256 和主题身份信息
+- 远程目录不可用时自动回退到安装包内置安全快照
+- 安装前仍需用户确认，不执行 JavaScript、CSS、HTML 或其他代码
+
+在线目录文件位于：
+
+```text
+assets/theme_catalog/catalog.json
+assets/theme_catalog/themes/
+```
+
+主题制作规范参见 [docs/theme-packs.md](docs/theme-packs.md)。
+
+## 核心能力
+
+- 本地音乐库管理与在线播放
+- 后台播放、播放队列、歌词和进度控制
+- 歌曲搜索、筛选和信息编辑
+- 歌单创建、整理和批量管理
+- JWT 登录与多服务器配置
+- JavaScript 插件扩展
+- DLNA 投放
+- 浅色、深色、自定义及在线主题
+- Android、Windows、Web 与 TV 响应式适配
+- 支持标准远程服务模式与 Bundle 本地模式
+
+## 平台状态
+
+| 平台 | 当前状态 | 说明 |
 |------|----------|------|
-| 🌐 **Web (standalone)** | [songloft-web-standalone.tar.gz](https://github.com/songloft-org/songloft-player/releases/latest/download/songloft-web-standalone.tar.gz) | 独立部署版，支持配置后端地址 |
-| 🌐 **Web (embedded)** | [songloft-web-embedded.tar.gz](https://github.com/songloft-org/songloft-player/releases/latest/download/songloft-web-embedded.tar.gz) | 嵌入 Go 后端同域部署 |
-| 🐧 **Linux** | [songloft-linux-x64.tar.gz](https://github.com/songloft-org/songloft-player/releases/latest/download/songloft-linux-x64.tar.gz) | x64 桌面版 |
-| | [songloft-linux-x64.deb](https://github.com/songloft-org/songloft-player/releases/latest/download/songloft-linux-x64.deb) | Debian/Ubuntu x64 |
-| | [songloft-linux-x64.rpm](https://github.com/songloft-org/songloft-player/releases/latest/download/songloft-linux-x64.rpm) | Fedora/RHEL/CentOS x64 |
-| | [songloft-linux-x64.AppImage](https://github.com/songloft-org/songloft-player/releases/latest/download/songloft-linux-x64.AppImage) | 免安装可执行文件 |
-| 🪟 **Windows** | [songloft-windows-x64.zip](https://github.com/songloft-org/songloft-player/releases/latest/download/songloft-windows-x64.zip) | x64 便携版 |
-| | [songloft-windows-x64.msix](https://github.com/songloft-org/songloft-player/releases/latest/download/songloft-windows-x64.msix) | x64 安装版 |
-| 🍎 **macOS** | [songloft-macos.dmg](https://github.com/songloft-org/songloft-player/releases/latest/download/songloft-macos.dmg) | Universal DMG (Intel/Apple Silicon) |
-| | [songloft-macos.zip](https://github.com/songloft-org/songloft-player/releases/latest/download/songloft-macos.zip) | Universal App 压缩包 |
-| 🤖 **Android** | [songloft-arm64-v8a.apk](https://github.com/songloft-org/songloft-player/releases/latest/download/songloft-arm64-v8a.apk) | ARM64 设备（推荐） |
-| | [songloft-armeabi-v7a.apk](https://github.com/songloft-org/songloft-player/releases/latest/download/songloft-armeabi-v7a.apk) | ARMv7 设备 |
-| | [songloft-x86_64.apk](https://github.com/songloft-org/songloft-player/releases/latest/download/songloft-x86_64.apk) | x86_64 模拟器/设备 |
-| 📱 **iOS** | [songloft-ios-nosign.ipa](https://github.com/songloft-org/songloft-player/releases/latest/download/songloft-ios-nosign.ipa) | 未签名 IPA，可通过 AltStore/Sideloadly 安装 |
+| Android 手机 | ✅ 重点适配 | ARM64 设备推荐使用 `arm64-v8a` APK |
+| Windows x64 | ✅ 已验证构建 | 支持便携版及内置 Go 后端模式 |
+| Web | ✅ 已验证构建 | 支持 standalone 与 embedded 模式 |
+| Android TV | 🟡 基础可用 | 已有 TV 首页、遥控器焦点和大屏播放器，部分设置与插件页面仍在持续优化 |
+| Linux | 🟡 继承上游能力 | 社区版尚未完成完整实机回归 |
+| macOS / iOS | 🟡 继承上游能力 | 社区版尚未完成完整实机回归 |
 
-> 开发版可在 [dev 分支 Release](https://github.com/songloft-org/songloft-player/releases/tag/dev) 获取。
+## 使用方式
 
-## 功能特性
+### 连接 Songloft 服务端
 
-- **跨平台支持**: iOS、Android（手机/平板/TV）、macOS、Windows、Linux、Web
-- **Bundle 本地模式**: 内嵌 Go 后端，无需服务器，支持本地/远程双模式切换
-- **响应式布局**: 4 级断点自适应（Mobile < 600px, Tablet 600-900px, Desktop 900-1920px, TV 1920px+）
-- **自适应导航**: 手机底栏、平板侧栏、桌面侧边菜单、TV 顶部 Tab
-- **音乐播放**: 基于 just_audio，支持本地和网络歌曲，后台播放
-- **歌单管理**: 创建、编辑、删除歌单，添加/移除歌曲
-- **歌曲库**: 分页加载、搜索过滤、歌曲编辑
-- **主题切换**: 亮色/暗色/跟随系统
-- **JWT 认证**: 双 Token 机制，安全存储（自动降级）
-- **TV 适配**: D-Pad 焦点导航，大按钮/大字体
+标准客户端需要连接 Songloft 后端服务。首次启动时填写服务端地址、用户名和密码即可。
 
-## 环境要求
+默认服务地址：
 
-- Flutter >= 3.29.0
-- Dart SDK >= 3.7.0
+```text
+http://localhost:58091
+```
+
+默认账号：
+
+```text
+admin / admin
+```
+
+服务端项目： [songloft-org/songloft](https://github.com/songloft-org/songloft)
+
+### Bundle 本地模式
+
+桌面端可将 Go 后端与 Flutter 客户端一起打包，启动后由客户端自动拉起本地服务，不需要额外部署服务器。
+
+```bash
+flutter build windows --release --dart-define=HAS_BACKEND=true
+```
+
+Web 不支持 Bundle 模式。
+
+## 开发环境
+
+- Flutter 3.41.5
+- Dart 3.x
+- Riverpod
+- GoRouter
+- Dio
+- just_audio / audio_service
+- SharedPreferences / FlutterSecureStorage
 
 ## 快速开始
 
 ```bash
+# 克隆仓库
+git clone https://github.com/NeoHeee/songloft-player.git
+cd songloft-player
+
 # 安装依赖
 flutter pub get
 
-# 运行（自动选择已连接设备）
+# 运行
 flutter run
-
-# 指定平台运行
-flutter run -d chrome --no-web-resources-cdn  # Web（standalone 模式）
-flutter run -d macos                          # macOS
-flutter run -d "iPhone 16 Pro"                # iOS 模拟器
-flutter run -d <device-id>                    # Android 设备
 ```
 
-## 构建
+### Android 构建
 
 ```bash
-# 各平台构建
-flutter build web --no-web-resources-cdn                                       # Web (standalone)
-flutter build web --no-web-resources-cdn --dart-define=DEPLOY_MODE=embedded    # Web (嵌入模式)
-flutter build apk --split-per-abi                                              # Android APK
-flutter build ios --no-codesign                                                # iOS
-flutter build macos                                                            # macOS
-flutter build linux                                                            # Linux
-flutter build windows                                                          # Windows
-
-# 使用构建脚本（支持并行构建所有平台）
-./scripts/build-frontend.sh web           # 构建单个平台
-./scripts/build-frontend.sh all           # 构建所有平台
+flutter build apk --release --split-per-abi
 ```
 
-详细构建说明参见 [构建指南](docs/cn/build_guide.md)。
+生成文件位于：
 
-## CI/CD
+```text
+build/app/outputs/flutter-apk/
+```
 
-本仓库通过 GitHub Actions 自动构建和发布：
+常见版本：
 
-- **推送 `v*` tag** → 自动构建所有平台并创建正式 Release
-- **手动触发** → 构建并发布到分支名对应的 Release（如 `main`）
+- `app-arm64-v8a-release.apk`：大多数新款 Android 手机和电视盒子
+- `app-armeabi-v7a-release.apk`：较老的 32 位 ARM 设备
+- `app-x86_64-release.apk`：Android 模拟器
 
-工作流文件：[`.github/workflows/build-and-release.yml`](.github/workflows/build-and-release.yml)
+### Windows 构建
+
+```bash
+flutter build windows --release
+```
+
+### Web 构建
+
+```bash
+flutter build web --release --base-href /
+```
 
 ## 项目结构
 
-```
+```text
 lib/
-├── config/          # 应用配置（API 地址、常量）
-├── core/            # 核心层
-│   ├── audio/       # 音频播放服务
-│   ├── backend/     # Bundle 本地模式（嵌入后端抽象层）
-│   ├── network/     # HTTP 客户端、认证拦截器
-│   ├── router/      # GoRouter 路由配置
-│   ├── storage/     # 本地存储、安全存储
-│   ├── theme/       # 主题、响应式断点
-│   └── utils/       # 工具函数
-├── features/        # 功能模块
-│   ├── auth/        # 认证（登录/登出/Token 管理/本地模式入口）
-│   ├── home/        # 首页
-│   ├── startup/     # 启动流程（本地/远程模式自动引导）
-│   ├── library/     # 歌曲库
-│   ├── player/      # 播放器（桌面/移动/TV/迷你）
-│   ├── playlist/    # 歌单管理
-│   └── settings/    # 设置（主题/扫描/插件/升级）
-├── shared/          # 共享层
-│   ├── layouts/     # 自适应布局（AdaptiveScaffold、ShellLayout）
-│   ├── models/      # 数据模型（Song、Playlist）
-│   └── widgets/     # 通用组件
-├── main.dart        # 应用入口
-scripts/
-├── build-frontend.sh         # 多平台构建脚本
-├── release-frontend.sh       # 版本发布脚本（语义化版本控制）
-└── docker-build-frontend.sh  # Docker 构建便捷脚本
+├── config/                 # 应用配置
+├── core/
+│   ├── audio/              # 音频播放
+│   ├── backend/            # 内置后端与运行模式
+│   ├── env/                # TV 等环境检测
+│   ├── network/            # 网络与服务器连接
+│   ├── router/             # GoRouter 路由
+│   ├── storage/            # 本地存储
+│   └── theme/              # 主题、主题包和在线目录
+├── features/
+│   ├── auth/               # 登录与认证
+│   ├── home/               # 首页与 TV 首页
+│   ├── jsplugin/           # 插件系统
+│   ├── library/            # 歌曲库
+│   ├── player/             # 播放器、歌词和队列
+│   ├── playlist/           # 歌单管理
+│   └── settings/           # 设置与主题管理
+└── shared/                 # 通用布局、模型和组件
 ```
 
-## 文档
+## 主题包安全规则
 
-| 文档 | 说明 |
-|------|------|
-| [docs/cn/build_guide.md](docs/cn/build_guide.md) | 多平台构建指南 |
-| [docs/cn/development.md](docs/cn/development.md) | 开发指南 |
-| [docs/cn/architecture.md](docs/cn/architecture.md) | 架构补充说明 |
-| [docs/cn/platform-notes.md](docs/cn/platform-notes.md) | 平台特定注意事项 |
-| [scripts/README.md](scripts/README.md) | 版本发布脚本指南 |
+主题包采用声明式 JSON，不具备代码执行能力：
 
-## 技术栈
+- 单个主题包最大 128 KB
+- 最多安装 32 个自定义主题
+- 颜色仅接受 `#RRGGBB` 或 `#AARRGGBB`
+- 圆角参数限制在 0–40
+- 在线主题必须来自受信任仓库
+- 下载文件必须通过 SHA-256 校验
+- 在线主题不能覆盖内置主题 ID
 
-| 类别 | 技术 |
-|------|------|
-| 状态管理 | Riverpod |
-| 路由 | GoRouter |
-| HTTP | Dio + JWT 拦截器 |
-| 音频 | just_audio + audio_service |
-| 本地存储 | SharedPreferences + FlutterSecureStorage |
-| 图片缓存 | CachedNetworkImage |
+完整规范见 [docs/theme-packs.md](docs/theme-packs.md)。
 
-## 部署模式
+## 当前改造方向
 
-| 模式 | 编译参数 | 说明 |
-|------|---------|------|
-| **standalone** | 默认（不传 `--dart-define`） | 前后端分离部署，显示 API 地址配置 UI，用户手动填写后端地址 |
-| **embedded** | `--dart-define=DEPLOY_MODE=embedded` | 嵌入 Go 后端同域部署，自动使用当前域名，隐藏 API 地址 UI |
-| **bundle** | `--dart-define=HAS_BACKEND=true` | 客户端内嵌 Go 后端，无需服务器，支持本地/远程双模式切换 |
+- 继续完善 Android TV 全页面遥控器焦点
+- 优化手机、平板和桌面端视觉细节
+- 增加更多社区主题与主题签名机制
+- 完善正式 Release 自动发布流程
+- 持续跟进上游 Songloft 接口和插件能力
 
-默认构建（不传 `--dart-define`）等同于 standalone 模式。
+## 上游项目
 
-### Bundle 本地模式
+- Songloft 服务端：[songloft-org/songloft](https://github.com/songloft-org/songloft)
+- Songloft 官方客户端：[songloft-org/songloft-player](https://github.com/songloft-org/songloft-player)
 
-Bundle 版将 Go 后端嵌入到客户端中，用户无需单独部署服务器：
+感谢原项目作者及所有开源贡献者。本仓库的界面重构与社区扩展建立在他们的工作基础上。
 
-- **移动端（Android/iOS）**：Go 后端通过 gomobile 编译为原生库（`.aar` / `.xcframework`），Flutter 通过 MethodChannel 调用
-- **桌面端（macOS/Windows/Linux）**：Go 后端编译为 `songloft-server` 可执行文件，启动时作为子进程运行
-- **Web**：不支持 Bundle 模式
+## 许可证
 
-构建步骤（以 Android 为例）：
+本项目沿用 [Apache-2.0 License](LICENSE)。
 
-```bash
-# 1. 在父仓库编译 Go 后端为 Android .aar
-make build-go-mobile-android
-
-# 2. 构建 Flutter APK（启用 Bundle 模式）
-flutter build apk --dart-define=HAS_BACKEND=true
-```
-
-使用方式：首次启动在登录页点击「使用本地模式」→ 选择音乐目录 → 自动完成。可在设置页随时切换本地/远程模式。
-
-Bundle 版预编译安装包在 [songloft 主仓库 Releases](https://github.com/songloft-org/songloft/releases/latest) 下载（`songloft-bundled-*` 文件）。
-
-## 版本发布
-
-使用 `release-frontend.sh` 脚本进行版本发布（遵循语义化版本控制）：
-
-```bash
-# 补丁版本升级（1.0.0 -> 1.0.1）
-./scripts/release-frontend.sh patch
-
-# 次版本号升级（1.0.0 -> 1.1.0）
-./scripts/release-frontend.sh minor
-
-# 主版本号升级（1.0.0 -> 2.0.0）
-./scripts/release-frontend.sh major
-```
-
-脚本会自动：
-- 读取并升级 `pubspec.yaml` 中的版本号
-- 创建 Git 标签（格式：`v{version}`）
-- 推送 Git 标签到远程仓库
-- 提供交互式确认和进度反馈
-
-## 后端
-
-**标准版**需要配合 [Songloft 后端](https://github.com/songloft-org/songloft) 服务运行。默认连接 `http://localhost:58091`，可在登录页中修改 API 地址。
-
-**Bundle 版**内嵌 Go 后端，无需单独部署服务器，启动后自动使用 admin/admin 登录。
-
-默认账号：admin / admin
-
-🔗 **服务端 GitHub**: [https://github.com/songloft-org/songloft](https://github.com/songloft-org/songloft)
-
-## 许可证 / 第三方组件
-
-本项目基于 [Apache-2.0 license](LICENSE) 开源。
-
-> **LGPL 合规提示**：本客户端在 Windows / Linux 上通过 `just_audio_media_kit` 调用 libmpv（LGPL-2.1+）作为音频后端。Windows 端打包的是 **audio-only LGPL 构建**（不含 GPL 编码器如 libx264 / libx265），Linux 端动态链接系统的 libmpv。完整的第三方组件清单、许可证类型与源码获取途径见 [NOTICE](NOTICE)。
+Windows / Linux 音频后端涉及的第三方组件及 LGPL 合规说明请参见 [NOTICE](NOTICE)。
