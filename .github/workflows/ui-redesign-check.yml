@@ -53,7 +53,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Check formatting
-        run: dart format --output=none --set-exit-if-changed lib test
+        run: dart format -o none --set-exit-if-changed lib test
       - name: Run theme pack tests
         run: flutter test test/core/theme/theme_pack_test.dart
       - name: Analyze
