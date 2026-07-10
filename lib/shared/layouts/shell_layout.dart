@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -30,7 +31,10 @@ class ShellLayout extends ConsumerStatefulWidget {
 }
 
 class _ShellLayoutState extends ConsumerState<ShellLayout> {
+  static const _exitConfirmationWindow = Duration(seconds: 2);
+
   final _visitedPluginTabs = <String>{};
+  DateTime? _lastBackPressedAt;
 
   int _getCurrentIndex(String location, ActiveDestinations activeDest) {
     if (activeDest.routeToIndex.containsKey(location)) {
@@ -76,8 +80,9 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
 
     final isPluginTab = location.startsWith('/plugin-tab/');
     final isSettings = location.startsWith('/settings');
-    final currentEntryPath =
-        isPluginTab ? location.replaceFirst('/plugin-tab/', '') : null;
+    final currentEntryPath = isPluginTab
+        ? location.replaceFirst('/plugin-tab/', '')
+        : null;
 
     Widget body;
     if (kIsWeb) {
@@ -85,11 +90,10 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
         _visitedPluginTabs.add(currentEntryPath);
       }
 
-      final validPaths =
-          activeDest.indexToRoute
-              .where((r) => r.startsWith('/plugin-tab/'))
-              .map((r) => r.replaceFirst('/plugin-tab/', ''))
-              .toSet();
+      final validPaths = activeDest.indexToRoute
+          .where((r) => r.startsWith('/plugin-tab/'))
+          .map((r) => r.replaceFirst('/plugin-tab/', ''))
+          .toSet();
       _visitedPluginTabs.retainAll(validPaths);
 
       if (_visitedPluginTabs.isEmpty) {
@@ -120,12 +124,14 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
       body = widget.child;
     }
 
-    final bottomPlayer =
-        (isPluginTab || isSettings) ? null : _buildBottomPlayer(context);
+    final bottomPlayer = (isPluginTab || isSettings)
+        ? null
+        : _buildBottomPlayer(context);
     final playlistDrawer = showPlaylistDrawer ? const PlaylistDrawer() : null;
 
     void onDestinationSelected(int index) {
       if (index >= 0 && index < activeDest.indexToRoute.length) {
+        _lastBackPressedAt = null;
         context.go(activeDest.indexToRoute[index]);
       }
     }
@@ -142,13 +148,71 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
       );
     }
 
-    return AdaptiveScaffold(
-      body: body,
-      currentIndex: currentIndex,
-      destinations: activeDest.destinations,
-      onDestinationSelected: onDestinationSelected,
-      bottomPlayer: bottomPlayer,
-      playlistDrawer: playlistDrawer,
+    final routerCanPop = GoRouter.of(context).canPop();
+    final childHandlesBack = location == '/settings';
+    if (location != '/') {
+      _lastBackPressedAt = null;
+    }
+
+    return PopScope(
+      canPop: !showPlaylistDrawer && (routerCanPop || childHandlesBack),
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+
+        if (showPlaylistDrawer) {
+          ref.read(playerStateProvider.notifier).closePlaylistDrawer();
+          return;
+        }
+
+        if (childHandlesBack) {
+          // 移动端设置页有自己的两级返回逻辑：详情 -> 设置列表 -> 首页。
+          return;
+        }
+
+        _handleMobileRootBack(context, location);
+      },
+      child: AdaptiveScaffold(
+        body: body,
+        currentIndex: currentIndex,
+        destinations: activeDest.destinations,
+        onDestinationSelected: onDestinationSelected,
+        bottomPlayer: bottomPlayer,
+        playlistDrawer: playlistDrawer,
+      ),
+    );
+  }
+
+  void _handleMobileRootBack(BuildContext context, String location) {
+    if (location != '/') {
+      _lastBackPressedAt = null;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      context.go('/');
+      return;
+    }
+
+    final now = DateTime.now();
+    final shouldExit =
+        _lastBackPressedAt != null &&
+        now.difference(_lastBackPressedAt!) <= _exitConfirmationWindow;
+
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+
+    if (shouldExit) {
+      _lastBackPressedAt = null;
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        SystemNavigator.pop();
+      }
+      return;
+    }
+
+    _lastBackPressedAt = now;
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('再按一次退出应用'),
+        duration: _exitConfirmationWindow,
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 
