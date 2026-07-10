@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import '../storage/app_preferences.dart';
 import 'theme_pack.dart';
 
 @immutable
@@ -58,6 +58,8 @@ class ThemePackState {
 class ThemePackNotifier extends Notifier<ThemePackState> {
   static const int maxCustomThemePacks = 32;
   static const int maxThemePackBytes = 128 * 1024;
+  static const String _selectedThemePackKey = 'selected_theme_pack_id';
+  static const String _customThemePacksKey = 'custom_theme_packs';
 
   @override
   ThemePackState build() {
@@ -67,29 +69,37 @@ class ThemePackNotifier extends Notifier<ThemePackState> {
 
   Future<void> _load() async {
     try {
-      final prefs = await AppPreferences.create();
+      final prefs = await SharedPreferences.getInstance();
       final custom = <SongloftThemePack>[];
-      for (final item in prefs.getCustomThemePacks()) {
-        try {
-          custom.add(SongloftThemePack.fromJson(item));
-        } catch (e) {
-          debugPrint('[ThemePack] 跳过无效本地主题包: $e');
+      final raw = prefs.getString(_customThemePacksKey);
+      if (raw != null && raw.isNotEmpty) {
+        final decoded = jsonDecode(raw);
+        if (decoded is List) {
+          for (final item in decoded) {
+            if (item is! Map) continue;
+            try {
+              custom.add(
+                SongloftThemePack.fromJson(Map<String, dynamic>.from(item)),
+              );
+            } catch (e) {
+              debugPrint('[ThemePack] 跳过无效本地主题包: $e');
+            }
+          }
         }
       }
 
+      custom.sort((a, b) => a.name.compareTo(b.name));
       final packs = List<SongloftThemePack>.unmodifiable([
         ...SongloftThemePacks.builtIn,
         ...custom,
       ]);
-      final storedId = prefs.getSelectedThemePackId();
+      final storedId =
+          prefs.getString(_selectedThemePackKey) ?? defaultThemePackId;
       final selectedId = packs.any((pack) => pack.id == storedId)
           ? storedId
           : defaultThemePackId;
 
-      state = ThemePackState(
-        packs: packs,
-        selectedId: selectedId,
-      );
+      state = ThemePackState(packs: packs, selectedId: selectedId);
     } catch (e) {
       state = ThemePackState(
         packs: SongloftThemePacks.builtIn,
@@ -106,8 +116,8 @@ class ThemePackNotifier extends Notifier<ThemePackState> {
 
     state = state.copyWith(selectedId: id, clearError: true);
     try {
-      final prefs = await AppPreferences.create();
-      await prefs.setSelectedThemePackId(id);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_selectedThemePackKey, id);
     } catch (e) {
       state = state.copyWith(errorMessage: '保存主题选择失败：$e');
       rethrow;
@@ -148,7 +158,13 @@ class ThemePackNotifier extends Notifier<ThemePackState> {
   }
 
   Future<void> removeThemePack(String id) async {
-    final target = state.packs.where((pack) => pack.id == id).firstOrNull;
+    SongloftThemePack? target;
+    for (final pack in state.packs) {
+      if (pack.id == id) {
+        target = pack;
+        break;
+      }
+    }
     if (target == null) return;
     if (target.isBuiltIn) {
       throw const ThemePackFormatException('内置主题不能删除');
@@ -172,11 +188,12 @@ class ThemePackNotifier extends Notifier<ThemePackState> {
     required String selectedId,
   }) async {
     try {
-      final prefs = await AppPreferences.create();
-      await prefs.setCustomThemePacks(
+      final prefs = await SharedPreferences.getInstance();
+      final encoded = jsonEncode(
         custom.map((pack) => pack.toJson()).toList(growable: false),
       );
-      await prefs.setSelectedThemePackId(selectedId);
+      await prefs.setString(_customThemePacksKey, encoded);
+      await prefs.setString(_selectedThemePackKey, selectedId);
     } catch (e) {
       state = state.copyWith(errorMessage: '保存主题包失败：$e');
       rethrow;
