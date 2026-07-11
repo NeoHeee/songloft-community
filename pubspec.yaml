@@ -59,6 +59,7 @@ dependencies:
   crypto: ^3.0.6
   # DLNA 投屏
   dlna_dart: ^0.1.1
+  qr_flutter: ^4.1.0
 
 dependency_overrides:
   # smtc_windows 1.1.0 的 Rust codegen 使用 flutter_rust_bridge 2.11.1 编译，

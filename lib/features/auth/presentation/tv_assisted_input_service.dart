@@ -67,15 +67,11 @@ class TvAssistedInputService {
   Future<void> _start() async {
     _hostAddress = await _findLanAddress();
     if (_hostAddress == null) {
-      throw SocketException('未找到可用的局域网 IPv4 地址');
+      throw const SocketException('未找到可用的局域网 IPv4 地址');
     }
 
     _server = await HttpServer.bind(InternetAddress.anyIPv4, 0, shared: false);
-    _server!.listen(
-      _handleRequest,
-      onError: (_) {},
-      cancelOnError: false,
-    );
+    _server!.listen(_handleRequest, onError: (_) {}, cancelOnError: false);
     _expiryTimer = Timer(expiresAt.difference(DateTime.now()), () {
       unawaited(close());
     });
@@ -321,8 +317,7 @@ class TvAssistedInputService {
     );
   }
 
-  String _expiredHtml() =>
-      _messageHtml('辅助输入已过期', '请在电视登录页重新生成。');
+  String _expiredHtml() => _messageHtml('辅助输入已过期', '请在电视登录页重新生成。');
 
   String _messageHtml(String title, String message) {
     return _pageShell(

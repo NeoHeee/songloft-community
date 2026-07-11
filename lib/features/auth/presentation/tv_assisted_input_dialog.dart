@@ -5,11 +5,10 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../core/theme/tv_theme.dart';
 import '../../../shared/widgets/tv_focusable.dart';
-import 'tv_assisted_input_service.dart';
+import 'tv_assisted_input_service_stub.dart'
+    if (dart.library.io) 'tv_assisted_input_service.dart';
 
-Future<TvAssistedCredentials?> showTvAssistedInputDialog(
-  BuildContext context,
-) {
+Future<TvAssistedCredentials?> showTvAssistedInputDialog(BuildContext context) {
   return showDialog<TvAssistedCredentials>(
     context: context,
     barrierDismissible: false,
@@ -21,8 +20,7 @@ class _TvAssistedInputDialog extends StatefulWidget {
   const _TvAssistedInputDialog();
 
   @override
-  State<_TvAssistedInputDialog> createState() =>
-      _TvAssistedInputDialogState();
+  State<_TvAssistedInputDialog> createState() => _TvAssistedInputDialogState();
 }
 
 class _TvAssistedInputDialogState extends State<_TvAssistedInputDialog> {
@@ -69,22 +67,24 @@ class _TvAssistedInputDialogState extends State<_TvAssistedInputDialog> {
         return;
       }
       _service = service;
-      _remainingSeconds = service.expiresAt
-          .difference(DateTime.now())
-          .inSeconds
-          .clamp(0, 300)
-          .toInt();
+      _remainingSeconds =
+          service.expiresAt
+              .difference(DateTime.now())
+              .inSeconds
+              .clamp(0, 300)
+              .toInt();
       _subscription = service.credentials.listen((credentials) {
         if (!mounted) return;
         setState(() => _received = credentials);
       });
       _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
         if (!mounted || _service == null) return;
-        final remaining = _service!.expiresAt
-            .difference(DateTime.now())
-            .inSeconds
-            .clamp(0, 300)
-            .toInt();
+        final remaining =
+            _service!.expiresAt
+                .difference(DateTime.now())
+                .inSeconds
+                .clamp(0, 300)
+                .toInt();
         setState(() => _remainingSeconds = remaining);
         if (remaining == 0) _countdownTimer?.cancel();
       });
@@ -116,13 +116,14 @@ class _TvAssistedInputDialogState extends State<_TvAssistedInputDialog> {
         constraints: const BoxConstraints(maxWidth: 980, minHeight: 540),
         child: Padding(
           padding: const EdgeInsets.all(30),
-          child: _starting
-              ? _buildLoading(theme)
-              : _error != null
+          child:
+              _starting
+                  ? _buildLoading(theme)
+                  : _error != null
                   ? _buildError(theme, colorScheme)
                   : _received != null
-                      ? _buildConfirmation(theme, colorScheme, _received!)
-                      : _buildWaiting(theme, colorScheme),
+                  ? _buildConfirmation(theme, colorScheme, _received!)
+                  : _buildWaiting(theme, colorScheme),
         ),
       ),
     );
@@ -232,17 +233,19 @@ class _TvAssistedInputDialogState extends State<_TvAssistedInputDialog> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: expired
-                    ? colorScheme.errorContainer
-                    : colorScheme.surfaceContainerHighest,
+                color:
+                    expired
+                        ? colorScheme.errorContainer
+                        : colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
                 expired ? '已过期' : '剩余 $_countdownLabel',
                 style: theme.textTheme.labelLarge?.copyWith(
-                  color: expired
-                      ? colorScheme.onErrorContainer
-                      : colorScheme.onSurfaceVariant,
+                  color:
+                      expired
+                          ? colorScheme.onErrorContainer
+                          : colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -262,30 +265,31 @@ class _TvAssistedInputDialogState extends State<_TvAssistedInputDialog> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(24),
                   ),
-                  child: expired
-                      ? Center(
-                          child: Icon(
-                            Icons.timer_off_rounded,
-                            size: 100,
-                            color: Colors.grey.shade500,
-                          ),
-                        )
-                      : Center(
-                          child: QrImageView(
-                            data: service.qrUrl,
-                            version: QrVersions.auto,
-                            size: 300,
-                            backgroundColor: Colors.white,
-                            eyeStyle: const QrEyeStyle(
-                              eyeShape: QrEyeShape.square,
-                              color: Colors.black,
+                  child:
+                      expired
+                          ? Center(
+                            child: Icon(
+                              Icons.timer_off_rounded,
+                              size: 100,
+                              color: Colors.grey.shade500,
                             ),
-                            dataModuleStyle: const QrDataModuleStyle(
-                              dataModuleShape: QrDataModuleShape.square,
-                              color: Colors.black,
+                          )
+                          : Center(
+                            child: QrImageView(
+                              data: service.qrUrl,
+                              version: QrVersions.auto,
+                              size: 300,
+                              backgroundColor: Colors.white,
+                              eyeStyle: const QrEyeStyle(
+                                eyeShape: QrEyeShape.square,
+                                color: Colors.black,
+                              ),
+                              dataModuleStyle: const QrDataModuleStyle(
+                                dataModuleShape: QrDataModuleShape.square,
+                                color: Colors.black,
+                              ),
                             ),
                           ),
-                        ),
                 ),
               ),
               const SizedBox(width: 30),
@@ -599,9 +603,9 @@ class _CredentialRow extends StatelessWidget {
               value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
             ),
           ),
         ],
@@ -627,17 +631,18 @@ class _TvDialogButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final button = filled
-        ? FilledButton.icon(
-            onPressed: onPressed,
-            icon: Icon(icon),
-            label: Text(label),
-          )
-        : OutlinedButton.icon(
-            onPressed: onPressed,
-            icon: Icon(icon),
-            label: Text(label),
-          );
+    final button =
+        filled
+            ? FilledButton.icon(
+              onPressed: onPressed,
+              icon: Icon(icon),
+              label: Text(label),
+            )
+            : OutlinedButton.icon(
+              onPressed: onPressed,
+              icon: Icon(icon),
+              label: Text(label),
+            );
 
     return TvFocusable(
       autofocus: autofocus,
@@ -645,10 +650,7 @@ class _TvDialogButton extends StatelessWidget {
       focusedScale: 1.04,
       borderRadius: 14,
       child: ExcludeFocus(
-        child: SizedBox(
-          height: TvTheme.minButtonSize,
-          child: button,
-        ),
+        child: SizedBox(height: TvTheme.minButtonSize, child: button),
       ),
     );
   }

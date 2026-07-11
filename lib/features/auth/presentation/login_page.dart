@@ -20,6 +20,7 @@ import '../../../shared/utils/responsive_snackbar.dart';
 import '../../../shared/widgets/tv_focusable.dart';
 import '../domain/auth_state.dart';
 import 'providers/auth_provider.dart';
+import 'tv_assisted_input_dialog.dart';
 
 /// 登录页面
 class LoginPage extends ConsumerStatefulWidget {
@@ -40,6 +41,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _passwordFocusNode = FocusNode();
   final _apiUrlFocusNode = FocusNode();
   final _loginButtonFocusNode = FocusNode();
+  final _assistInputFocusNode = FocusNode();
   final Map<String, FocusNode> _serverFocusNodes = {};
 
   bool _obscurePassword = true;
@@ -188,10 +190,27 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     _passwordFocusNode.dispose();
     _apiUrlFocusNode.dispose();
     _loginButtonFocusNode.dispose();
+    _assistInputFocusNode.dispose();
     for (final node in _serverFocusNodes.values) {
       node.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> _openTvAssistedInput() async {
+    final credentials = await showTvAssistedInputDialog(context);
+    if (!mounted || credentials == null) return;
+
+    setState(() {
+      _useManualApiUrl = true;
+      _apiUrlController.text = credentials.apiUrl;
+      _usernameController.text = credentials.username;
+      _passwordController.text = credentials.password;
+      _currentStep = _totalSteps;
+    });
+
+    await Future<void>.delayed(Duration.zero);
+    if (mounted) await _handleLogin();
   }
 
   Future<void> _handleLogin() async {
@@ -429,18 +448,46 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             ),
                             const SizedBox(height: TvTheme.spacingXLarge),
 
+                            // 手机辅助输入（推荐）
+                            _buildTvAssistedInputButton(context, colorScheme),
+                            const SizedBox(height: 18),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Divider(
+                                    color: colorScheme.outlineVariant,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                  ),
+                                  child: Text(
+                                    '或使用遥控器手动输入',
+                                    style: TvTheme.captionStyle(context),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Divider(
+                                    color: colorScheme.outlineVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 18),
+
                             // 用户名
                             _buildTvInputField(
                               context: context,
                               controller: _usernameController,
                               focusNode: _usernameFocusNode,
                               nextFocusNode: _passwordFocusNode,
-                              previousFocusNode: null,
+                              previousFocusNode: _assistInputFocusNode,
                               colorScheme: colorScheme,
                               labelText: '用户名',
                               hintText: '请输入用户名',
                               prefixIcon: Icons.person_outline,
-                              autofocus: true,
+                              autofocus: false,
                               isLastField: false,
                               autofillHints: const [AutofillHints.username],
                               validator: (value) {
@@ -868,6 +915,114 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               color: colorScheme.onSurfaceVariant,
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTvAssistedInputButton(
+    BuildContext context,
+    ColorScheme colorScheme,
+  ) {
+    return TvFocusable(
+      focusNode: _assistInputFocusNode,
+      autofocus: true,
+      onSelect: _openTvAssistedInput,
+      onFocusChange: (hasFocus) {
+        if (hasFocus) _setCurrentStep(1);
+      },
+      onKeyEvent: (_, event) {
+        if (event is KeyDownEvent &&
+            event.logicalKey == LogicalKeyboardKey.arrowDown) {
+          _usernameFocusNode.requestFocus();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      focusedScale: 1.025,
+      borderRadius: 18,
+      child: ExcludeFocus(
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                colorScheme.primaryContainer,
+                colorScheme.tertiaryContainer,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: colorScheme.primary.withValues(alpha: 0.45),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: colorScheme.surface.withValues(alpha: 0.72),
+                  borderRadius: BorderRadius.circular(17),
+                ),
+                child: Icon(
+                  Icons.qr_code_scanner_rounded,
+                  size: 30,
+                  color: colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          '手机辅助输入',
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w900),
+                        ),
+                        const SizedBox(width: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 9,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            '推荐',
+                            style: Theme.of(
+                              context,
+                            ).textTheme.labelSmall?.copyWith(
+                              color: colorScheme.onPrimary,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      '用手机扫描二维码填写服务器、账号和密码',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 30,
+                color: colorScheme.primary,
+              ),
+            ],
+          ),
         ),
       ),
     );
