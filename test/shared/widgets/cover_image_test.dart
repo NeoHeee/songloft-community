@@ -45,23 +45,18 @@ void main() {
         home: Scaffold(
           body: Row(
             children: [
-              CoverImage(
-                coverUrl: 'https://example.com/cover.jpg',
-                size: 48,
-              ),
-              CoverImage(
-                coverUrl: 'https://example.com/cover.jpg',
-                size: 160,
-              ),
+              CoverImage(coverUrl: 'https://example.com/cover.jpg', size: 48),
+              CoverImage(coverUrl: 'https://example.com/cover.jpg', size: 160),
             ],
           ),
         ),
       ),
     );
 
-    final images = tester
-        .widgetList<CachedNetworkImage>(find.byType(CachedNetworkImage))
-        .toList();
+    final images =
+        tester
+            .widgetList<CachedNetworkImage>(find.byType(CachedNetworkImage))
+            .toList();
 
     expect(
       images.map((image) => image.cacheKey),
