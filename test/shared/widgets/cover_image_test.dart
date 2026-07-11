@@ -73,10 +73,7 @@ void main() {
 
     final cover = find.byType(CoverImage);
     expect(
-      find.descendant(
-        of: cover,
-        matching: find.byType(ExcludeSemantics),
-      ),
+      find.descendant(of: cover, matching: find.byType(ExcludeSemantics)),
       findsOneWidget,
     );
   });
