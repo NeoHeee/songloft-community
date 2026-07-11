@@ -67,7 +67,7 @@ class TvAssistedInputService {
   Future<void> _start() async {
     _hostAddress = await _findLanAddress();
     if (_hostAddress == null) {
-      throw const SocketException('未找到可用的局域网 IPv4 地址');
+      throw SocketException('未找到可用的局域网 IPv4 地址');
     }
 
     _server = await HttpServer.bind(InternetAddress.anyIPv4, 0, shared: false);
@@ -76,7 +76,9 @@ class TvAssistedInputService {
       onError: (_) {},
       cancelOnError: false,
     );
-    _expiryTimer = Timer(expiresAt.difference(DateTime.now()), close);
+    _expiryTimer = Timer(expiresAt.difference(DateTime.now()), () {
+      unawaited(close());
+    });
   }
 
   Future<String?> _findLanAddress() async {
@@ -229,12 +231,14 @@ class TvAssistedInputService {
         statusCode: 404,
       );
     } catch (_) {
-      if (!response.headersSent) {
+      try {
         await _writeHtml(
           response,
           _messageHtml('提交失败', '请返回上一页重试。'),
           statusCode: 500,
         );
+      } catch (_) {
+        // 响应已经开始或连接已断开时无需再次写入。
       }
     } finally {
       await response.close();
@@ -242,7 +246,7 @@ class TvAssistedInputService {
   }
 
   Future<Map<String, String>> _readForm(HttpRequest request) async {
-    if ((request.contentLength) > 64 * 1024) {
+    if (request.contentLength > 64 * 1024) {
       throw const FormatException('请求内容过大');
     }
     final body = await utf8.decoder.bind(request).join();
