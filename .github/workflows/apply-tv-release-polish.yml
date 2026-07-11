@@ -32,6 +32,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Correct release-polish patch helper
+        run: python tool/fix_tv_release_polish_helper.py
+
       - name: Apply TV release polish
         id: apply_patch
         shell: bash
