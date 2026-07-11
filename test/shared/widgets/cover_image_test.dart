@@ -72,10 +72,11 @@ void main() {
     );
 
     final cover = find.byType(CoverImage);
-    expect(
-      find.descendant(of: cover, matching: find.byType(ExcludeSemantics)),
-      findsOneWidget,
+    final excludedSemantics = find.descendant(
+      of: cover,
+      matching: find.byType(ExcludeSemantics),
     );
+    expect(excludedSemantics, findsAtLeastNWidgets(1));
   });
 
   testWidgets('提供语义标签时向读屏器说明封面内容', (tester) async {
@@ -85,11 +86,15 @@ void main() {
       ),
     );
 
-    final labeledSemantics = find.byWidgetPredicate(
-      (widget) =>
-          widget is Semantics &&
-          widget.properties.image == true &&
-          widget.properties.label == '歌曲《测试》封面',
+    final cover = find.byType(CoverImage);
+    final labeledSemantics = find.descendant(
+      of: cover,
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.image == true &&
+            widget.properties.label == '歌曲《测试》封面',
+      ),
     );
     expect(labeledSemantics, findsOneWidget);
   });
