@@ -5,14 +5,17 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../config/app_config.dart';
 import '../../../config/constants.dart';
 import '../../../core/theme/app_dimensions.dart';
 import '../../../core/theme/responsive.dart';
 import '../../../core/utils/url_helper.dart';
 import '../../../shared/utils/responsive_snackbar.dart';
+import '../../../shared/widgets/tv_focusable.dart';
 import '../../player/presentation/providers/player_provider.dart';
 import '../domain/playlist.dart';
 import 'providers/playlist_provider.dart';
@@ -34,6 +37,9 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
   bool _isSelectionMode = false;
   final Set<int> _selectedPlaylistIds = {};
   final _searchController = TextEditingController();
+  final _searchFocusNode = FocusNode();
+  final Map<int, FocusNode> _playlistFocusNodes = {};
+  int? _lastFocusedPlaylistId;
   Timer? _searchDebounce;
   String _searchQuery = '';
 
@@ -59,6 +65,10 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
   void dispose() {
     _searchDebounce?.cancel();
     _searchController.dispose();
+    _searchFocusNode.dispose();
+    for (final node in _playlistFocusNodes.values) {
+      node.dispose();
+    }
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
@@ -71,6 +81,32 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
     if (position.pixels >= position.maxScrollExtent - _loadMoreThreshold) {
       ref.read(playlistListProvider(_selectedType).notifier).loadMore();
     }
+  }
+
+  FocusNode _focusNodeForPlaylist(Playlist playlist) {
+    return _playlistFocusNodes.putIfAbsent(playlist.id, FocusNode.new);
+  }
+
+  Future<void> _submitTvPlaylistSearch(String value) async {
+    _onSearchChanged(value);
+    await Future<void>.delayed(const Duration(milliseconds: 360));
+    if (!mounted) return;
+    final items =
+        ref.read(playlistListProvider(_selectedType)).value?.items ?? [];
+    final results = _filterPlaylists(items);
+    if (results.isEmpty) {
+      _searchFocusNode.requestFocus();
+      return;
+    }
+    _lastFocusedPlaylistId = results.first.id;
+    _focusNodeForPlaylist(results.first).requestFocus();
+  }
+
+  Future<void> _refreshTvPlaylists() async {
+    ref.invalidate(playlistListProvider(_selectedType));
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    if (!mounted) return;
+    ResponsiveSnackBar.show(context, message: '歌单已刷新');
   }
 
   void _onSearchChanged(String value) {
@@ -445,8 +481,10 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
       ),
       child: TextField(
         controller: _searchController,
+        focusNode: _searchFocusNode,
         textInputAction: TextInputAction.search,
         onChanged: _onSearchChanged,
+        onSubmitted: AppConfig.isTvMode ? _submitTvPlaylistSearch : null,
         decoration: InputDecoration(
           hintText: '搜索歌单名称、简介或标签',
           prefixIcon: const Icon(Icons.search_rounded),
@@ -522,6 +560,18 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
     return AppBar(
       title: const Text('歌单'),
       actions: [
+        if (AppConfig.isTvMode)
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: '刷新歌单',
+            onPressed: _refreshTvPlaylists,
+          ),
+        if (AppConfig.isTvMode)
+          IconButton(
+            icon: const Icon(Icons.search_rounded),
+            tooltip: '搜索歌单',
+            onPressed: () => _searchFocusNode.requestFocus(),
+          ),
         // 视图模式切换按钮
         IconButton(
           icon: Icon(
@@ -650,12 +700,95 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
   }
 
   /// 排序模式下的主体内容
+  void _moveSortablePlaylist(int index, int delta) {
+    final target =
+        (index + delta).clamp(0, _sortablePlaylists.length - 1).toInt();
+    if (target == index) return;
+    setState(() {
+      final item = _sortablePlaylists.removeAt(index);
+      _sortablePlaylists.insert(target, item);
+    });
+  }
+
   Widget _buildSortModeBody() {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
     if (_sortablePlaylists.isEmpty) {
       return const Center(child: Text('暂无歌单'));
+    }
+
+    if (AppConfig.isTvMode) {
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+        itemCount: _sortablePlaylists.length,
+        itemBuilder: (context, index) {
+          final playlist = _sortablePlaylists[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: TvFocusable(
+              autofocus: index == 0,
+              onSelect: () {},
+              onKeyEvent: (_, event) {
+                if (event is! KeyDownEvent) return KeyEventResult.ignored;
+                if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+                  _moveSortablePlaylist(index, -1);
+                  return KeyEventResult.handled;
+                }
+                if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+                  _moveSortablePlaylist(index, 1);
+                  return KeyEventResult.handled;
+                }
+                return KeyEventResult.ignored;
+              },
+              focusedScale: 1.015,
+              borderRadius: 16,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 44,
+                      child: Text(
+                        '${index + 1}',
+                        textAlign: TextAlign.center,
+                        style: textTheme.titleMedium?.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        playlist.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '← 前移   后移 →',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
     }
 
     return ReorderableListView.builder(
@@ -666,109 +799,23 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
         final playlist = _sortablePlaylists[index];
         return Card(
           key: ValueKey(playlist.id),
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Row(
-              children: [
-                // 序号
-                SizedBox(
-                  width: 32,
-                  child: Text(
-                    '${index + 1}',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // 封面
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: SizedBox(
-                    width: 48,
-                    height: 48,
-                    child:
-                        playlist.coverImageUrl != null
-                            ? ExcludeSemantics(
-                              child: CachedNetworkImage(
-                                imageUrl: UrlHelper.buildCoverUrl(
-                                  playlist.coverImageUrl!,
-                                ),
-                                fit: BoxFit.cover,
-                                placeholder:
-                                    (context, url) => Container(
-                                      color:
-                                          colorScheme.surfaceContainerHighest,
-                                      child: Icon(
-                                        Icons.queue_music,
-                                        size: 24,
-                                        color: colorScheme.onSurfaceVariant
-                                            .withValues(alpha: 0.5),
-                                      ),
-                                    ),
-                                errorWidget:
-                                    (context, url, error) => Container(
-                                      color:
-                                          colorScheme.surfaceContainerHighest,
-                                      child: Icon(
-                                        Icons.queue_music,
-                                        size: 24,
-                                        color: colorScheme.onSurfaceVariant
-                                            .withValues(alpha: 0.5),
-                                      ),
-                                    ),
-                              ),
-                            )
-                            : Container(
-                              color: colorScheme.surfaceContainerHighest,
-                              child: Center(
-                                child: Icon(
-                                  playlist.type == 'radio'
-                                      ? Icons.radio
-                                      : Icons.queue_music,
-                                  size: 24,
-                                  color: colorScheme.onSurfaceVariant
-                                      .withValues(alpha: 0.5),
-                                ),
-                              ),
-                            ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                // 歌单信息
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        playlist.name,
-                        style: textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${playlist.songCount} 首歌曲',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // 拖拽手柄
-                ReorderableDragStartListener(
-                  index: index,
-                  child: Icon(
-                    Icons.drag_handle,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
+          child: ListTile(
+            leading: SizedBox(
+              width: 32,
+              child: Text('${index + 1}', textAlign: TextAlign.center),
+            ),
+            title: Text(
+              playlist.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Text('${playlist.songCount} 首歌曲'),
+            trailing: ReorderableDragStartListener(
+              index: index,
+              child: Icon(
+                Icons.drag_handle,
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
         );
@@ -901,7 +948,19 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
           final playlist = playlists[index];
           return PlaylistCard(
             playlist: playlist,
-            autofocus: index == 0,
+            focusNode:
+                AppConfig.isTvMode ? _focusNodeForPlaylist(playlist) : null,
+            autofocus:
+                AppConfig.isTvMode &&
+                (_lastFocusedPlaylistId == null
+                    ? index == 0
+                    : _lastFocusedPlaylistId == playlist.id),
+            onFocusChange:
+                AppConfig.isTvMode
+                    ? (hasFocus) {
+                      if (hasFocus) _lastFocusedPlaylistId = playlist.id;
+                    }
+                    : null,
             onTap: () => context.push('/playlists/${playlist.id}'),
             onEdit: () => _showEditDialog(playlist),
             onDelete:
@@ -942,7 +1001,19 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
           final playlist = playlists[index];
           return PlaylistListItem(
             playlist: playlist,
-            autofocus: index == 0,
+            focusNode:
+                AppConfig.isTvMode ? _focusNodeForPlaylist(playlist) : null,
+            autofocus:
+                AppConfig.isTvMode &&
+                (_lastFocusedPlaylistId == null
+                    ? index == 0
+                    : _lastFocusedPlaylistId == playlist.id),
+            onFocusChange:
+                AppConfig.isTvMode
+                    ? (hasFocus) {
+                      if (hasFocus) _lastFocusedPlaylistId = playlist.id;
+                    }
+                    : null,
             onTap: () => context.push('/playlists/${playlist.id}'),
             onEdit: () => _showEditDialog(playlist),
             onDelete:

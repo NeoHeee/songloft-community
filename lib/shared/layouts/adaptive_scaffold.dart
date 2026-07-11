@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/responsive.dart';
 import '../../core/theme/tv_theme.dart';
+import '../widgets/tv_action_dialog.dart';
 
 /// 导航目的地定义
 class NavDestination {
@@ -458,31 +459,67 @@ class AdaptiveScaffold extends StatelessWidget {
                   const SizedBox(width: TvTheme.spacingXLarge),
                   // 导航按钮
                   Expanded(
-                    child: FocusTraversalGroup(
-                      policy: OrderedTraversalPolicy(),
-                      child: Row(
-                        children:
-                            destinations.asMap().entries.map((entry) {
-                              final index = entry.key;
-                              final dest = entry.value;
-                              final isSelected = index == currentIndex;
-                              return Padding(
-                                padding: const EdgeInsets.only(
-                                  right: TvTheme.spacingMedium,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final visibleIndices = _tvVisibleIndices(
+                          constraints.maxWidth,
+                        );
+                        final overflowIndices = <int>[
+                          for (
+                            var index = 0;
+                            index < destinations.length;
+                            index++
+                          )
+                            if (!visibleIndices.contains(index)) index,
+                        ];
+                        final selectedInOverflow = overflowIndices.contains(
+                          currentIndex,
+                        );
+
+                        return FocusTraversalGroup(
+                          policy: OrderedTraversalPolicy(),
+                          child: Row(
+                            children: [
+                              for (final index in visibleIndices)
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    right: TvTheme.spacingSmall,
+                                  ),
+                                  child: _TvNavButton(
+                                    icon:
+                                        index == currentIndex
+                                            ? destinations[index].selectedIcon
+                                            : destinations[index].icon,
+                                    label: destinations[index].label,
+                                    isSelected: index == currentIndex,
+                                    onPressed:
+                                        () => onDestinationSelected(index),
+                                    autofocus: index == currentIndex,
+                                  ),
                                 ),
-                                child: _TvNavButton(
-                                  icon:
-                                      isSelected
-                                          ? dest.selectedIcon
-                                          : dest.icon,
-                                  label: dest.label,
-                                  isSelected: isSelected,
-                                  onPressed: () => onDestinationSelected(index),
-                                  autofocus: index == currentIndex,
+                              if (overflowIndices.isNotEmpty)
+                                _TvNavButton(
+                                  icon: Icon(
+                                    selectedInOverflow
+                                        ? Icons.apps_rounded
+                                        : Icons.apps_outlined,
+                                  ),
+                                  label:
+                                      selectedInOverflow
+                                          ? destinations[currentIndex].label
+                                          : '更多',
+                                  isSelected: selectedInOverflow,
+                                  onPressed:
+                                      () => _showTvOverflowMenu(
+                                        context,
+                                        overflowIndices,
+                                      ),
+                                  autofocus: selectedInOverflow,
                                 ),
-                              );
-                            }).toList(),
-                      ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -504,6 +541,49 @@ class AdaptiveScaffold extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  List<int> _tvVisibleIndices(double availableWidth) {
+    if (destinations.length <= 5) {
+      return List<int>.generate(destinations.length, (index) => index);
+    }
+
+    final maxButtons = (availableWidth / 154).floor().clamp(3, 7);
+    final realSlots = (maxButtons - 1).clamp(2, destinations.length);
+    final lastIndex = destinations.length - 1;
+    final visible = <int>{0, lastIndex};
+
+    if (currentIndex > 0 && currentIndex < lastIndex) {
+      visible.add(currentIndex);
+    }
+    for (
+      var index = 1;
+      index < lastIndex && visible.length < realSlots;
+      index++
+    ) {
+      visible.add(index);
+    }
+
+    final result = visible.toList()..sort();
+    return result;
+  }
+
+  void _showTvOverflowMenu(BuildContext context, List<int> indices) {
+    showTvActionDialog(
+      context: context,
+      title: '更多功能',
+      actions: [
+        for (final index in indices)
+          TvActionItem(
+            icon:
+                index == currentIndex
+                    ? Icons.radio_button_checked_rounded
+                    : Icons.apps_rounded,
+            label: destinations[index].label,
+            onPressed: () => onDestinationSelected(index),
+          ),
+      ],
     );
   }
 }

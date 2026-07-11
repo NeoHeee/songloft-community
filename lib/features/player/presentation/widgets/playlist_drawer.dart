@@ -377,13 +377,15 @@ class _DrawerSongItem extends StatelessWidget {
       return TvFocusable(
         autofocus: autofocus,
         onSelect: onTap,
+        onLongSelect: onShowActions,
         onKeyEvent: (_, event) {
           if (event is! KeyDownEvent) return KeyEventResult.ignored;
           final key = event.logicalKey;
           if (key == LogicalKeyboardKey.contextMenu ||
               key == LogicalKeyboardKey.gameButtonY ||
               key == LogicalKeyboardKey.keyM ||
-              key == LogicalKeyboardKey.delete) {
+              key == LogicalKeyboardKey.delete ||
+              key == LogicalKeyboardKey.arrowRight) {
             onShowActions();
             return KeyEventResult.handled;
           }

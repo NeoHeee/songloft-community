@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -13,8 +15,14 @@ class TvFocusable extends StatefulWidget {
   /// 子组件
   final Widget child;
 
-  /// Enter/Select 按下时触发
+  /// Enter/Select 短按时触发
   final VoidCallback? onSelect;
+
+  /// Enter/Select 长按时触发
+  final VoidCallback? onLongSelect;
+
+  /// 长按识别时长
+  final Duration longPressDuration;
 
   /// 是否自动获取焦点
   final bool autofocus;
@@ -62,6 +70,8 @@ class TvFocusable extends StatefulWidget {
     super.key,
     required this.child,
     this.onSelect,
+    this.onLongSelect,
+    this.longPressDuration = const Duration(milliseconds: 650),
     this.autofocus = false,
     this.focusNode,
     this.focusedScale = TvTheme.focusScale,
@@ -85,6 +95,8 @@ class TvFocusable extends StatefulWidget {
 class _TvFocusableState extends State<TvFocusable> {
   late FocusNode _focusNode;
   bool _hasFocus = false;
+  Timer? _longPressTimer;
+  bool _longPressTriggered = false;
 
   @override
   void initState() {
@@ -94,6 +106,7 @@ class _TvFocusableState extends State<TvFocusable> {
 
   @override
   void dispose() {
+    _longPressTimer?.cancel();
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
@@ -118,21 +131,39 @@ class _TvFocusableState extends State<TvFocusable> {
       return customResult;
     }
 
-    if (!widget.enabled || widget.onSelect == null) {
+    if (!widget.enabled ||
+        (widget.onSelect == null && widget.onLongSelect == null)) {
       return KeyEventResult.ignored;
     }
 
-    // 只处理按下事件
-    if (event is! KeyDownEvent) {
-      return KeyEventResult.ignored;
-    }
-
-    // 处理 Enter 键和 Select 键（遥控器确认键）
-    if (event.logicalKey == LogicalKeyboardKey.enter ||
+    final isConfirm =
+        event.logicalKey == LogicalKeyboardKey.enter ||
         event.logicalKey == LogicalKeyboardKey.select ||
         event.logicalKey == LogicalKeyboardKey.gameButtonA ||
-        event.logicalKey == LogicalKeyboardKey.space) {
-      widget.onSelect?.call();
+        event.logicalKey == LogicalKeyboardKey.space;
+    if (!isConfirm) return KeyEventResult.ignored;
+
+    if (event is KeyDownEvent) {
+      _longPressTimer?.cancel();
+      _longPressTriggered = false;
+      if (widget.onLongSelect != null) {
+        _longPressTimer = Timer(widget.longPressDuration, () {
+          if (!mounted) return;
+          _longPressTriggered = true;
+          widget.onLongSelect?.call();
+        });
+      }
+      return KeyEventResult.handled;
+    }
+
+    if (event is KeyRepeatEvent) {
+      return KeyEventResult.handled;
+    }
+
+    if (event is KeyUpEvent) {
+      _longPressTimer?.cancel();
+      if (!_longPressTriggered) widget.onSelect?.call();
+      _longPressTriggered = false;
       return KeyEventResult.handled;
     }
 
@@ -171,6 +202,7 @@ class _TvFocusableState extends State<TvFocusable> {
         button: true,
         child: GestureDetector(
           onTap: widget.enabled ? widget.onSelect : null,
+          onLongPress: widget.enabled ? widget.onLongSelect : null,
           child: AnimatedScale(
             scale: _hasFocus ? widget.focusedScale : 1.0,
             duration: widget.animationDuration,

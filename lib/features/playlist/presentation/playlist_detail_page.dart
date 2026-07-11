@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -678,6 +679,40 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
     final currentSong = ref.watch(currentSongProvider);
 
     if (_isSortMode) {
+      if (AppConfig.isTvMode) {
+        return SliverList(
+          delegate: SliverChildBuilderDelegate((context, index) {
+            final song = _sortableSongs[index];
+            return TvFocusable(
+              autofocus: index == 0,
+              onSelect: () {},
+              onKeyEvent: (_, event) {
+                if (event is! KeyDownEvent) return KeyEventResult.ignored;
+                if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+                  _moveSortableSong(index, -1);
+                  return KeyEventResult.handled;
+                }
+                if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+                  _moveSortableSong(index, 1);
+                  return KeyEventResult.handled;
+                }
+                return KeyEventResult.ignored;
+              },
+              focusedScale: 1.012,
+              borderRadius: 16,
+              child: _PlaylistSongTile(
+                song: song,
+                index: index,
+                displayIndex: index + 1,
+                isCurrent: currentSong?.id == song.id,
+                showDragHandle: false,
+                onTap: () {},
+              ),
+            );
+          }, childCount: _sortableSongs.length),
+        );
+      }
+
       return SliverToBoxAdapter(
         child: ReorderableListView.builder(
           shrinkWrap: true,
@@ -973,6 +1008,15 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
     });
   }
 
+  void _moveSortableSong(int index, int delta) {
+    final target = (index + delta).clamp(0, _sortableSongs.length - 1).toInt();
+    if (target == index) return;
+    setState(() {
+      final item = _sortableSongs.removeAt(index);
+      _sortableSongs.insert(target, item);
+    });
+  }
+
   void _onReorder(int oldIndex, int newIndex) {
     setState(() {
       if (newIndex > oldIndex) newIndex -= 1;
@@ -1108,6 +1152,7 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
             content: Text('确定从歌单中移除选中的 $count 首歌曲吗？'),
             actions: [
               TextButton(
+                autofocus: AppConfig.isTvMode,
                 onPressed: () => Navigator.pop(context, false),
                 child: const Text('取消'),
               ),
@@ -1190,6 +1235,7 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
             content: Text('确定删除“${playlist.name}”吗？此操作不可恢复。'),
             actions: [
               TextButton(
+                autofocus: AppConfig.isTvMode,
                 onPressed: () => Navigator.pop(context, false),
                 child: const Text('取消'),
               ),
@@ -1252,6 +1298,7 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
             content: Text('确定从歌单中移除“${song.title}”吗？'),
             actions: [
               TextButton(
+                autofocus: AppConfig.isTvMode,
                 onPressed: () => Navigator.pop(context, false),
                 child: const Text('取消'),
               ),
