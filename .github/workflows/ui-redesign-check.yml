@@ -3,6 +3,7 @@ name: UI Redesign Check
 on:
   push:
     branches:
+      - main
       - ui-redesign
     paths:
       - 'lib/**'
@@ -45,8 +46,6 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ui-redesign
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.41.5'
@@ -68,8 +67,6 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ui-redesign
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.41.5'
@@ -98,8 +95,6 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ui-redesign
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.41.5'
@@ -129,8 +124,6 @@ jobs:
     steps:
       - name: Checkout redesigned player
         uses: actions/checkout@v4
-        with:
-          ref: ui-redesign
       - name: Checkout Songloft backend
         uses: actions/checkout@v4
         with:
@@ -168,7 +161,7 @@ jobs:
       - name: Upload Windows client
         uses: actions/upload-artifact@v4
         with:
-          name: songloft-windows-preview
+          name: songloft-windows-x64.zip
           path: songloft-windows-x64.zip
           retention-days: 14
           if-no-files-found: error
