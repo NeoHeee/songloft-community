@@ -21,6 +21,15 @@ void main() {
       );
     });
 
+    test('只有临时令牌时缓存键不保留空查询串', () {
+      expect(
+        CoverCache.cacheKey(
+          'https://example.com/cover.jpg?access_token=abc&token=def',
+        ),
+        'https://example.com/cover.jpg',
+      );
+    });
+
     test('界面和调色板使用同一种缓存 Provider', () {
       final provider = CoverCache.provider('https://example.com/cover.jpg');
       final resized = CoverCache.resizedProvider(
