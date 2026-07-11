@@ -138,6 +138,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       final servers = await ref.read(serversProvider.future);
       if (servers.length == 1 && servers.first.url.isNotEmpty) {
         _apiUrlController.text = servers.first.url;
+      } else if (servers.length >= 2) {
+        final currentUrl = ref.read(baseUrlProvider);
+        if (!servers.any((entry) => entry.url == currentUrl)) {
+          ref.read(baseUrlProvider.notifier).set(servers.first.url);
+        }
       }
     } catch (_) {
       // 忽略
@@ -942,7 +947,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         if (isLast) {
           _handleLogin();
         } else {
-          _apiUrlFocusNode.requestFocus();
+          nextFocusNode.requestFocus();
         }
       },
       suffixIconBuilder:
