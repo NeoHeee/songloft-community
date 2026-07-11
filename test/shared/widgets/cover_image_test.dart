@@ -6,7 +6,7 @@ import 'package:songloft_flutter/shared/widgets/cover_image.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('按显示尺寸和 DPR 限制封面缓存位图', (tester) async {
+  testWidgets('按显示尺寸和 DPR 限制封面内存位图', (tester) async {
     tester.view.devicePixelRatio = 2;
     addTearDown(tester.view.resetDevicePixelRatio);
 
@@ -26,17 +26,17 @@ void main() {
       find.byType(CachedNetworkImage),
     );
 
-    expect(image.cacheKey, 'https://example.com/cover.jpg?v=1@96');
+    expect(image.cacheKey, 'https://example.com/cover.jpg?v=1');
     expect(image.memCacheWidth, 96);
     expect(image.memCacheHeight, 96);
-    expect(image.maxWidthDiskCache, 96);
-    expect(image.maxHeightDiskCache, 96);
+    expect(image.maxWidthDiskCache, 1024);
+    expect(image.maxHeightDiskCache, 1024);
     expect(image.useOldImageOnUrlChange, isTrue);
     expect(image.fadeInDuration, Duration.zero);
     expect(image.fadeOutDuration, Duration.zero);
   });
 
-  testWidgets('同一封面的不同显示尺寸使用独立缓存档位', (tester) async {
+  testWidgets('同一封面的不同显示尺寸共享磁盘缓存并独立解码', (tester) async {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetDevicePixelRatio);
 
@@ -63,10 +63,12 @@ void main() {
         .widgetList<CachedNetworkImage>(find.byType(CachedNetworkImage))
         .toList();
 
-    expect(images.map((image) => image.cacheKey), [
-      'https://example.com/cover.jpg@48',
-      'https://example.com/cover.jpg@160',
-    ]);
+    expect(
+      images.map((image) => image.cacheKey),
+      everyElement('https://example.com/cover.jpg'),
+    );
+    expect(images.map((image) => image.memCacheWidth), [48, 160]);
+    expect(images.map((image) => image.maxWidthDiskCache), [1024, 1024]);
   });
 
   testWidgets('未提供语义标签时封面作为装饰图片跳过读屏', (tester) async {
