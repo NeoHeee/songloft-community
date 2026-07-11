@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../config/app_config.dart';
 import '../../core/theme/responsive.dart';
 
 class DeleteSongResult {
@@ -80,6 +81,7 @@ class _DeleteSongDialogState extends State<DeleteSongDialog> {
       ),
       actions: [
         TextButton(
+          autofocus: AppConfig.isTvMode,
           onPressed: () => Navigator.of(context).pop(),
           style: TextButton.styleFrom(
             minimumSize: context.responsiveButtonMinSize,

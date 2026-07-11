@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../config/app_config.dart';
 import '../../../../core/utils/url_helper.dart';
@@ -21,6 +22,8 @@ class PlaylistListItem extends StatelessWidget {
   final bool isCurrentPlaylist;
   final bool isPlaying;
   final bool autofocus;
+  final FocusNode? focusNode;
+  final ValueChanged<bool>? onFocusChange;
 
   const PlaylistListItem({
     super.key,
@@ -37,6 +40,8 @@ class PlaylistListItem extends StatelessWidget {
     this.isCurrentPlaylist = false,
     this.isPlaying = false,
     this.autofocus = false,
+    this.focusNode,
+    this.onFocusChange,
   });
 
   @override
@@ -175,7 +180,20 @@ class PlaylistListItem extends StatelessWidget {
     final action = isSelectionMode ? onSelect : onTap;
     return TvFocusable(
       autofocus: autofocus,
+      focusNode: focusNode,
+      onFocusChange: onFocusChange,
       onSelect: action,
+      onLongSelect: isSelectionMode ? null : onLongPress,
+      onKeyEvent: (_, event) {
+        if (event is KeyDownEvent &&
+            event.logicalKey == LogicalKeyboardKey.arrowRight &&
+            !isSelectionMode &&
+            onLongPress != null) {
+          onLongPress!.call();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
       enabled: action != null,
       focusedScale: 1.02,
       borderRadius: 20,

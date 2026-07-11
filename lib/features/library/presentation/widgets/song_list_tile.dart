@@ -72,6 +72,7 @@ class SongListTile extends ConsumerWidget {
       focusNode: focusNode,
       onFocusChange: onFocusChange,
       onKeyEvent: (node, event) => _handleTvKey(context, ref, event),
+      onLongSelect: isSelectionMode ? null : () => _showTvActions(context, ref),
       onSelect: action,
       enabled: action != null,
       focusedScale: 1.015,
@@ -93,7 +94,8 @@ class SongListTile extends ConsumerWidget {
     if (key == LogicalKeyboardKey.contextMenu ||
         key == LogicalKeyboardKey.gameButtonY ||
         key == LogicalKeyboardKey.keyM ||
-        key == LogicalKeyboardKey.delete) {
+        key == LogicalKeyboardKey.delete ||
+        key == LogicalKeyboardKey.arrowRight) {
       _showTvActions(context, ref);
       return KeyEventResult.handled;
     }

@@ -329,7 +329,7 @@ class _TvPlayerState extends ConsumerState<TvPlayer> {
         currentPosition: state.currentTime,
         onSeek: notifier.seek,
         song: song,
-        editable: true,
+        editable: false,
       ),
     );
   }
@@ -413,7 +413,6 @@ class _TvPlayerState extends ConsumerState<TvPlayer> {
               onPressed: state.hasPrev ? notifier.playPrev : null,
               size: TvTheme.minButtonSize,
               iconSize: 40,
-              autofocus: true,
             ),
             const SizedBox(width: TvTheme.spacingMedium),
             // 播放/暂停（主按钮）
@@ -577,7 +576,6 @@ class _TvPlayerControlButton extends StatefulWidget {
   final IconData icon;
   final String label;
   final VoidCallback? onPressed;
-  final bool autofocus;
   final FocusNode? focusNode;
   final double size;
   final double iconSize;
@@ -587,7 +585,6 @@ class _TvPlayerControlButton extends StatefulWidget {
     required this.icon,
     required this.label,
     this.onPressed,
-    this.autofocus = false,
     this.focusNode,
     this.size = TvTheme.minButtonSize,
     this.iconSize = 32,
@@ -628,7 +625,6 @@ class _TvPlayerControlButtonState extends State<_TvPlayerControlButton> {
           child: TvIconButton(
             icon: widget.icon,
             onPressed: widget.onPressed,
-            autofocus: widget.autofocus,
             focusNode: widget.focusNode,
             size: widget.size,
             iconSize: widget.iconSize,

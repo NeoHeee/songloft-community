@@ -140,11 +140,30 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     );
   }
 
+  Future<void> _refreshTvLibrary() async {
+    await ref.read(songsListProvider.notifier).loadSongs();
+    if (!mounted) return;
+    final songs = ref.read(songsListProvider).songs;
+    if (songs.isNotEmpty) {
+      _lastFocusedSongKey = _songFocusKey(songs.first);
+      _focusNodeForSong(songs.first).requestFocus();
+    } else {
+      _searchFocusNode.requestFocus();
+    }
+    ResponsiveSnackBar.show(context, message: '歌曲库已刷新');
+  }
+
   PreferredSizeWidget _buildAppBar(BuildContext context, SongsListState state) {
     if (!state.isSelectionMode) {
       return AppBar(
         title: const Text('歌曲库'),
         actions: [
+          if (AppConfig.isTvMode)
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded),
+              tooltip: '刷新歌曲库',
+              onPressed: state.isLoading ? null : _refreshTvLibrary,
+            ),
           if (AppConfig.isTvMode)
             IconButton(
               icon: const Icon(Icons.search_rounded),
