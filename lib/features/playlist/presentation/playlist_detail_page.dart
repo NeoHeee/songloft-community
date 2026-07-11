@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../config/app_config.dart';
 import '../../../core/theme/responsive.dart';
 import '../../../core/utils/color_extraction.dart';
 import '../../../core/utils/formatters.dart';
@@ -18,6 +19,7 @@ import '../../../shared/widgets/delete_song_dialog.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/loading_indicator.dart';
 import '../../../shared/widgets/song_picker_modal.dart';
+import '../../../shared/widgets/tv_focusable.dart';
 import '../../library/presentation/providers/songs_provider.dart';
 import '../../player/presentation/providers/player_provider.dart';
 import '../domain/playlist.dart';
@@ -1516,7 +1518,7 @@ class _PlaylistSongTile extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Padding(
+    final tile = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 3),
       child: Material(
         color:
@@ -1643,6 +1645,17 @@ class _PlaylistSongTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+
+    if (!AppConfig.isTvMode || showDragHandle) return tile;
+    final action = selectionMode ? onSelected : onTap;
+    return TvFocusable(
+      autofocus: index == 0,
+      onSelect: action,
+      enabled: action != null,
+      focusedScale: 1.015,
+      borderRadius: 17,
+      child: ExcludeFocus(child: tile),
     );
   }
 }

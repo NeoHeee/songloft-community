@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../config/app_config.dart';
 import '../../../../config/constants.dart';
 import '../../../../core/theme/responsive.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/url_helper.dart';
 import '../../../../shared/models/song.dart';
 import '../../../../shared/widgets/favorite_button.dart';
+import '../../../../shared/widgets/tv_focusable.dart';
 
 /// 歌曲列表项组件
 class SongListTile extends ConsumerWidget {
@@ -41,7 +43,7 @@ class SongListTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return LayoutBuilder(
+    final content = LayoutBuilder(
       builder: (context, constraints) {
         if (context.isMobile ||
             constraints.maxWidth < ResponsiveBreakpoints.tablet) {
@@ -49,6 +51,17 @@ class SongListTile extends ConsumerWidget {
         }
         return _buildDesktopLayout(context);
       },
+    );
+
+    if (!AppConfig.isTvMode) return content;
+    final action = isSelectionMode ? onSelect : onTap;
+    return TvFocusable(
+      autofocus: index == 0,
+      onSelect: action,
+      enabled: action != null,
+      focusedScale: 1.015,
+      borderRadius: 18,
+      child: ExcludeFocus(child: content),
     );
   }
 

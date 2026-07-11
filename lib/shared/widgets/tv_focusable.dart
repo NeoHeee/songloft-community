@@ -46,6 +46,9 @@ class TvFocusable extends StatefulWidget {
   /// 焦点变化回调
   final ValueChanged<bool>? onFocusChange;
 
+  /// 获得焦点时自动滚动到可视区域
+  final bool scrollIntoView;
+
   const TvFocusable({
     super.key,
     required this.child,
@@ -60,6 +63,7 @@ class TvFocusable extends StatefulWidget {
     this.animationDuration = TvTheme.focusAnimationDuration,
     this.enabled = true,
     this.onFocusChange,
+    this.scrollIntoView = true,
   });
 
   @override
@@ -133,6 +137,17 @@ class _TvFocusableState extends State<TvFocusable> {
         setState(() {
           _hasFocus = hasFocus;
         });
+        if (hasFocus && widget.scrollIntoView) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            Scrollable.ensureVisible(
+              context,
+              alignment: 0.35,
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+            );
+          });
+        }
         widget.onFocusChange?.call(hasFocus);
       },
       child: Semantics(

@@ -901,6 +901,7 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
           final playlist = playlists[index];
           return PlaylistCard(
             playlist: playlist,
+            autofocus: index == 0,
             onTap: () => context.push('/playlists/${playlist.id}'),
             onEdit: () => _showEditDialog(playlist),
             onDelete:
@@ -941,6 +942,7 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
           final playlist = playlists[index];
           return PlaylistListItem(
             playlist: playlist,
+            autofocus: index == 0,
             onTap: () => context.push('/playlists/${playlist.id}'),
             onEdit: () => _showEditDialog(playlist),
             onDelete:
