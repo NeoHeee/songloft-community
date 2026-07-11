@@ -51,7 +51,21 @@ jobs:
             lib/features/player/presentation/queue_page.dart
 
       - name: Analyze
-        run: flutter analyze
+        shell: bash
+        run: |
+          set +e
+          flutter analyze 2>&1 | tee analyze-report.txt
+          status=${PIPESTATUS[0]}
+          exit $status
+
+      - name: Upload analyze report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-round-2-analyze-report
+          path: analyze-report.txt
+          retention-days: 2
+          if-no-files-found: warn
 
       - name: Run focused tests
         run: |
