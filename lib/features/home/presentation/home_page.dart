@@ -4,11 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart';
+import '../../../core/storage/mobile_tab_memory.dart';
 import '../../../core/theme/app_dimensions.dart';
 import '../../../core/theme/responsive.dart';
 import '../../../core/utils/url_helper.dart';
 import '../../../features/jsplugin/presentation/widgets/jsplugin_grid.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/utils/responsive_snackbar.dart';
 import '../../../shared/widgets/loading_indicator.dart';
 import '../../player/presentation/providers/player_provider.dart';
 import '../../playlist/domain/playlist.dart';
@@ -18,11 +20,52 @@ import 'widgets/section_header.dart';
 import 'widgets/stats_strip.dart';
 
 /// 新版首页仪表盘
-class HomePage extends ConsumerWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends ConsumerState<HomePage> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController(
+      initialScrollOffset: MobileTabMemory.homeScrollOffset,
+    )..addListener(_rememberScrollOffset);
+  }
+
+  void _rememberScrollOffset() {
+    if (_scrollController.hasClients) {
+      MobileTabMemory.homeScrollOffset = _scrollController.offset;
+    }
+  }
+
+  Future<void> _refreshHome() async {
+    ref.invalidate(playlistListProvider(null));
+    ref.invalidate(playlistListProvider('normal'));
+    ref.invalidate(playlistListProvider('radio'));
+    await Future.wait([
+      ref.read(playlistListProvider(null).future),
+      ref.read(playlistListProvider('normal').future),
+      ref.read(playlistListProvider('radio').future),
+    ]);
+    if (!mounted) return;
+    ResponsiveSnackBar.showSuccess(context, message: '首页内容已刷新');
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_rememberScrollOffset);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final playlistsAsync = ref.watch(playlistListProvider(null));
     final normalAsync = ref.watch(playlistListProvider('normal'));
     final radioAsync = ref.watch(playlistListProvider('radio'));
@@ -32,12 +75,11 @@ class HomePage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(playlistListProvider(null));
-          ref.invalidate(playlistListProvider('normal'));
-          ref.invalidate(playlistListProvider('radio'));
-        },
+        onRefresh: _refreshHome,
         child: CustomScrollView(
+          key: const PageStorageKey<String>('home-scroll'),
+          controller: _scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(
               child: _DashboardHeader(
@@ -47,16 +89,18 @@ class HomePage extends ConsumerWidget {
             ),
             SliverToBoxAdapter(
               child: playlistsAsync.when(
-                data: (state) => _DashboardContent(
-                  playlists: state.items,
-                  normalCount: normalCount,
-                  radioCount: radioCount,
-                ),
+                data:
+                    (state) => _DashboardContent(
+                      playlists: state.items,
+                      normalCount: normalCount,
+                      radioCount: radioCount,
+                    ),
                 loading: () => const _LoadingContent(),
-                error: (error, stack) => _ErrorContent(
-                  error: error.toString(),
-                  onRetry: () => ref.invalidate(playlistListProvider(null)),
-                ),
+                error:
+                    (error, stack) => _ErrorContent(
+                      error: error.toString(),
+                      onRetry: () => ref.invalidate(playlistListProvider(null)),
+                    ),
               ),
             ),
           ],
@@ -587,9 +631,8 @@ class _PlaylistGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final columns = context.responsive<int>(mobile: 2, tablet: 3, desktop: 4);
-    final itemCount = playlists.length > columns * 2
-        ? columns * 2
-        : playlists.length;
+    final itemCount =
+        playlists.length > columns * 2 ? columns * 2 : playlists.length;
 
     return GridView.builder(
       shrinkWrap: true,
@@ -648,9 +691,10 @@ class _PlaylistCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18),
                       color: colorScheme.surfaceContainerHighest,
-                      border: isCurrent
-                          ? Border.all(color: colorScheme.primary, width: 2)
-                          : null,
+                      border:
+                          isCurrent
+                              ? Border.all(color: colorScheme.primary, width: 2)
+                              : null,
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: Stack(
@@ -662,10 +706,12 @@ class _PlaylistCard extends StatelessWidget {
                               playlist.coverImageUrl!,
                             ),
                             fit: BoxFit.cover,
-                            placeholder: (_, _) =>
-                                _CoverPlaceholder(colorScheme: colorScheme),
-                            errorWidget: (_, _, _) =>
-                                _CoverPlaceholder(colorScheme: colorScheme),
+                            placeholder:
+                                (_, _) =>
+                                    _CoverPlaceholder(colorScheme: colorScheme),
+                            errorWidget:
+                                (_, _, _) =>
+                                    _CoverPlaceholder(colorScheme: colorScheme),
                           )
                         else
                           _CoverPlaceholder(colorScheme: colorScheme),
@@ -676,9 +722,10 @@ class _PlaylistCard extends StatelessWidget {
                             width: 42,
                             height: 42,
                             decoration: BoxDecoration(
-                              color: isCurrent
-                                  ? colorScheme.primary
-                                  : Colors.black.withValues(alpha: 0.62),
+                              color:
+                                  isCurrent
+                                      ? colorScheme.primary
+                                      : Colors.black.withValues(alpha: 0.62),
                               shape: BoxShape.circle,
                               boxShadow: const [
                                 BoxShadow(
@@ -772,18 +819,19 @@ class _LoadingContent extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               itemCount: 4,
               separatorBuilder: (_, _) => const SizedBox(width: 16),
-              itemBuilder: (_, _) => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SkeletonLoader.card(size: 150),
-                  const SizedBox(height: 10),
-                  SkeletonLoader(
-                    height: 13,
-                    width: 110,
-                    borderRadius: AppRadius.smAll,
+              itemBuilder:
+                  (_, _) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SkeletonLoader.card(size: 150),
+                      const SizedBox(height: 10),
+                      SkeletonLoader(
+                        height: 13,
+                        width: 110,
+                        borderRadius: AppRadius.smAll,
+                      ),
+                    ],
                   ),
-                ],
-              ),
             ),
           ),
         ],

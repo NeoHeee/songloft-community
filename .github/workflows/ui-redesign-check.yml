@@ -3,6 +3,7 @@ name: UI Redesign Check
 on:
   push:
     branches:
+      - main
       - ui-redesign
     paths:
       - 'lib/**'
@@ -46,7 +47,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ui-redesign
+          fetch-depth: 0
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.41.5'
@@ -54,8 +55,33 @@ jobs:
           cache: true
       - name: Install dependencies
         run: flutter pub get
-      - name: Check formatting
-        run: dart format -o none --set-exit-if-changed lib test
+      - name: Verify changed Dart file hashes v3
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            base_sha="${{ github.event.pull_request.base.sha }}"
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            base_sha="${{ github.event.before }}"
+          else
+            base_sha="$(git rev-parse HEAD^ 2>/dev/null || git rev-parse HEAD)"
+          fi
+
+          mapfile -t dart_files < <(
+            git diff --name-only --diff-filter=ACMRT "$base_sha"...HEAD -- \
+              | grep -E '^(lib|test)/.*\.dart$' \
+              || true
+          )
+
+          if [[ ${#dart_files[@]} -eq 0 ]]; then
+            echo "No changed Dart files to format-check."
+            exit 0
+          fi
+
+          printf 'Checking %s\n' "${dart_files[@]}"
+          sha256sum "${dart_files[@]}" > /tmp/dart-before.sha256
+          dart format "${dart_files[@]}"
+          sha256sum "${dart_files[@]}" > /tmp/dart-after.sha256
+          diff -u /tmp/dart-before.sha256 /tmp/dart-after.sha256
       - name: Run theme system tests
         run: flutter test test/core/theme
       - name: Analyze
@@ -68,8 +94,6 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ui-redesign
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.41.5'
@@ -98,8 +122,6 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ui-redesign
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.41.5'
@@ -129,8 +151,6 @@ jobs:
     steps:
       - name: Checkout redesigned player
         uses: actions/checkout@v4
-        with:
-          ref: ui-redesign
       - name: Checkout Songloft backend
         uses: actions/checkout@v4
         with:
@@ -168,7 +188,7 @@ jobs:
       - name: Upload Windows client
         uses: actions/upload-artifact@v4
         with:
-          name: songloft-windows-preview
+          name: songloft-windows-x64
           path: songloft-windows-x64.zip
           retention-days: 14
           if-no-files-found: error

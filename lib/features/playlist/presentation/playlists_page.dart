@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../config/constants.dart';
+import '../../../core/storage/mobile_tab_memory.dart';
 import '../../../core/theme/app_dimensions.dart';
 import '../../../core/theme/responsive.dart';
 import '../../../core/utils/url_helper.dart';
@@ -30,12 +31,14 @@ class PlaylistsPage extends ConsumerStatefulWidget {
 }
 
 class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
-  String? _selectedType;
+  String? _selectedType = MobileTabMemory.playlistType;
   bool _isSelectionMode = false;
   final Set<int> _selectedPlaylistIds = {};
-  final _searchController = TextEditingController();
+  final _searchController = TextEditingController(
+    text: MobileTabMemory.playlistsSearch,
+  );
   Timer? _searchDebounce;
-  String _searchQuery = '';
+  String _searchQuery = MobileTabMemory.playlistsSearch;
 
   /// 排序模式
   bool _isSortMode = false;
@@ -52,7 +55,9 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController()..addListener(_onScroll);
+    _scrollController = ScrollController(
+      initialScrollOffset: MobileTabMemory.playlistsScrollOffset,
+    )..addListener(_onScroll);
   }
 
   @override
@@ -68,6 +73,7 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
   void _onScroll() {
     if (!_scrollController.hasClients) return;
     final position = _scrollController.position;
+    MobileTabMemory.playlistsScrollOffset = position.pixels;
     if (position.pixels >= position.maxScrollExtent - _loadMoreThreshold) {
       ref.read(playlistListProvider(_selectedType).notifier).loadMore();
     }
@@ -88,6 +94,7 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
         }
       }
       if (!mounted) return;
+      MobileTabMemory.playlistsSearch = query;
       setState(() => _searchQuery = query);
     });
   }
@@ -95,10 +102,12 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
   void _clearSearch() {
     _searchDebounce?.cancel();
     _searchController.clear();
+    MobileTabMemory.playlistsSearch = '';
     setState(() => _searchQuery = '');
   }
 
   Future<void> _changeSelectedType(String? type) async {
+    MobileTabMemory.playlistType = type;
     setState(() {
       _selectedType = type;
       _selectedPlaylistIds.clear();
@@ -334,14 +343,14 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
           _isSortMode
               ? _buildSortModeBody()
               : RefreshIndicator(
-                onRefresh: () async {
-                  ref.invalidate(playlistListProvider(_selectedType));
-                },
+                onRefresh: _refreshPlaylists,
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 1200),
                     child: CustomScrollView(
+                      key: const PageStorageKey<String>('playlists-scroll'),
                       controller: _scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
                       slivers: [
                         SliverToBoxAdapter(child: _buildSearchBar()),
 
@@ -425,6 +434,13 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
                 ),
               ),
     );
+  }
+
+  Future<void> _refreshPlaylists() async {
+    ref.invalidate(playlistListProvider(_selectedType));
+    await ref.read(playlistListProvider(_selectedType).future);
+    if (!mounted) return;
+    ResponsiveSnackBar.showSuccess(context, message: '歌单已刷新');
   }
 
   Widget _buildSearchBar() {

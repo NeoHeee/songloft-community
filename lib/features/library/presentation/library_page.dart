@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/constants.dart';
+import '../../../core/storage/mobile_tab_memory.dart';
 import '../../../core/theme/app_dimensions.dart';
 import '../../../core/theme/responsive.dart';
 import '../../../shared/models/song.dart';
@@ -25,16 +26,26 @@ class LibraryPage extends ConsumerStatefulWidget {
 }
 
 class _LibraryPageState extends ConsumerState<LibraryPage> {
-  final _scrollController = ScrollController();
+  late final ScrollController _scrollController;
   final _searchController = TextEditingController();
   Timer? _debounceTimer;
+  bool _showIntroHeader = true;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
+    final rememberedSearch = ref.read(songsListProvider).keyword;
+    _searchController.text = rememberedSearch;
+    MobileTabMemory.librarySearch = rememberedSearch;
+    _scrollController = ScrollController(
+      initialScrollOffset: MobileTabMemory.libraryScrollOffset,
+    )..addListener(_onScroll);
+    _showIntroHeader = MobileTabMemory.libraryScrollOffset < 72;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(songsListProvider.notifier).loadSongs();
+      final current = ref.read(songsListProvider);
+      if (current.songs.isEmpty && !current.isLoading) {
+        ref.read(songsListProvider.notifier).loadSongs();
+      }
     });
   }
 
@@ -48,13 +59,19 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
 
   void _onScroll() {
     if (!_scrollController.hasClients) return;
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
+    final position = _scrollController.position;
+    MobileTabMemory.libraryScrollOffset = position.pixels;
+    final showHeader = position.pixels < 72;
+    if (showHeader != _showIntroHeader && mounted) {
+      setState(() => _showIntroHeader = showHeader);
+    }
+    if (position.pixels >= position.maxScrollExtent - 200) {
       ref.read(songsListProvider.notifier).loadMore();
     }
   }
 
   void _onSearchChanged(String value) {
+    MobileTabMemory.librarySearch = value;
     setState(() {});
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 300), () {
@@ -85,7 +102,15 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       appBar: _buildAppBar(context, state),
       body: Column(
         children: [
-          if (!state.isSelectionMode) _buildLibraryHeader(context, state),
+          if (!state.isSelectionMode)
+            AnimatedSize(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              child:
+                  _showIntroHeader
+                      ? _buildLibraryHeader(context, state)
+                      : const SizedBox.shrink(),
+            ),
           SongFilterBar(
             currentType: state.type,
             onTypeChanged: (type) {
@@ -491,6 +516,15 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     );
   }
 
+  Future<void> _refreshLibrary() async {
+    await ref.read(songsListProvider.notifier).refresh();
+    if (!mounted) return;
+    final state = ref.read(songsListProvider);
+    if (state.error == null) {
+      ResponsiveSnackBar.showSuccess(context, message: '歌曲库已刷新');
+    }
+  }
+
   Widget _buildSongList(BuildContext context, SongsListState state) {
     if (state.isLoading && state.songs.isEmpty) {
       return const Center(child: CircularProgressIndicator());
@@ -507,7 +541,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     );
 
     return RefreshIndicator(
-      onRefresh: () => ref.read(songsListProvider.notifier).refresh(),
+      onRefresh: _refreshLibrary,
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: contentPadding),
         child: LayoutBuilder(
@@ -527,7 +561,9 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     final currentSong = ref.watch(currentSongProvider);
 
     return ListView.builder(
+      key: const PageStorageKey<String>('library-song-list'),
       controller: _scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.only(top: 2, bottom: 90),
       itemCount: state.songs.length + (state.isLoadingMore ? 1 : 0),
       itemBuilder: (context, index) {
