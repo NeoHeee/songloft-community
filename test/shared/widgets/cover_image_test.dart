@@ -13,7 +13,11 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: CoverImage(coverUrl: 'https://example.com/cover.jpg', size: 48),
+          body: CoverImage(
+            coverUrl:
+                'https://example.com/cover.jpg?access_token=old-token&v=1',
+            size: 48,
+          ),
         ),
       ),
     );
@@ -22,7 +26,7 @@ void main() {
       find.byType(CachedNetworkImage),
     );
 
-    expect(image.cacheKey, 'https://example.com/cover.jpg');
+    expect(image.cacheKey, 'https://example.com/cover.jpg?v=1@96');
     expect(image.memCacheWidth, 96);
     expect(image.memCacheHeight, 96);
     expect(image.maxWidthDiskCache, 96);
@@ -30,6 +34,39 @@ void main() {
     expect(image.useOldImageOnUrlChange, isTrue);
     expect(image.fadeInDuration, Duration.zero);
     expect(image.fadeOutDuration, Duration.zero);
+  });
+
+  testWidgets('同一封面的不同显示尺寸使用独立缓存档位', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: Row(
+            children: [
+              CoverImage(
+                coverUrl: 'https://example.com/cover.jpg',
+                size: 48,
+              ),
+              CoverImage(
+                coverUrl: 'https://example.com/cover.jpg',
+                size: 160,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final images = tester
+        .widgetList<CachedNetworkImage>(find.byType(CachedNetworkImage))
+        .toList();
+
+    expect(images.map((image) => image.cacheKey), [
+      'https://example.com/cover.jpg@48',
+      'https://example.com/cover.jpg@160',
+    ]);
   });
 
   testWidgets('未提供语义标签时封面作为装饰图片跳过读屏', (tester) async {
