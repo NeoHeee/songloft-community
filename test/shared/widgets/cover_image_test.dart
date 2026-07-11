@@ -13,10 +13,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: CoverImage(
-            coverUrl: 'https://example.com/cover.jpg',
-            size: 48,
-          ),
+          body: CoverImage(coverUrl: 'https://example.com/cover.jpg', size: 48),
         ),
       ),
     );
@@ -37,9 +34,7 @@ void main() {
 
   testWidgets('未提供语义标签时封面作为装饰图片跳过读屏', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(body: CoverImage(size: 48)),
-      ),
+      const MaterialApp(home: Scaffold(body: CoverImage(size: 48))),
     );
 
     expect(find.byType(ExcludeSemantics), findsOneWidget);
@@ -48,9 +43,7 @@ void main() {
   testWidgets('提供语义标签时向读屏器说明封面内容', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
-        home: Scaffold(
-          body: CoverImage(size: 48, semanticLabel: '歌曲《测试》封面'),
-        ),
+        home: Scaffold(body: CoverImage(size: 48, semanticLabel: '歌曲《测试》封面')),
       ),
     );
 
