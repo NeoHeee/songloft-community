@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 
 player = Path("lib/features/player/presentation/widgets/mobile_player.dart")
@@ -33,6 +34,14 @@ text = text.replace(
     "          target.clamp(0.0, position.maxScrollExtent).toDouble();\n",
     1,
 )
+text, count = re.subn(
+    r"(_buildQueueList\(\n\s*context,\n)\s*ref,\n",
+    r"\1",
+    text,
+    count=1,
+)
+if count != 1:
+    raise RuntimeError(f"Unable to remove stale queue ref argument: {count}")
 queue.write_text(text, encoding="utf-8")
 
 print("Repaired mobile second round analyzer compatibility")
