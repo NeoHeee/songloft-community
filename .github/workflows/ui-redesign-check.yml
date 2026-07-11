@@ -86,22 +86,8 @@ jobs:
         run: flutter test test/core/theme
       - name: Run cover cache utility tests
         run: flutter test test/core/utils/cover_cache_test.dart
-      - name: Test cover cache sizing
-        run: >-
-          flutter test test/shared/widgets/cover_image_test.dart
-          --plain-name "按显示尺寸和 DPR 限制封面内存位图"
-      - name: Test shared disk cache
-        run: >-
-          flutter test test/shared/widgets/cover_image_test.dart
-          --plain-name "同一封面的不同显示尺寸共享磁盘缓存并独立解码"
-      - name: Test decorative cover semantics
-        run: >-
-          flutter test test/shared/widgets/cover_image_test.dart
-          --plain-name "未提供语义标签时封面作为装饰图片跳过读屏"
-      - name: Test labeled cover semantics
-        run: >-
-          flutter test test/shared/widgets/cover_image_test.dart
-          --plain-name "提供语义标签时向读屏器说明封面内容"
+      - name: Run cover image widget tests
+        run: flutter test test/shared/widgets/cover_image_test.dart
       - name: Analyze
         run: flutter analyze
 
