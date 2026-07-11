@@ -55,11 +55,15 @@ jobs:
         if: steps.apply_patch.outputs.status != '0'
         run: exit 1
 
+      - name: Apply compatibility follow-up fixes
+        run: python tool/fix_tv_assisted_input_followup.py
+
       - name: Format changed files
         run: |
           dart format \
             lib/features/auth/presentation/login_page.dart \
             lib/features/auth/presentation/tv_assisted_input_service.dart \
+            lib/features/auth/presentation/tv_assisted_input_service_stub.dart \
             lib/features/auth/presentation/tv_assisted_input_dialog.dart
 
       - name: Analyze
@@ -94,6 +98,7 @@ jobs:
             pubspec.lock \
             lib/features/auth/presentation/login_page.dart \
             lib/features/auth/presentation/tv_assisted_input_service.dart \
+            lib/features/auth/presentation/tv_assisted_input_service_stub.dart \
             lib/features/auth/presentation/tv_assisted_input_dialog.dart
           if git diff --cached --quiet; then
             echo "No assisted-input changes to commit"
