@@ -41,7 +41,7 @@ concurrency:
 
 jobs:
   analyze:
-    name: Flutter analyze and theme system tests
+    name: Flutter analyze and focused tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -84,6 +84,10 @@ jobs:
           diff -u /tmp/dart-before.sha256 /tmp/dart-after.sha256
       - name: Run theme system tests
         run: flutter test test/core/theme
+      - name: Run cover cache tests
+        run: |
+          flutter test test/core/utils/cover_cache_test.dart
+          flutter test test/shared/widgets/cover_image_test.dart
       - name: Analyze
         run: flutter analyze
 
