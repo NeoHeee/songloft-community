@@ -6,12 +6,13 @@ import '../../core/utils/url_helper.dart';
 /// 统一封面图组件。
 ///
 /// 所有页面的封面图都应优先使用此组件：
-/// - 统一磁盘与内存缓存；
-/// - 按实际显示尺寸解码，减少长列表滚动时的内存和 GPU 压力；
+/// - 每张封面只保留一份适合播放器展示的磁盘缓存；
+/// - 按实际显示尺寸解码内存位图，减少长列表滚动时的内存和 GPU 压力；
 /// - URL 中的临时认证参数变化时仍复用同一份缓存；
-/// - 不同显示尺寸使用独立缓存档位，避免小图污染全屏大封面；
 /// - 默认作为装饰图片跳过读屏器，也可显式提供语义标签。
 class CoverImage extends StatelessWidget {
+  static const int _diskCacheExtent = 1024;
+
   /// 完整的封面 URL（后端统一处理）
   final String? coverUrl;
 
@@ -46,15 +47,12 @@ class CoverImage extends StatelessWidget {
     final hasCover = rawCoverUrl != null && rawCoverUrl.isNotEmpty;
     final displayUrl = hasCover ? UrlHelper.buildCoverUrl(rawCoverUrl) : null;
 
-    // CachedNetworkImage 默认会按原图尺寸解码。音乐库中大量高分辨率封面同时
-    // 出现在列表里时会造成明显内存抖动，因此按逻辑尺寸 × DPR 限制缓存位图。
+    // 磁盘只缓存一份 1024px 封面，足以覆盖手机全屏和大部分桌面展示；
+    // 内存位图再按逻辑尺寸 × DPR 解码，避免列表里驻留大量原尺寸图片。
     final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
     final targetPixels =
         (size * devicePixelRatio).round().clamp(1, 2048).toInt();
-    final cacheKey =
-        hasCover
-            ? '${_stableCoverIdentity(rawCoverUrl)}@$targetPixels'
-            : null;
+    final cacheKey = hasCover ? _stableCoverIdentity(rawCoverUrl) : null;
 
     final imageWidget = RepaintBoundary(
       child: ClipRRect(
@@ -66,14 +64,13 @@ class CoverImage extends StatelessWidget {
               displayUrl != null
                   ? CachedNetworkImage(
                     imageUrl: displayUrl,
-                    // 去掉临时认证参数后再加入分辨率档位：重新登录不会重复
-                    // 缓存，同一封面的小图和全屏大图也不会互相覆盖。
+                    // 去掉临时认证参数，重新登录或 token 刷新后继续复用缓存。
                     cacheKey: cacheKey,
                     fit: fit,
                     memCacheWidth: targetPixels,
                     memCacheHeight: targetPixels,
-                    maxWidthDiskCache: targetPixels,
-                    maxHeightDiskCache: targetPixels,
+                    maxWidthDiskCache: _diskCacheExtent,
+                    maxHeightDiskCache: _diskCacheExtent,
                     useOldImageOnUrlChange: true,
                     fadeInDuration: Duration.zero,
                     fadeOutDuration: Duration.zero,
