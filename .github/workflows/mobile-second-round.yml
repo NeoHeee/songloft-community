@@ -1,0 +1,78 @@
+name: Mobile second round
+
+on:
+  push:
+    branches:
+      - mobile-second-round
+    paths:
+      - 'scripts/apply_mobile_second_round.py'
+      - '.github/workflows/mobile-second-round.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-test-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: mobile-second-round
+          fetch-depth: 0
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Apply mobile second round
+        run: python scripts/apply_mobile_second_round.py
+
+      - name: Format changed source
+        run: |
+          dart format \
+            lib/shared/layouts/shell_layout.dart \
+            lib/features/player/presentation/widgets/mobile_player.dart \
+            lib/features/player/presentation/queue_page.dart
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run focused tests
+        run: |
+          flutter test test/core/theme
+          flutter test test/features/player/domain/lyric_parser_test.dart
+
+      - name: Build Android release APKs
+        run: flutter build apk --release --split-per-abi
+
+      - name: Upload Android APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-mobile-second-round
+          path: build/app/outputs/flutter-apk/*-release.apk
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Commit source changes
+        run: |
+          if git diff --quiet -- \
+            lib/shared/layouts/shell_layout.dart \
+            lib/features/player/presentation/widgets/mobile_player.dart \
+            lib/features/player/presentation/queue_page.dart; then
+            echo "No source changes to commit"
+            exit 0
+          fi
+          git config user.name "Songloft UI Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add \
+            lib/shared/layouts/shell_layout.dart \
+            lib/features/player/presentation/widgets/mobile_player.dart \
+            lib/features/player/presentation/queue_page.dart
+          git commit -m "feat(mobile): close navigation and playback interaction gaps"
+          git push origin HEAD:mobile-second-round
