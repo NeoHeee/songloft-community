@@ -39,14 +39,20 @@ jobs:
       - name: Apply source changes
         run: python scripts/run_mobile_polish_round_1.py
 
-      - name: Format
-        run: |
-          dart format \
-            lib/core/storage/mobile_tab_memory.dart \
-            lib/features/home/presentation/home_page.dart \
-            lib/features/library/presentation/library_page.dart \
-            lib/features/playlist/presentation/playlists_page.dart \
-            lib/features/player/presentation/widgets/mobile_player.dart
+      - name: Format memory
+        run: dart format lib/core/storage/mobile_tab_memory.dart
+
+      - name: Format home
+        run: dart format lib/features/home/presentation/home_page.dart
+
+      - name: Format library
+        run: dart format lib/features/library/presentation/library_page.dart
+
+      - name: Format playlists
+        run: dart format lib/features/playlist/presentation/playlists_page.dart
+
+      - name: Format player
+        run: dart format lib/features/player/presentation/widgets/mobile_player.dart
 
       - name: Install dependencies
         run: flutter pub get
