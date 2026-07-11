@@ -35,6 +35,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
 
   final _visitedPluginTabs = <String>{};
   DateTime? _lastBackPressedAt;
+  bool _tvExitDialogOpen = false;
 
   int _getCurrentIndex(String location, ActiveDestinations activeDest) {
     if (activeDest.routeToIndex.containsKey(location)) {
@@ -157,6 +158,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
         playlistDrawer: playlistDrawer,
         onClosePlaylistDrawer:
             ref.read(playerStateProvider.notifier).closePlaylistDrawer,
+        onExitRequested: () => _showTvExitDialog(context),
       );
     }
 
@@ -194,6 +196,51 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
             ref.read(playerStateProvider.notifier).closePlaylistDrawer,
       ),
     );
+  }
+
+  Future<void> _showTvExitDialog(BuildContext context) async {
+    if (_tvExitDialogOpen) return;
+    _tvExitDialogOpen = true;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        final colorScheme = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          icon: Icon(
+            Icons.power_settings_new_rounded,
+            color: colorScheme.primary,
+            size: 40,
+          ),
+          title: const Text('退出 Songloft？', textAlign: TextAlign.center),
+          content: const Text(
+            '退出后当前音乐将停止播放，并返回电视系统桌面。播放队列会保留。',
+            textAlign: TextAlign.center,
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            TextButton(
+              autofocus: true,
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('取消'),
+            ),
+            FilledButton.icon(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              icon: const Icon(Icons.power_settings_new_rounded),
+              label: const Text('退出应用'),
+            ),
+          ],
+        );
+      },
+    );
+
+    _tvExitDialogOpen = false;
+    if (confirmed != true || !mounted) return;
+
+    await ref.read(playerStateProvider.notifier).stopForAppExit();
+    if (!mounted) return;
+    await SystemNavigator.pop();
   }
 
   void _handleMobileRootBack(BuildContext context, String location) {

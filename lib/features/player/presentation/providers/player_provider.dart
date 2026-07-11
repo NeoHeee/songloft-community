@@ -584,6 +584,31 @@ class PlayerNotifier extends Notifier<PlayerState> {
     }
   }
 
+  /// TV 端退出应用前停止播放，但保留播放队列和当前歌曲信息。
+  Future<void> stopForAppExit() async {
+    _prefetchCancelToken?.cancel('app exit');
+    _loadGeneration++;
+    _playGeneration++;
+    _stopPositionSaveTimer();
+    _sleepTimer?.cancel();
+    _sleepTimerCountdown?.cancel();
+
+    try {
+      final prefs = await ref.read(appPreferencesProvider.future);
+      await prefs.setPositionMs(state.currentTime.inMilliseconds);
+    } catch (e) {
+      debugPrint('[Player] Failed to save exit position: $e');
+    }
+
+    await _audioHandler.stop();
+    _liveActivity.endActivity();
+    state = state.copyWith(
+      isPlaying: false,
+      isBuffering: false,
+      clearSleepTimer: true,
+    );
+  }
+
   /// 播放下一首
   Future<void> playNext() async {
     debugPrint(

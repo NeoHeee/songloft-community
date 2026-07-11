@@ -28,6 +28,7 @@ class AdaptiveScaffold extends StatelessWidget {
   final Widget? bottomPlayer;
   final Widget? playlistDrawer;
   final VoidCallback? onClosePlaylistDrawer;
+  final VoidCallback? onExitRequested;
 
   const AdaptiveScaffold({
     super.key,
@@ -38,6 +39,7 @@ class AdaptiveScaffold extends StatelessWidget {
     this.bottomPlayer,
     this.playlistDrawer,
     this.onClosePlaylistDrawer,
+    this.onExitRequested,
   });
 
   @override
@@ -408,15 +410,11 @@ class AdaptiveScaffold extends StatelessWidget {
           onDestinationSelected(0);
           return;
         }
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            const SnackBar(
-              content: Text('已在首页，按遥控器 Home 键可返回系统桌面'),
-              duration: Duration(seconds: 2),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+        if (onExitRequested != null) {
+          onExitRequested!.call();
+          return;
+        }
+        SystemNavigator.pop();
       },
       child: Scaffold(
         body: Column(
@@ -522,6 +520,15 @@ class AdaptiveScaffold extends StatelessWidget {
                       },
                     ),
                   ),
+                  if (onExitRequested != null) ...[
+                    const SizedBox(width: TvTheme.spacingSmall),
+                    _TvNavButton(
+                      icon: const Icon(Icons.power_settings_new_rounded),
+                      label: '退出',
+                      isSelected: false,
+                      onPressed: onExitRequested!,
+                    ),
+                  ],
                 ],
               ),
             ),
