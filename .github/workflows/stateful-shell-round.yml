@@ -8,12 +8,20 @@ on:
       - 'lib/core/router/app_router.dart'
       - 'lib/shared/layouts/shell_layout.dart'
       - '.github/workflows/stateful-shell-round.yml'
+  pull_request:
+    branches:
+      - main
+    types:
+      - edited
 
 permissions:
   contents: write
 
 jobs:
   validate-build:
+    if: >-
+      github.event_name == 'push' ||
+      github.event.pull_request.head.ref == 'mobile-stateful-shell'
     runs-on: ubuntu-latest
     timeout-minutes: 55
     steps:
