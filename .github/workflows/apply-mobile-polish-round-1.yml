@@ -1,0 +1,68 @@
+name: Apply mobile polish round 1
+
+on:
+  push:
+    branches:
+      - mobile-polish-round-1
+    paths:
+      - 'scripts/apply_mobile_polish_round_1.py'
+      - '.github/workflows/apply-mobile-polish-round-1.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: mobile-polish-round-1
+          fetch-depth: 0
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+
+      - name: Apply source changes
+        run: python scripts/apply_mobile_polish_round_1.py
+
+      - name: Format
+        run: |
+          dart format \
+            lib/core/storage/mobile_tab_memory.dart \
+            lib/features/home/presentation/home_page.dart \
+            lib/features/library/presentation/library_page.dart \
+            lib/features/playlist/presentation/playlists_page.dart \
+            lib/features/player/presentation/widgets/mobile_player.dart
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run focused tests
+        run: |
+          flutter test test/core/theme
+          flutter test test/features/player/domain/lyric_parser_test.dart
+
+      - name: Commit changes
+        run: |
+          if git diff --quiet; then
+            echo "No source change needed"
+            exit 0
+          fi
+          git config user.name "Songloft UI Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add \
+            lib/core/storage/mobile_tab_memory.dart \
+            lib/features/home/presentation/home_page.dart \
+            lib/features/library/presentation/library_page.dart \
+            lib/features/playlist/presentation/playlists_page.dart \
+            lib/features/player/presentation/widgets/mobile_player.dart
+          git commit -m "feat(mobile): polish navigation state refresh and player gestures"
+          git push origin HEAD:mobile-polish-round-1
