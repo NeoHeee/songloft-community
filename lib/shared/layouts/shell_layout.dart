@@ -80,9 +80,8 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
 
     final isPluginTab = location.startsWith('/plugin-tab/');
     final isSettings = location.startsWith('/settings');
-    final currentEntryPath = isPluginTab
-        ? location.replaceFirst('/plugin-tab/', '')
-        : null;
+    final currentEntryPath =
+        isPluginTab ? location.replaceFirst('/plugin-tab/', '') : null;
 
     Widget body;
     if (kIsWeb) {
@@ -90,10 +89,11 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
         _visitedPluginTabs.add(currentEntryPath);
       }
 
-      final validPaths = activeDest.indexToRoute
-          .where((r) => r.startsWith('/plugin-tab/'))
-          .map((r) => r.replaceFirst('/plugin-tab/', ''))
-          .toSet();
+      final validPaths =
+          activeDest.indexToRoute
+              .where((r) => r.startsWith('/plugin-tab/'))
+              .map((r) => r.replaceFirst('/plugin-tab/', ''))
+              .toSet();
       _visitedPluginTabs.retainAll(validPaths);
 
       if (_visitedPluginTabs.isEmpty) {
@@ -124,9 +124,8 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
       body = widget.child;
     }
 
-    final bottomPlayer = (isPluginTab || isSettings)
-        ? null
-        : _buildBottomPlayer(context);
+    final bottomPlayer =
+        (isPluginTab || isSettings) ? null : _buildBottomPlayer(context);
     final playlistDrawer = showPlaylistDrawer ? const PlaylistDrawer() : null;
 
     void onDestinationSelected(int index) {
@@ -160,15 +159,24 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
     }
 
     final routerCanPop = GoRouter.of(context).canPop();
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
     final childHandlesBack = location == '/settings';
     if (location != '/') {
       _lastBackPressedAt = null;
     }
 
     return PopScope(
-      canPop: !showPlaylistDrawer && (routerCanPop || childHandlesBack),
+      canPop:
+          !showPlaylistDrawer &&
+          !keyboardVisible &&
+          (routerCanPop || childHandlesBack),
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
+
+        if (keyboardVisible) {
+          FocusManager.instance.primaryFocus?.unfocus();
+          return;
+        }
 
         if (showPlaylistDrawer) {
           ref.read(playerStateProvider.notifier).closePlaylistDrawer();
