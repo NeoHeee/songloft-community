@@ -1,0 +1,132 @@
+name: Apply TV exit flow
+
+on:
+  pull_request:
+    branches: [tv-sixth-round-icon-polish]
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    if: github.event.pull_request.head.ref == 'tv-seventh-round-release-polish'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout TV release-polish branch
+        uses: actions/checkout@v4
+        with:
+          ref: tv-seventh-round-release-polish
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Apply TV exit flow
+        id: apply_patch
+        shell: bash
+        run: |
+          set +e
+          python tool/apply_tv_exit_flow.py > tv-exit-flow-patch.log 2>&1
+          status=$?
+          cat tv-exit-flow-patch.log
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload patch log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-tv-exit-flow-patch-log
+          path: tv-exit-flow-patch.log
+          retention-days: 7
+
+      - name: Stop when patch failed
+        if: steps.apply_patch.outputs.status != '0'
+        run: exit 1
+
+      - name: Format changed files
+        run: |
+          dart format \
+            lib/shared/layouts/adaptive_scaffold.dart \
+            lib/shared/layouts/shell_layout.dart \
+            lib/features/player/presentation/providers/player_provider.dart
+
+      - name: Analyze
+        id: analyze
+        shell: bash
+        run: |
+          set +e
+          flutter analyze > tv-exit-flow-analyze.log 2>&1
+          status=$?
+          cat tv-exit-flow-analyze.log
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload analyze log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-tv-exit-flow-analyze-log
+          path: tv-exit-flow-analyze.log
+          retention-days: 7
+
+      - name: Stop when analyze failed
+        if: steps.analyze.outputs.status != '0'
+        run: exit 1
+
+      - name: Commit TV exit-flow changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            lib/shared/layouts/adaptive_scaffold.dart \
+            lib/shared/layouts/shell_layout.dart \
+            lib/features/player/presentation/providers/player_provider.dart
+          if git diff --cached --quiet; then
+            echo "No TV exit-flow changes to commit"
+          else
+            git commit -m "feat(tv): add explicit app exit flow"
+            git push origin HEAD:tv-seventh-round-release-polish
+          fi
+
+      - name: Build Android release APKs
+        id: android_build
+        shell: bash
+        run: |
+          set +e
+          flutter build apk --release --split-per-abi > tv-exit-flow-build.log 2>&1
+          status=$?
+          cat tv-exit-flow-build.log
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-tv-exit-flow-build-log
+          path: tv-exit-flow-build.log
+          retention-days: 7
+
+      - name: Upload APKs
+        if: steps.android_build.outputs.status == '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-tv-exit-flow-apks
+          path: build/app/outputs/flutter-apk/*-release.apk
+          retention-days: 30
+
+      - name: Fail when Android build failed
+        if: steps.android_build.outputs.status != '0'
+        run: exit 1
