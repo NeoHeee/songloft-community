@@ -34,6 +34,12 @@ class TvFocusable extends StatefulWidget {
   /// 是否显示焦点阴影
   final bool showShadow;
 
+  /// 获得焦点时，为未显式指定颜色的 Icon 提供统一高亮色
+  final Color? focusIconColor;
+
+  /// 未获得焦点时的图标色；为空时沿用子组件自身样式
+  final Color? unfocusedIconColor;
+
   /// 边框圆角，默认 12
   final double borderRadius;
 
@@ -46,6 +52,12 @@ class TvFocusable extends StatefulWidget {
   /// 焦点变化回调
   final ValueChanged<bool>? onFocusChange;
 
+  /// 获得焦点时自动滚动到可视区域
+  final bool scrollIntoView;
+
+  /// 自定义按键处理，优先于默认确认键逻辑
+  final KeyEventResult Function(FocusNode node, KeyEvent event)? onKeyEvent;
+
   const TvFocusable({
     super.key,
     required this.child,
@@ -56,10 +68,14 @@ class TvFocusable extends StatefulWidget {
     this.focusBorderWidth = TvTheme.focusBorderWidth,
     this.focusBorderColor,
     this.showShadow = true,
+    this.focusIconColor,
+    this.unfocusedIconColor,
     this.borderRadius = 12,
     this.animationDuration = TvTheme.focusAnimationDuration,
     this.enabled = true,
     this.onFocusChange,
+    this.scrollIntoView = true,
+    this.onKeyEvent,
   });
 
   @override
@@ -97,6 +113,11 @@ class _TvFocusableState extends State<TvFocusable> {
 
   /// 处理按键事件
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    final customResult = widget.onKeyEvent?.call(node, event);
+    if (customResult != null && customResult != KeyEventResult.ignored) {
+      return customResult;
+    }
+
     if (!widget.enabled || widget.onSelect == null) {
       return KeyEventResult.ignored;
     }
@@ -133,6 +154,17 @@ class _TvFocusableState extends State<TvFocusable> {
         setState(() {
           _hasFocus = hasFocus;
         });
+        if (hasFocus && widget.scrollIntoView) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            Scrollable.ensureVisible(
+              context,
+              alignment: 0.35,
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+            );
+          });
+        }
         widget.onFocusChange?.call(hasFocus);
       },
       child: Semantics(
@@ -180,7 +212,15 @@ class _TvFocusableState extends State<TvFocusable> {
                 borderRadius: BorderRadius.circular(
                   widget.borderRadius - widget.focusBorderWidth,
                 ),
-                child: widget.child,
+                child: IconTheme.merge(
+                  data: IconThemeData(
+                    color:
+                        _hasFocus
+                            ? (widget.focusIconColor ?? focusBorderColor)
+                            : widget.unfocusedIconColor,
+                  ),
+                  child: widget.child,
+                ),
               ),
             ),
           ),

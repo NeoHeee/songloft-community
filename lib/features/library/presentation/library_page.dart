@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/app_config.dart';
 import '../../../config/constants.dart';
 import '../../../core/theme/app_dimensions.dart';
 import '../../../core/theme/responsive.dart';
@@ -27,6 +28,9 @@ class LibraryPage extends ConsumerStatefulWidget {
 class _LibraryPageState extends ConsumerState<LibraryPage> {
   final _scrollController = ScrollController();
   final _searchController = TextEditingController();
+  final _searchFocusNode = FocusNode();
+  final Map<String, FocusNode> _songFocusNodes = {};
+  String? _lastFocusedSongKey;
   Timer? _debounceTimer;
 
   @override
@@ -42,6 +46,10 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   void dispose() {
     _scrollController.dispose();
     _searchController.dispose();
+    _searchFocusNode.dispose();
+    for (final node in _songFocusNodes.values) {
+      node.dispose();
+    }
     _debounceTimer?.cancel();
     super.dispose();
   }
@@ -60,6 +68,38 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     _debounceTimer = Timer(const Duration(milliseconds: 300), () {
       ref.read(songsListProvider.notifier).search(value);
     });
+  }
+
+  String _songFocusKey(Song song) => '${song.type}:${song.id}';
+
+  FocusNode _focusNodeForSong(Song song) {
+    return _songFocusNodes.putIfAbsent(_songFocusKey(song), FocusNode.new);
+  }
+
+  Future<void> _submitTvSearch(String value) async {
+    _debounceTimer?.cancel();
+    await ref.read(songsListProvider.notifier).search(value);
+    if (!mounted || !AppConfig.isTvMode) return;
+
+    await Future<void>.delayed(const Duration(milliseconds: 180));
+    if (!mounted) return;
+    final songs = ref.read(songsListProvider).songs;
+    if (songs.isEmpty) {
+      _searchFocusNode.requestFocus();
+      return;
+    }
+    _lastFocusedSongKey = _songFocusKey(songs.first);
+    _focusNodeForSong(songs.first).requestFocus();
+  }
+
+  void _queueSongNext(Song song) {
+    ref.read(playerStateProvider.notifier).queueNext(song);
+    ResponsiveSnackBar.show(context, message: '已将「${song.title}」设为下一首');
+  }
+
+  void _addSongToQueue(Song song) {
+    ref.read(playerStateProvider.notifier).addToPlaylist([song]);
+    ResponsiveSnackBar.show(context, message: '已加入播放队列：${song.title}');
   }
 
   Future<void> _playAll(SongsListState state) async {
@@ -105,6 +145,12 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       return AppBar(
         title: const Text('歌曲库'),
         actions: [
+          if (AppConfig.isTvMode)
+            IconButton(
+              icon: const Icon(Icons.search_rounded),
+              tooltip: '搜索歌曲',
+              onPressed: () => _searchFocusNode.requestFocus(),
+            ),
           IconButton(
             icon: const Icon(Icons.checklist_rounded),
             tooltip: '多选',
@@ -283,6 +329,8 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
 
     return TextField(
       controller: _searchController,
+      focusNode: _searchFocusNode,
+      textInputAction: TextInputAction.search,
       decoration: InputDecoration(
         hintText: '搜索歌曲、艺术家或专辑',
         prefixIcon: const Icon(Icons.search_rounded),
@@ -296,6 +344,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                     _searchController.clear();
                     setState(() {});
                     ref.read(songsListProvider.notifier).search('');
+                    _searchFocusNode.requestFocus();
                   },
                 ),
         filled: true,
@@ -316,6 +365,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         ),
       ),
       onChanged: _onSearchChanged,
+      onSubmitted: AppConfig.isTvMode ? _submitTvSearch : null,
     );
   }
 
@@ -547,7 +597,23 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
           isSelected: state.selectedSongIds.contains(song.id),
           isSelectionMode: state.isSelectionMode,
           isCurrentSong: currentSong?.id == song.id,
+          focusNode: AppConfig.isTvMode ? _focusNodeForSong(song) : null,
+          autofocus:
+              AppConfig.isTvMode &&
+              (_lastFocusedSongKey == null
+                  ? index == 0
+                  : _lastFocusedSongKey == _songFocusKey(song)),
+          onFocusChange:
+              AppConfig.isTvMode
+                  ? (hasFocus) {
+                    if (hasFocus) {
+                      _lastFocusedSongKey = _songFocusKey(song);
+                    }
+                  }
+                  : null,
           onTap: () => _onSongTap(song, index),
+          onPlayNext: () => _queueSongNext(song),
+          onAddToQueue: () => _addSongToQueue(song),
           onLongPress: () {
             ref.read(songsListProvider.notifier).toggleSelectMode();
             ref.read(songsListProvider.notifier).toggleSongSelection(song.id);
@@ -665,7 +731,24 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                         isSelectionMode: state.isSelectionMode,
                         isNarrow: isNarrow,
                         isCurrentSong: currentSong?.id == song.id,
+                        focusNode:
+                            AppConfig.isTvMode ? _focusNodeForSong(song) : null,
+                        autofocus:
+                            AppConfig.isTvMode &&
+                            (_lastFocusedSongKey == null
+                                ? index == 0
+                                : _lastFocusedSongKey == _songFocusKey(song)),
+                        onFocusChange:
+                            AppConfig.isTvMode
+                                ? (hasFocus) {
+                                  if (hasFocus) {
+                                    _lastFocusedSongKey = _songFocusKey(song);
+                                  }
+                                }
+                                : null,
                         onTap: () => _onSongTap(song, index),
+                        onPlayNext: () => _queueSongNext(song),
+                        onAddToQueue: () => _addSongToQueue(song),
                         onLongPress: () {
                           ref
                               .read(songsListProvider.notifier)

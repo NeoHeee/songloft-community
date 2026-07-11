@@ -26,6 +26,7 @@ class AdaptiveScaffold extends StatelessWidget {
   final List<NavDestination> destinations;
   final Widget? bottomPlayer;
   final Widget? playlistDrawer;
+  final VoidCallback? onClosePlaylistDrawer;
 
   const AdaptiveScaffold({
     super.key,
@@ -35,6 +36,7 @@ class AdaptiveScaffold extends StatelessWidget {
     required this.destinations,
     this.bottomPlayer,
     this.playlistDrawer,
+    this.onClosePlaylistDrawer,
   });
 
   @override
@@ -392,11 +394,28 @@ class AdaptiveScaffold extends StatelessWidget {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
+        if (playlistDrawer != null) {
+          onClosePlaylistDrawer?.call();
+          return;
+        }
         final router = GoRouter.of(context);
         if (router.canPop()) {
           router.pop();
+          return;
         }
-        // 一级页面不做任何操作，防止退出应用
+        if (currentIndex != 0) {
+          onDestinationSelected(0);
+          return;
+        }
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text('已在首页，按遥控器 Home 键可返回系统桌面'),
+              duration: Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
       },
       child: Scaffold(
         body: Column(
@@ -459,7 +478,7 @@ class AdaptiveScaffold extends StatelessWidget {
                                   label: dest.label,
                                   isSelected: isSelected,
                                   onPressed: () => onDestinationSelected(index),
-                                  autofocus: index == 0,
+                                  autofocus: index == currentIndex,
                                 ),
                               );
                             }).toList(),

@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../config/app_config.dart';
 import '../../../../core/utils/url_helper.dart';
+import '../../../../shared/widgets/tv_focusable.dart';
 import '../../domain/playlist.dart';
 
 /// 新版歌单列表项组件
@@ -18,6 +20,7 @@ class PlaylistListItem extends StatelessWidget {
   final VoidCallback? onSelect;
   final bool isCurrentPlaylist;
   final bool isPlaying;
+  final bool autofocus;
 
   const PlaylistListItem({
     super.key,
@@ -33,6 +36,7 @@ class PlaylistListItem extends StatelessWidget {
     this.onSelect,
     this.isCurrentPlaylist = false,
     this.isPlaying = false,
+    this.autofocus = false,
   });
 
   @override
@@ -41,7 +45,7 @@ class PlaylistListItem extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final highlighted = (isSelectionMode && isSelected) || isCurrentPlaylist;
 
-    return Padding(
+    final content = Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
         color:
@@ -165,6 +169,17 @@ class PlaylistListItem extends StatelessWidget {
           ),
         ),
       ),
+    );
+
+    if (!AppConfig.isTvMode) return content;
+    final action = isSelectionMode ? onSelect : onTap;
+    return TvFocusable(
+      autofocus: autofocus,
+      onSelect: action,
+      enabled: action != null,
+      focusedScale: 1.02,
+      borderRadius: 20,
+      child: ExcludeFocus(child: content),
     );
   }
 

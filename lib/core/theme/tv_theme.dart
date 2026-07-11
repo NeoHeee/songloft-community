@@ -9,6 +9,18 @@ class TvTheme {
   /// 按钮最小尺寸
   static const double minButtonSize = 80;
 
+  /// TV 图标尺寸层级
+  static const double iconSizeSmall = 24;
+  static const double iconSizeMedium = 32;
+  static const double iconSizeLarge = 40;
+  static const double iconSizeHero = 56;
+
+  /// TV 图标底板尺寸层级
+  static const double iconSurfaceSmall = 48;
+  static const double iconSurfaceMedium = 64;
+  static const double iconSurfaceLarge = 80;
+  static const double iconSurfaceRadius = 18;
+
   /// 标题字体大小 (24sp)
   static const double fontSizeTitle = 24;
 

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../config/app_config.dart';
+
 enum ScreenType { mobile, tablet, desktop, auto_, tv }
 
 class ResponsiveBreakpoints {
@@ -20,7 +22,8 @@ extension ResponsiveContext on BuildContext {
   bool get isDesktop =>
       screenWidth >= ResponsiveBreakpoints.desktop &&
       screenWidth < ResponsiveBreakpoints.tv;
-  bool get isTv => screenWidth >= ResponsiveBreakpoints.tv;
+  bool get isTv =>
+      AppConfig.isTvMode || screenWidth >= ResponsiveBreakpoints.tv;
 
   /// 车机模式：宽度 >= 900 且宽高比 > 2.2:1（横向超宽屏幕）
   bool get isAuto {
@@ -30,7 +33,10 @@ extension ResponsiveContext on BuildContext {
   }
 
   ScreenType get screenType {
-    // 车机模式优先于其他宽屏断点（desktop/tv），因为它靠宽高比区分
+    // 设备检测到 Android TV 后强制使用 TV 布局，避免 4K 电视因
+    // 逻辑分辨率较低而误进入桌面或平板布局。
+    if (AppConfig.isTvMode) return ScreenType.tv;
+    // 非 TV 设备继续按宽高比识别车机，再按宽度断点识别大屏。
     if (isAuto) return ScreenType.auto_;
     if (isTv) return ScreenType.tv;
     if (isDesktop) return ScreenType.desktop;

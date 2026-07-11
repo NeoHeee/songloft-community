@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../config/app_config.dart';
 import '../../../../config/constants.dart';
 import '../../../../core/theme/responsive.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/url_helper.dart';
 import '../../../../shared/models/song.dart';
 import '../../../../shared/widgets/favorite_button.dart';
+import '../../../../shared/widgets/tv_action_dialog.dart';
+import '../../../../shared/widgets/tv_focusable.dart';
 
 /// 歌曲列表项组件
 class SongListTile extends ConsumerWidget {
@@ -22,6 +26,11 @@ class SongListTile extends ConsumerWidget {
   final VoidCallback? onDelete;
   final VoidCallback? onEdit;
   final VoidCallback? onAddToPlaylist;
+  final VoidCallback? onPlayNext;
+  final VoidCallback? onAddToQueue;
+  final FocusNode? focusNode;
+  final bool autofocus;
+  final ValueChanged<bool>? onFocusChange;
 
   const SongListTile({
     super.key,
@@ -37,11 +46,16 @@ class SongListTile extends ConsumerWidget {
     this.onDelete,
     this.onEdit,
     this.onAddToPlaylist,
+    this.onPlayNext,
+    this.onAddToQueue,
+    this.focusNode,
+    this.autofocus = false,
+    this.onFocusChange,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return LayoutBuilder(
+    final content = LayoutBuilder(
       builder: (context, constraints) {
         if (context.isMobile ||
             constraints.maxWidth < ResponsiveBreakpoints.tablet) {
@@ -49,6 +63,86 @@ class SongListTile extends ConsumerWidget {
         }
         return _buildDesktopLayout(context);
       },
+    );
+
+    if (!AppConfig.isTvMode) return content;
+    final action = isSelectionMode ? onSelect : onTap;
+    return TvFocusable(
+      autofocus: autofocus,
+      focusNode: focusNode,
+      onFocusChange: onFocusChange,
+      onKeyEvent: (node, event) => _handleTvKey(context, ref, event),
+      onSelect: action,
+      enabled: action != null,
+      focusedScale: 1.015,
+      borderRadius: 18,
+      child: ExcludeFocus(child: content),
+    );
+  }
+
+  KeyEventResult _handleTvKey(
+    BuildContext context,
+    WidgetRef ref,
+    KeyEvent event,
+  ) {
+    if (event is! KeyDownEvent || isSelectionMode) {
+      return KeyEventResult.ignored;
+    }
+
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.contextMenu ||
+        key == LogicalKeyboardKey.gameButtonY ||
+        key == LogicalKeyboardKey.keyM ||
+        key == LogicalKeyboardKey.delete) {
+      _showTvActions(context, ref);
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
+  void _showTvActions(BuildContext context, WidgetRef ref) {
+    showTvActionDialog(
+      context: context,
+      title: song.title,
+      actions: [
+        if (onTap != null)
+          TvActionItem(
+            icon: Icons.play_arrow_rounded,
+            label: '立即播放',
+            onPressed: onTap!,
+          ),
+        if (onPlayNext != null)
+          TvActionItem(
+            icon: Icons.skip_next_rounded,
+            label: '下一首播放',
+            onPressed: onPlayNext!,
+          ),
+        if (onAddToQueue != null)
+          TvActionItem(
+            icon: Icons.queue_music_rounded,
+            label: '加入播放队列',
+            onPressed: onAddToQueue!,
+          ),
+        if (onAddToPlaylist != null)
+          TvActionItem(
+            icon: Icons.playlist_add_rounded,
+            label: '加入歌单',
+            onPressed: onAddToPlaylist!,
+          ),
+        if (onEdit != null)
+          TvActionItem(
+            icon: Icons.edit_rounded,
+            label: '编辑歌曲',
+            onPressed: onEdit!,
+          ),
+        if (onDelete != null)
+          TvActionItem(
+            icon: Icons.delete_outline_rounded,
+            label: '删除歌曲',
+            onPressed: onDelete!,
+            destructive: true,
+          ),
+      ],
     );
   }
 

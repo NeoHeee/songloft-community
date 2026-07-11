@@ -7,6 +7,7 @@ import '../../../core/router/app_router.dart';
 import '../../../core/theme/tv_theme.dart';
 import '../../../core/utils/url_helper.dart';
 import '../../../shared/widgets/tv_focusable.dart';
+import '../../../shared/widgets/tv_icon_surface.dart';
 import '../../player/presentation/providers/player_provider.dart';
 import '../../playlist/domain/playlist.dart';
 import '../../playlist/presentation/providers/playlist_provider.dart';
@@ -122,7 +123,7 @@ class _TvHomeContent extends ConsumerWidget {
                             Icon(
                               Icons.queue_music_rounded,
                               color: colorScheme.primary,
-                              size: 28,
+                              size: TvTheme.iconSizeMedium,
                             ),
                             const SizedBox(width: 12),
                             Text(
@@ -133,7 +134,7 @@ class _TvHomeContent extends ConsumerWidget {
                             Icon(
                               Icons.radio_rounded,
                               color: colorScheme.secondary,
-                              size: 28,
+                              size: TvTheme.iconSizeMedium,
                             ),
                             const SizedBox(width: 12),
                             Text(
@@ -192,8 +193,8 @@ class _TvHomeContent extends ConsumerWidget {
                   ),
                 ),
                 SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: TvTheme.gridColumns,
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 310,
                     mainAxisSpacing: TvTheme.gridSpacing,
                     crossAxisSpacing: TvTheme.gridSpacing,
                     childAspectRatio: 0.85,
@@ -232,7 +233,7 @@ class _TvHomeContent extends ConsumerWidget {
                         Icon(
                           Icons.radio_rounded,
                           color: colorScheme.primary,
-                          size: 28,
+                          size: TvTheme.iconSizeMedium,
                         ),
                         const SizedBox(width: 12),
                         Text('我的电台', style: TvTheme.titleStyle(context)),
@@ -241,8 +242,8 @@ class _TvHomeContent extends ConsumerWidget {
                   ),
                 ),
                 SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: TvTheme.gridColumns,
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 310,
                     mainAxisSpacing: TvTheme.gridSpacing,
                     crossAxisSpacing: TvTheme.gridSpacing,
                     childAspectRatio: 0.85,
@@ -274,7 +275,7 @@ class _TvHomeContent extends ConsumerWidget {
                       children: [
                         Icon(
                           Icons.library_music_outlined,
-                          size: 80,
+                          size: TvTheme.iconSurfaceLarge,
                           color: colorScheme.onSurfaceVariant.withValues(
                             alpha: 0.5,
                           ),
@@ -350,7 +351,12 @@ class _TvQuickNavCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 48, color: colorScheme.primary),
+            TvIconSurface(
+              size: TvTheme.iconSurfaceMedium,
+              iconSize: TvTheme.iconSizeLarge,
+              accentColor: colorScheme.primary,
+              icon: Icon(icon),
+            ),
             const SizedBox(height: 12),
             Text(
               title,
@@ -415,7 +421,7 @@ class _TvPlaylistCard extends StatelessWidget {
                       child: Center(
                         child: Icon(
                           Icons.equalizer_rounded,
-                          size: 48,
+                          size: TvTheme.iconSizeLarge,
                           color: colorScheme.primary,
                         ),
                       ),
@@ -472,12 +478,18 @@ class _TvPlaylistCard extends StatelessWidget {
     return Container(
       color: colorScheme.surfaceContainerHighest,
       child: Center(
-        child: Icon(
-          playlist.type == 'radio'
-              ? Icons.radio_rounded
-              : Icons.queue_music_rounded,
-          size: 56,
-          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+        child: TvIconSurface(
+          size: TvTheme.iconSurfaceLarge,
+          iconSize: TvTheme.iconSizeHero,
+          accentColor:
+              playlist.type == 'radio'
+                  ? colorScheme.secondary
+                  : colorScheme.primary,
+          icon: Icon(
+            playlist.type == 'radio'
+                ? Icons.radio_rounded
+                : Icons.queue_music_rounded,
+          ),
         ),
       ),
     );
@@ -509,7 +521,11 @@ class _TvErrorContent extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.error_outline, size: 80, color: colorScheme.error),
+          Icon(
+            Icons.error_outline,
+            size: TvTheme.iconSurfaceLarge,
+            color: colorScheme.error,
+          ),
           const SizedBox(height: TvTheme.spacingLarge),
           Text('加载失败', style: TvTheme.titleStyle(context)),
           const SizedBox(height: TvTheme.spacingSmall),

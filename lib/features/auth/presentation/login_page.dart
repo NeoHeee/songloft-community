@@ -17,8 +17,10 @@ import '../../../core/router/app_router.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/theme/tv_theme.dart';
 import '../../../shared/utils/responsive_snackbar.dart';
+import '../../../shared/widgets/tv_focusable.dart';
 import '../domain/auth_state.dart';
 import 'providers/auth_provider.dart';
+import 'tv_assisted_input_dialog.dart';
 
 /// 登录页面
 class LoginPage extends ConsumerStatefulWidget {
@@ -39,14 +41,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _passwordFocusNode = FocusNode();
   final _apiUrlFocusNode = FocusNode();
   final _loginButtonFocusNode = FocusNode();
+  final _assistInputFocusNode = FocusNode();
+  final Map<String, FocusNode> _serverFocusNodes = {};
 
   bool _obscurePassword = true;
+  bool _useManualApiUrl = false;
   bool _isLocalModeBootstrapping = false;
   String _localModeHint = '';
 
   // TV 焦点步骤指示器
   int _currentStep = 1;
-  int get _totalSteps => !AppConfig.isEmbedded ? 3 : 2;
+  int get _totalSteps => _isApiUrlVisible ? 4 : 3;
 
   bool get _isApiUrlVisible => !AppConfig.isEmbedded;
 
@@ -68,6 +73,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     _usernameFocusNode.addListener(_updateStep);
     _passwordFocusNode.addListener(_updateStep);
     _apiUrlFocusNode.addListener(_updateStep);
+    _loginButtonFocusNode.addListener(_updateStep);
   }
 
   void _updateStep() {
@@ -76,14 +82,55 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       newStep = 1;
     } else if (_passwordFocusNode.hasFocus) {
       newStep = 2;
-    } else if (_apiUrlFocusNode.hasFocus) {
+    } else if (_apiUrlFocusNode.hasFocus ||
+        _serverFocusNodes.values.any((node) => node.hasFocus)) {
       newStep = 3;
+    } else if (_loginButtonFocusNode.hasFocus) {
+      newStep = _totalSteps;
     }
-    if (newStep != _currentStep) {
-      setState(() {
-        _currentStep = newStep;
-      });
+    if (newStep != _currentStep && mounted) {
+      setState(() => _currentStep = newStep);
     }
+  }
+
+  void _setCurrentStep(int step) {
+    if (_currentStep == step || !mounted) return;
+    setState(() => _currentStep = step);
+  }
+
+  FocusNode _serverFocusNode(String id) {
+    return _serverFocusNodes.putIfAbsent(id, FocusNode.new);
+  }
+
+  FocusNode? _firstServerFocusNode(List<ServerEntry> servers) {
+    if (servers.isEmpty) return null;
+    return _serverFocusNode(servers.first.id);
+  }
+
+  void _selectTvServer(ServerEntry entry) {
+    ref.read(baseUrlProvider.notifier).set(entry.url);
+    _apiUrlController.text = entry.url;
+    if (entry.username != null && entry.username!.isNotEmpty) {
+      _usernameController.text = entry.username!;
+    }
+    if (entry.password != null && entry.password!.isNotEmpty) {
+      _passwordController.text = entry.password!;
+    }
+    setState(() {
+      _useManualApiUrl = false;
+      _currentStep = 3;
+    });
+  }
+
+  void _showManualApiInput() {
+    _apiUrlController.text = ref.read(baseUrlProvider);
+    setState(() {
+      _useManualApiUrl = true;
+      _currentStep = 3;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _apiUrlFocusNode.requestFocus();
+    });
   }
 
   Future<void> _loadSavedApiUrl() async {
@@ -93,6 +140,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       final servers = await ref.read(serversProvider.future);
       if (servers.length == 1 && servers.first.url.isNotEmpty) {
         _apiUrlController.text = servers.first.url;
+      } else if (servers.length >= 2) {
+        final currentUrl = ref.read(baseUrlProvider);
+        if (!servers.any((entry) => entry.url == currentUrl)) {
+          ref.read(baseUrlProvider.notifier).set(servers.first.url);
+        }
       }
     } catch (_) {
       // 忽略
@@ -130,6 +182,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     _usernameFocusNode.removeListener(_updateStep);
     _passwordFocusNode.removeListener(_updateStep);
     _apiUrlFocusNode.removeListener(_updateStep);
+    _loginButtonFocusNode.removeListener(_updateStep);
     _usernameController.dispose();
     _passwordController.dispose();
     _apiUrlController.dispose();
@@ -137,7 +190,27 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     _passwordFocusNode.dispose();
     _apiUrlFocusNode.dispose();
     _loginButtonFocusNode.dispose();
+    _assistInputFocusNode.dispose();
+    for (final node in _serverFocusNodes.values) {
+      node.dispose();
+    }
     super.dispose();
+  }
+
+  Future<void> _openTvAssistedInput() async {
+    final credentials = await showTvAssistedInputDialog(context);
+    if (!mounted || credentials == null) return;
+
+    setState(() {
+      _useManualApiUrl = true;
+      _apiUrlController.text = credentials.apiUrl;
+      _usernameController.text = credentials.username;
+      _passwordController.text = credentials.password;
+      _currentStep = _totalSteps;
+    });
+
+    await Future<void>.delayed(Duration.zero);
+    if (mounted) await _handleLogin();
   }
 
   Future<void> _handleLogin() async {
@@ -148,11 +221,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     String? apiBaseUrl;
     if (!AppConfig.isEmbedded) {
       final servers = ref.read(serversProvider).value ?? const <ServerEntry>[];
-      if (servers.length >= 2) {
-        // 多服务器：默认布局走 dropdown，TV 布局也以 baseUrlProvider 为准
+      if (servers.length >= 2 && !_useManualApiUrl) {
         apiBaseUrl = ref.read(baseUrlProvider);
       } else {
-        // 0/1 项：使用单输入框的值
         final raw = _apiUrlController.text.trim();
         if (raw.isNotEmpty) {
           apiBaseUrl = raw.replaceAll(RegExp(r'/+$'), '');
@@ -167,10 +238,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
-  /// 判断是否为 TV 端（屏幕宽度 >= 1920）
-  bool _isTv(BuildContext context) {
-    return MediaQuery.of(context).size.width >= 1920;
-  }
+  /// TV 模式由平台检测统一决定，避免 720p/4K 逻辑分辨率误判。
+  bool _isTv(BuildContext context) => AppConfig.isTvMode;
 
   @override
   Widget build(BuildContext context) {
@@ -302,6 +371,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     ThemeData theme,
     ColorScheme colorScheme,
   ) {
+    final servers = ref.watch(serversProvider).value ?? const <ServerEntry>[];
     return Scaffold(
       body: SafeArea(
         child: FocusTraversalGroup(
@@ -378,18 +448,46 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             ),
                             const SizedBox(height: TvTheme.spacingXLarge),
 
+                            // 手机辅助输入（推荐）
+                            _buildTvAssistedInputButton(context, colorScheme),
+                            const SizedBox(height: 18),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Divider(
+                                    color: colorScheme.outlineVariant,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                  ),
+                                  child: Text(
+                                    '或使用遥控器手动输入',
+                                    style: TvTheme.captionStyle(context),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Divider(
+                                    color: colorScheme.outlineVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 18),
+
                             // 用户名
                             _buildTvInputField(
                               context: context,
                               controller: _usernameController,
                               focusNode: _usernameFocusNode,
                               nextFocusNode: _passwordFocusNode,
-                              previousFocusNode: null,
+                              previousFocusNode: _assistInputFocusNode,
                               colorScheme: colorScheme,
                               labelText: '用户名',
                               hintText: '请输入用户名',
                               prefixIcon: Icons.person_outline,
-                              autofocus: true,
+                              autofocus: false,
                               isLastField: false,
                               autofillHints: const [AutofillHints.username],
                               validator: (value) {
@@ -402,33 +500,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             const SizedBox(height: TvTheme.spacingLarge),
 
                             // 密码
-                            _buildTvPasswordField(context, colorScheme),
+                            _buildTvPasswordField(
+                              context,
+                              colorScheme,
+                              servers,
+                            ),
                             const SizedBox(height: TvTheme.spacingLarge),
 
-                            // API 地址 — 嵌入模式下隐藏
+                            // 服务器选择 / API 地址 — 嵌入模式下隐藏
                             if (_isApiUrlVisible) ...[
-                              _buildTvInputField(
-                                context: context,
-                                controller: _apiUrlController,
-                                focusNode: _apiUrlFocusNode,
-                                nextFocusNode: _loginButtonFocusNode,
-                                previousFocusNode: _passwordFocusNode,
-                                colorScheme: colorScheme,
-                                labelText: 'API 地址',
-                                hintText: AppConfig.baseUrl,
-                                prefixIcon: Icons.cloud_outlined,
-                                keyboardType: TextInputType.url,
-                                isLastField: true,
-                                onSubmit: _handleLogin,
-                                validator: (value) {
-                                  if (value != null && value.isNotEmpty) {
-                                    if (!value.startsWith('http://') &&
-                                        !value.startsWith('https://')) {
-                                      return '请输入有效的 URL（以 http:// 或 https:// 开头）';
-                                    }
-                                  }
-                                  return null;
-                                },
+                              _buildTvServerSection(
+                                context,
+                                colorScheme,
+                                servers,
                               ),
                               const SizedBox(height: TvTheme.spacingLarge),
                             ],
@@ -539,7 +623,408 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             fontSize: TvTheme.fontSizeBody,
           ),
         ),
+        const SizedBox(height: 34),
+        Container(
+          width: 360,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: colorScheme.surface.withValues(alpha: 0.58),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.45),
+            ),
+          ),
+          child: Column(
+            children: [
+              _buildTvGuideRow(colorScheme, Icons.gamepad_rounded, '方向键移动焦点'),
+              const SizedBox(height: 12),
+              _buildTvGuideRow(
+                colorScheme,
+                Icons.keyboard_rounded,
+                '确认键打开系统键盘',
+              ),
+              const SizedBox(height: 12),
+              _buildTvGuideRow(colorScheme, Icons.login_rounded, '完成输入后选择登录'),
+            ],
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _buildTvGuideRow(ColorScheme colorScheme, IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 24, color: colorScheme.primary),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: TvTheme.fontSizeCaption,
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTvServerSection(
+    BuildContext context,
+    ColorScheme colorScheme,
+    List<ServerEntry> servers,
+  ) {
+    if (servers.length < 2 || _useManualApiUrl) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildTvInputField(
+            context: context,
+            controller: _apiUrlController,
+            focusNode: _apiUrlFocusNode,
+            nextFocusNode: _loginButtonFocusNode,
+            previousFocusNode: _passwordFocusNode,
+            colorScheme: colorScheme,
+            labelText: 'API 地址',
+            hintText: '例如：http://192.168.1.10:3000',
+            prefixIcon: Icons.cloud_outlined,
+            keyboardType: TextInputType.url,
+            isLastField: true,
+            onSubmit: _handleLogin,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return '请输入 API 地址';
+              }
+              if (!value.startsWith('http://') &&
+                  !value.startsWith('https://')) {
+                return '请输入有效的 URL（以 http:// 或 https:// 开头）';
+              }
+              return null;
+            },
+          ),
+          if (servers.length >= 2) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () {
+                  setState(() => _useManualApiUrl = false);
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _firstServerFocusNode(servers)?.requestFocus();
+                  });
+                },
+                icon: const Icon(Icons.dns_rounded),
+                label: const Text('返回已保存服务器'),
+              ),
+            ),
+          ],
+        ],
+      );
+    }
+
+    final selectedUrl = ref.watch(baseUrlProvider);
+    final cards = <Widget>[
+      for (final server in servers)
+        _buildTvServerCard(
+          context,
+          colorScheme,
+          server: server,
+          selected: server.url == selectedUrl,
+        ),
+      _buildTvManualServerCard(context, colorScheme),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.dns_rounded, color: colorScheme.primary),
+            const SizedBox(width: 10),
+            Text(
+              '选择服务器',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const Spacer(),
+            Text(
+              '${servers.length} 个已保存',
+              style: TvTheme.captionStyle(context),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final width = (constraints.maxWidth - 12) / 2;
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                for (final card in cards) SizedBox(width: width, child: card),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTvServerCard(
+    BuildContext context,
+    ColorScheme colorScheme, {
+    required ServerEntry server,
+    required bool selected,
+  }) {
+    return TvFocusable(
+      focusNode: _serverFocusNode(server.id),
+      onFocusChange: (hasFocus) {
+        if (hasFocus) _setCurrentStep(3);
+      },
+      onKeyEvent: (_, event) {
+        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+        if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+          _passwordFocusNode.requestFocus();
+          return KeyEventResult.handled;
+        }
+        if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+          _loginButtonFocusNode.requestFocus();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      onSelect: () => _selectTvServer(server),
+      focusedScale: 1.025,
+      borderRadius: 16,
+      child: Container(
+        height: 92,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color:
+              selected
+                  ? colorScheme.primaryContainer.withValues(alpha: 0.62)
+                  : colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color:
+                selected
+                    ? colorScheme.primary.withValues(alpha: 0.65)
+                    : colorScheme.outlineVariant.withValues(alpha: 0.35),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              selected ? Icons.cloud_done_rounded : Icons.cloud_outlined,
+              color:
+                  selected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    server.displayName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    server.url,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TvTheme.captionStyle(context),
+                  ),
+                ],
+              ),
+            ),
+            if (selected)
+              Icon(Icons.check_circle_rounded, color: colorScheme.primary),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTvManualServerCard(
+    BuildContext context,
+    ColorScheme colorScheme,
+  ) {
+    return TvFocusable(
+      focusNode: _serverFocusNode('__manual__'),
+      onFocusChange: (hasFocus) {
+        if (hasFocus) _setCurrentStep(3);
+      },
+      onKeyEvent: (_, event) {
+        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+        if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+          _passwordFocusNode.requestFocus();
+          return KeyEventResult.handled;
+        }
+        if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+          _loginButtonFocusNode.requestFocus();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      onSelect: _showManualApiInput,
+      focusedScale: 1.025,
+      borderRadius: 16,
+      child: Container(
+        height: 92,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.35),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.add_link_rounded, color: colorScheme.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '手动输入地址',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '连接新的 Songloft 服务',
+                    style: TvTheme.captionStyle(context),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTvAssistedInputButton(
+    BuildContext context,
+    ColorScheme colorScheme,
+  ) {
+    return TvFocusable(
+      focusNode: _assistInputFocusNode,
+      autofocus: true,
+      onSelect: _openTvAssistedInput,
+      onFocusChange: (hasFocus) {
+        if (hasFocus) _setCurrentStep(1);
+      },
+      onKeyEvent: (_, event) {
+        if (event is KeyDownEvent &&
+            event.logicalKey == LogicalKeyboardKey.arrowDown) {
+          _usernameFocusNode.requestFocus();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      focusedScale: 1.025,
+      borderRadius: 18,
+      child: ExcludeFocus(
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                colorScheme.primaryContainer,
+                colorScheme.tertiaryContainer,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: colorScheme.primary.withValues(alpha: 0.45),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: colorScheme.surface.withValues(alpha: 0.72),
+                  borderRadius: BorderRadius.circular(17),
+                ),
+                child: Icon(
+                  Icons.qr_code_scanner_rounded,
+                  size: 30,
+                  color: colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          '手机辅助输入',
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w900),
+                        ),
+                        const SizedBox(width: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 9,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            '推荐',
+                            style: Theme.of(
+                              context,
+                            ).textTheme.labelSmall?.copyWith(
+                              color: colorScheme.onPrimary,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      '用手机扫描二维码填写服务器、账号和密码',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 30,
+                color: colorScheme.primary,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -588,12 +1073,22 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   /// TV 密码输入框（带显示/隐藏切换）
-  Widget _buildTvPasswordField(BuildContext context, ColorScheme colorScheme) {
+  Widget _buildTvPasswordField(
+    BuildContext context,
+    ColorScheme colorScheme,
+    List<ServerEntry> servers,
+  ) {
     const bool isLast = AppConfig.isEmbedded;
+    final nextFocusNode =
+        isLast
+            ? _loginButtonFocusNode
+            : (servers.length >= 2 && !_useManualApiUrl
+                ? _firstServerFocusNode(servers) ?? _apiUrlFocusNode
+                : _apiUrlFocusNode);
     return _TvFocusableTextField(
       controller: _passwordController,
       focusNode: _passwordFocusNode,
-      nextFocusNode: isLast ? _loginButtonFocusNode : _apiUrlFocusNode,
+      nextFocusNode: nextFocusNode,
       previousFocusNode: _usernameFocusNode,
       isLastField: isLast,
       colorScheme: colorScheme,
@@ -607,7 +1102,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         if (isLast) {
           _handleLogin();
         } else {
-          _apiUrlFocusNode.requestFocus();
+          nextFocusNode.requestFocus();
         }
       },
       suffixIconBuilder:
@@ -640,67 +1135,38 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     AuthState authState,
     ColorScheme colorScheme,
   ) {
-    return Focus(
+    final enabled = !authState.isLoading;
+    return TvFocusable(
       focusNode: _loginButtonFocusNode,
-      child: Builder(
-        builder: (context) {
-          final hasFocus = Focus.of(context).hasFocus;
-          return AnimatedScale(
-            scale: hasFocus ? 1.08 : 1.0,
-            duration: TvTheme.focusAnimationDuration,
-            curve: TvTheme.focusAnimationCurve,
-            child: AnimatedContainer(
-              duration: TvTheme.focusAnimationDuration,
-              curve: TvTheme.focusAnimationCurve,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border:
-                    hasFocus
-                        ? Border.all(
-                          color: colorScheme.primary,
-                          width: TvTheme.focusBorderWidth,
-                        )
-                        : null,
-                boxShadow:
-                    hasFocus
-                        ? [
-                          BoxShadow(
-                            color: colorScheme.primary.withValues(
-                              alpha: TvTheme.focusGlowOpacity,
-                            ),
-                            blurRadius: TvTheme.focusShadowBlurRadius,
-                            spreadRadius: TvTheme.focusGlowSpreadRadius,
-                          ),
-                        ]
-                        : null,
-              ),
-              child: FilledButton(
-                focusNode: null,
-                onPressed: authState.isLoading ? null : _handleLogin,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(TvTheme.minButtonSize),
-                  textStyle: TvTheme.buttonStyle(context).copyWith(
-                    fontWeight: hasFocus ? FontWeight.bold : FontWeight.w500,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child:
-                    authState.isLoading
-                        ? SizedBox(
-                          height: 28,
-                          width: 28,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 3,
-                            color: colorScheme.onPrimary,
-                          ),
-                        )
-                        : Text(hasFocus ? '按确认键登录' : '登录'),
-              ),
+      onFocusChange: (_) => _updateStep(),
+      onSelect: enabled ? _handleLogin : null,
+      enabled: enabled,
+      focusedScale: 1.035,
+      borderRadius: 16,
+      child: ExcludeFocus(
+        child: FilledButton(
+          onPressed: enabled ? _handleLogin : null,
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(TvTheme.minButtonSize),
+            textStyle: TvTheme.buttonStyle(
+              context,
+            ).copyWith(fontWeight: FontWeight.w700),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
             ),
-          );
-        },
+          ),
+          child:
+              authState.isLoading
+                  ? SizedBox(
+                    height: 28,
+                    width: 28,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      color: colorScheme.onPrimary,
+                    ),
+                  )
+                  : const Text('登录'),
+        ),
       ),
     );
   }
@@ -1118,17 +1584,10 @@ class _TvFocusableTextFieldState extends State<_TvFocusableTextField> {
         widget.previousFocusNode!.requestFocus();
         return KeyEventResult.handled;
       }
-    } else if (key == LogicalKeyboardKey.enter ||
-        key == LogicalKeyboardKey.select) {
-      if (!widget.isLastField && widget.nextFocusNode != null) {
-        widget.nextFocusNode!.requestFocus();
-        return KeyEventResult.handled;
-      } else if (widget.isLastField && widget.onFieldSubmitted != null) {
-        widget.onFieldSubmitted!(widget.controller.text);
-        return KeyEventResult.handled;
-      }
     }
 
+    // 确认键交给 TextFormField，自然调用电视系统键盘；
+    // 输入完成后的“下一步/完成”由 onFieldSubmitted 处理。
     return KeyEventResult.ignored;
   }
 
@@ -1137,7 +1596,7 @@ class _TvFocusableTextFieldState extends State<_TvFocusableTextField> {
     final colorScheme = widget.colorScheme;
 
     return Focus(
-      focusNode: widget.focusNode,
+      canRequestFocus: false,
       onKeyEvent: _handleKeyEvent,
       child: AnimatedContainer(
         duration: TvTheme.focusAnimationDuration,
@@ -1167,6 +1626,7 @@ class _TvFocusableTextFieldState extends State<_TvFocusableTextField> {
         ),
         child: TextFormField(
           controller: widget.controller,
+          focusNode: widget.focusNode,
           autofocus: widget.autofocus,
           obscureText: widget.obscureText,
           autofillHints: widget.autofillHints,
