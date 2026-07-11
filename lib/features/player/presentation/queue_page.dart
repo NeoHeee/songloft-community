@@ -428,7 +428,9 @@ class _QueueSongItem extends StatelessWidget {
                       if (isPlaying)
                         ExcludeSemantics(
                           child: DecoratedBox(
-                            decoration: const BoxDecoration(color: Colors.black54),
+                            decoration: const BoxDecoration(
+                              color: Colors.black54,
+                            ),
                             child: Center(
                               child: Icon(
                                 Icons.equalizer_rounded,
