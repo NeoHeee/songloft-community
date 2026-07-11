@@ -58,6 +58,9 @@ jobs:
         if: steps.apply_patch.outputs.status != '0'
         run: exit 1
 
+      - name: Clean obsolete plugin icon code
+        run: python tool/fix_tv_icon_polish_output.py
+
       - name: Format changed files
         run: |
           dart format \
