@@ -55,7 +55,9 @@ final routerProvider = Provider<GoRouter>((ref) {
     debugLabel: 'playlists',
   );
   final pluginsNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'plugins');
-  final settingsNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'settings');
+  final settingsNavigatorKey = GlobalKey<NavigatorState>(
+    debugLabel: 'settings',
+  );
 
   ref.onDispose(() {
     authChangeNotifier.dispose();
