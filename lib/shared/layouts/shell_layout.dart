@@ -19,12 +19,12 @@ import 'active_destinations.dart';
 import 'adaptive_scaffold.dart';
 import 'redesigned_desktop_shell.dart';
 
-/// ShellRoute 的布局组件
-/// 整合响应式导航、播放器和插件页面保活逻辑。
+/// StatefulShellRoute 的布局组件。
+/// 整合响应式导航、播放器、独立标签导航栈和插件页面保活逻辑。
 class ShellLayout extends ConsumerStatefulWidget {
-  final Widget child;
+  final StatefulNavigationShell navigationShell;
 
-  const ShellLayout({super.key, required this.child});
+  const ShellLayout({super.key, required this.navigationShell});
 
   @override
   ConsumerState<ShellLayout> createState() => _ShellLayoutState();
@@ -32,6 +32,11 @@ class ShellLayout extends ConsumerStatefulWidget {
 
 class _ShellLayoutState extends ConsumerState<ShellLayout> {
   static const _exitConfirmationWindow = Duration(seconds: 2);
+  static const _homeBranch = 0;
+  static const _libraryBranch = 1;
+  static const _playlistsBranch = 2;
+  static const _pluginsBranch = 3;
+  static const _settingsBranch = 4;
 
   final _visitedPluginTabs = <String>{};
   DateTime? _lastBackPressedAt;
@@ -59,6 +64,15 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
     return 0;
   }
 
+  int _branchForRoute(String route) {
+    if (route == '/') return _homeBranch;
+    if (route == '/library') return _libraryBranch;
+    if (route.startsWith('/playlists')) return _playlistsBranch;
+    if (route.startsWith('/plugin-tab/')) return _pluginsBranch;
+    if (route.startsWith('/settings')) return _settingsBranch;
+    return _homeBranch;
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeDest = ref.watch(activeDestinationsProvider);
@@ -83,45 +97,46 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
     final currentEntryPath =
         isPluginTab ? location.replaceFirst('/plugin-tab/', '') : null;
 
-    Widget body;
-    if (kIsWeb) {
-      if (currentEntryPath != null) {
-        _visitedPluginTabs.add(currentEntryPath);
-      }
+    // 动态插件标签共用一个 StatefulShellBranch，但每个访问过的插件页面
+    // 都保留自己的 Widget/WebView 状态。配置中被移除的插件会立即释放。
+    if (currentEntryPath != null && currentEntryPath != '_empty') {
+      _visitedPluginTabs.add(currentEntryPath);
+    }
 
-      final validPaths =
-          activeDest.indexToRoute
-              .where((r) => r.startsWith('/plugin-tab/'))
-              .map((r) => r.replaceFirst('/plugin-tab/', ''))
-              .toSet();
-      _visitedPluginTabs.retainAll(validPaths);
+    final validPluginPaths =
+        activeDest.indexToRoute
+            .where((route) => route.startsWith('/plugin-tab/'))
+            .map((route) => route.replaceFirst('/plugin-tab/', ''))
+            .toSet();
+    _visitedPluginTabs.retainAll(validPluginPaths);
 
-      if (_visitedPluginTabs.isEmpty) {
-        body = widget.child;
-      } else {
-        body = Stack(
-          children: [
-            Offstage(offstage: isPluginTab, child: widget.child),
-            for (final ep in _visitedPluginTabs)
-              Offstage(
-                offstage: currentEntryPath != ep,
+    final Widget body;
+    if (_visitedPluginTabs.isEmpty) {
+      body = widget.navigationShell;
+    } else {
+      body = Stack(
+        children: [
+          TickerMode(
+            enabled: !isPluginTab,
+            child: Offstage(
+              offstage: isPluginTab,
+              child: widget.navigationShell,
+            ),
+          ),
+          for (final entryPath in _visitedPluginTabs)
+            TickerMode(
+              enabled: currentEntryPath == entryPath,
+              child: Offstage(
+                offstage: currentEntryPath != entryPath,
                 child: PluginTabPage(
-                  key: ValueKey('plugin-keep-$ep'),
-                  entryPath: ep,
-                  isActive: currentEntryPath == ep,
+                  key: ValueKey('plugin-keep-$entryPath'),
+                  entryPath: entryPath,
+                  isActive: currentEntryPath == entryPath,
                 ),
               ),
-          ],
-        );
-      }
-    } else if (currentEntryPath != null) {
-      body = PluginTabPage(
-        key: ValueKey('plugin-active-$currentEntryPath'),
-        entryPath: currentEntryPath,
-        isActive: true,
+            ),
+        ],
       );
-    } else {
-      body = widget.child;
     }
 
     final bottomPlayer =
@@ -129,10 +144,23 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
     final playlistDrawer = showPlaylistDrawer ? const PlaylistDrawer() : null;
 
     void onDestinationSelected(int index) {
-      if (index >= 0 && index < activeDest.indexToRoute.length) {
-        _lastBackPressedAt = null;
-        context.go(activeDest.indexToRoute[index]);
+      if (index < 0 || index >= activeDest.indexToRoute.length) return;
+
+      _lastBackPressedAt = null;
+      final route = activeDest.indexToRoute[index];
+      final targetBranch = _branchForRoute(route);
+
+      if (targetBranch == _pluginsBranch) {
+        if (location != route) context.go(route);
+        return;
       }
+
+      // 再次点击当前栏目时回到该栏目的根页面；切换到其他栏目时恢复
+      // 其上次保留的页面栈和滚动现场。
+      widget.navigationShell.goBranch(
+        targetBranch,
+        initialLocation: widget.navigationShell.currentIndex == targetBranch,
+      );
     }
 
     final screenType = context.screenType;
@@ -205,7 +233,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
     if (location != '/') {
       _lastBackPressedAt = null;
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      context.go('/');
+      widget.navigationShell.goBranch(_homeBranch);
       return;
     }
 
