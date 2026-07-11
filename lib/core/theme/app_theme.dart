@@ -64,6 +64,14 @@ class AppTheme {
       canvasColor: background,
       splashFactory: InkSparkle.splashFactory,
       fontFamilyFallback: const ['NotoSansSC', 'sans-serif'],
+      iconTheme: IconThemeData(
+        size: isTv ? 32 : 24,
+        color: colorScheme.onSurfaceVariant,
+      ),
+      primaryIconTheme: IconThemeData(
+        size: isTv ? 32 : 24,
+        color: colorScheme.primary,
+      ),
       extensions: [
         SongloftThemeTokens(
           playerGradient: palette.playerGradient,
@@ -146,7 +154,14 @@ class AppTheme {
         indicatorShape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(navigationRadius),
         ),
-        selectedIconTheme: IconThemeData(color: colorScheme.primary),
+        selectedIconTheme: IconThemeData(
+          color: colorScheme.primary,
+          size: isTv ? 34 : 24,
+        ),
+        unselectedIconTheme: IconThemeData(
+          color: colorScheme.onSurfaceVariant,
+          size: isTv ? 32 : 24,
+        ),
         selectedLabelTextStyle: TextStyle(
           color: colorScheme.primary,
           fontWeight: FontWeight.w700,
@@ -164,7 +179,8 @@ class AppTheme {
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
-          minimumSize: const Size(42, 42),
+          minimumSize: isTv ? const Size(56, 56) : const Size(42, 42),
+          iconSize: isTv ? 30 : 24,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(controlRadius),
           ),

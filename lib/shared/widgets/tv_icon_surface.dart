@@ -30,33 +30,37 @@ class TvIconSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final accent = accentColor ?? colorScheme.primary;
-    final borderRadius = circular
-        ? BorderRadius.circular(size / 2)
-        : BorderRadius.circular(radius ?? TvTheme.iconSurfaceRadius);
+    final borderRadius =
+        circular
+            ? BorderRadius.circular(size / 2)
+            : BorderRadius.circular(radius ?? TvTheme.iconSurfaceRadius);
 
     return AnimatedContainer(
       duration: TvTheme.focusAnimationDuration,
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: selected
-            ? accent.withValues(alpha: 0.18)
-            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.82),
+        color:
+            selected
+                ? accent.withValues(alpha: 0.18)
+                : colorScheme.surfaceContainerHighest.withValues(alpha: 0.82),
         borderRadius: borderRadius,
         border: Border.all(
-          color: selected
-              ? accent.withValues(alpha: 0.5)
-              : colorScheme.outlineVariant.withValues(alpha: 0.26),
+          color:
+              selected
+                  ? accent.withValues(alpha: 0.5)
+                  : colorScheme.outlineVariant.withValues(alpha: 0.26),
         ),
-        boxShadow: selected
-            ? [
-                BoxShadow(
-                  color: accent.withValues(alpha: 0.16),
-                  blurRadius: 14,
-                  spreadRadius: 1,
-                ),
-              ]
-            : null,
+        boxShadow:
+            selected
+                ? [
+                  BoxShadow(
+                    color: accent.withValues(alpha: 0.16),
+                    blurRadius: 14,
+                    spreadRadius: 1,
+                  ),
+                ]
+                : null,
       ),
       child: IconTheme.merge(
         data: IconThemeData(

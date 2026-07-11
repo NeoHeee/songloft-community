@@ -41,24 +41,27 @@ class PluginIcon extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: selected
-            ? accent.withValues(alpha: 0.18)
-            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.84),
+        color:
+            selected
+                ? accent.withValues(alpha: 0.18)
+                : colorScheme.surfaceContainerHighest.withValues(alpha: 0.84),
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(
-          color: selected
-              ? accent.withValues(alpha: 0.52)
-              : colorScheme.outlineVariant.withValues(alpha: 0.28),
+          color:
+              selected
+                  ? accent.withValues(alpha: 0.52)
+                  : colorScheme.outlineVariant.withValues(alpha: 0.28),
         ),
-        boxShadow: selected
-            ? [
-                BoxShadow(
-                  color: accent.withValues(alpha: 0.18),
-                  blurRadius: 14,
-                  spreadRadius: 1,
-                ),
-              ]
-            : null,
+        boxShadow:
+            selected
+                ? [
+                  BoxShadow(
+                    color: accent.withValues(alpha: 0.18),
+                    blurRadius: 14,
+                    spreadRadius: 1,
+                  ),
+                ]
+                : null,
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(
@@ -84,16 +87,13 @@ class PluginIcon extends StatelessWidget {
     );
   }
 
-  Widget _buildNetworkIcon(
-    BuildContext context,
-    Color accent,
-    double padding,
-  ) {
+  Widget _buildNetworkIcon(BuildContext context, Color accent, double padding) {
     final fallback = _buildFallback(context, accent);
     final url = iconUrl?.trim();
     if (url == null || url.isEmpty) return fallback;
 
-    final isSvg = Uri.tryParse(url)?.path.toLowerCase().endsWith('.svg') ??
+    final isSvg =
+        Uri.tryParse(url)?.path.toLowerCase().endsWith('.svg') ??
         url.toLowerCase().contains('.svg');
     final innerSize = size - padding * 2;
 
@@ -159,9 +159,10 @@ class PluginNavIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final effectiveSize = AppConfig.isTvMode
-        ? size.clamp(TvTheme.iconSizeMedium, 40).toDouble()
-        : size;
+    final effectiveSize =
+        AppConfig.isTvMode
+            ? size.clamp(TvTheme.iconSizeMedium, 40).toDouble()
+            : size;
     final iconColor =
         selected ? colorScheme.primary : colorScheme.onSurfaceVariant;
     final fallback = IconTheme.merge(
@@ -172,27 +173,29 @@ class PluginNavIcon extends StatelessWidget {
     Widget content = fallback;
     final url = iconUrl?.trim();
     if (url != null && url.isNotEmpty) {
-      final isSvg = Uri.tryParse(url)?.path.toLowerCase().endsWith('.svg') ??
+      final isSvg =
+          Uri.tryParse(url)?.path.toLowerCase().endsWith('.svg') ??
           url.toLowerCase().contains('.svg');
-      content = isSvg
-          ? SvgPicture.network(
-              url,
-              width: effectiveSize,
-              height: effectiveSize,
-              fit: BoxFit.contain,
-              placeholderBuilder: (_) => fallback,
-              errorBuilder: (_, _, _) => fallback,
-            )
-          : ExcludeSemantics(
-              child: Image.network(
+      content =
+          isSvg
+              ? SvgPicture.network(
                 url,
                 width: effectiveSize,
                 height: effectiveSize,
-                fit: BoxFit.cover,
-                filterQuality: FilterQuality.medium,
+                fit: BoxFit.contain,
+                placeholderBuilder: (_) => fallback,
                 errorBuilder: (_, _, _) => fallback,
-              ),
-            );
+              )
+              : ExcludeSemantics(
+                child: Image.network(
+                  url,
+                  width: effectiveSize,
+                  height: effectiveSize,
+                  fit: BoxFit.cover,
+                  filterQuality: FilterQuality.medium,
+                  errorBuilder: (_, _, _) => fallback,
+                ),
+              );
     }
 
     final surfacePadding = AppConfig.isTvMode ? 7.0 : 5.0;
@@ -203,14 +206,16 @@ class PluginNavIcon extends StatelessWidget {
       height: effectiveSize + surfacePadding * 2,
       padding: EdgeInsets.all(surfacePadding),
       decoration: BoxDecoration(
-        color: selected
-            ? colorScheme.primaryContainer.withValues(alpha: 0.78)
-            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.68),
+        color:
+            selected
+                ? colorScheme.primaryContainer.withValues(alpha: 0.78)
+                : colorScheme.surfaceContainerHighest.withValues(alpha: 0.68),
         borderRadius: BorderRadius.circular(AppConfig.isTvMode ? 13 : 10),
         border: Border.all(
-          color: selected
-              ? colorScheme.primary.withValues(alpha: 0.42)
-              : colorScheme.outlineVariant.withValues(alpha: 0.26),
+          color:
+              selected
+                  ? colorScheme.primary.withValues(alpha: 0.42)
+                  : colorScheme.outlineVariant.withValues(alpha: 0.26),
         ),
       ),
       child: ClipRRect(

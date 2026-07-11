@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/responsive.dart';
 import '../../../../core/theme/tv_theme.dart';
 import '../../../../shared/widgets/tv_focusable.dart';
+import '../../../../shared/widgets/tv_icon_surface.dart';
 
 class SettingsCategory {
   final IconData icon;
@@ -290,22 +291,12 @@ class _TvCategoryCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 58,
-            height: 58,
-            decoration: BoxDecoration(
-              color:
-                  selected
-                      ? colorScheme.primary.withValues(alpha: 0.16)
-                      : colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Icon(
-              category.icon,
-              size: 30,
-              color:
-                  selected ? colorScheme.primary : colorScheme.onSurfaceVariant,
-            ),
+          TvIconSurface(
+            size: TvTheme.iconSurfaceMedium,
+            iconSize: TvTheme.iconSizeMedium,
+            selected: selected,
+            accentColor: colorScheme.primary,
+            icon: Icon(category.icon),
           ),
           const SizedBox(width: 18),
           Expanded(

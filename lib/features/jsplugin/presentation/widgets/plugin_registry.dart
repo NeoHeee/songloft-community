@@ -2,15 +2,18 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../../../config/app_config.dart';
 import '../../../../core/network/api_exceptions.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/tv_theme.dart';
 import '../../../../shared/utils/responsive_snackbar.dart';
+import '../../../../shared/widgets/tv_focusable.dart';
 import '../../../settings/data/settings_api.dart';
 import '../../../settings/presentation/providers/settings_provider.dart';
 import '../../data/jsplugin_api.dart';
 import '../providers/jsplugin_provider.dart';
+import 'plugin_icon.dart';
 
 /// 官方插件源 URL
 const _kOfficialRegistryUrl =
@@ -453,21 +456,60 @@ class _PluginRegistryPageState extends ConsumerState<PluginRegistryPage> {
             ),
           ),
         Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: plugins.length,
-            separatorBuilder: (_, _) => const Divider(height: 1, indent: 16),
-            itemBuilder:
-                (context, index) => _RegistryPluginItem(
-                  entry: plugins[index],
-                  githubProxy: _effectiveProxy,
-                  token: _selectedRegistry?.token ?? '',
-                  onInstalled: () {
-                    _refreshPlugins();
-                    ref.invalidate(jsPluginsProvider);
-                  },
-                ),
-          ),
+          child:
+              AppConfig.isTvMode
+                  ? LayoutBuilder(
+                    builder: (context, constraints) {
+                      final columns =
+                          constraints.maxWidth >= 1500
+                              ? 4
+                              : constraints.maxWidth >= 980
+                              ? 3
+                              : 2;
+                      return GridView.builder(
+                        padding: const EdgeInsets.fromLTRB(
+                          TvTheme.contentPadding,
+                          18,
+                          TvTheme.contentPadding,
+                          120,
+                        ),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: columns,
+                          mainAxisSpacing: 20,
+                          crossAxisSpacing: 20,
+                          childAspectRatio: 1.42,
+                        ),
+                        itemCount: plugins.length,
+                        itemBuilder:
+                            (context, index) => _RegistryPluginItem(
+                              entry: plugins[index],
+                              autofocus: index == 0,
+                              githubProxy: _effectiveProxy,
+                              token: _selectedRegistry?.token ?? '',
+                              onInstalled: () {
+                                _refreshPlugins();
+                                ref.invalidate(jsPluginsProvider);
+                              },
+                            ),
+                      );
+                    },
+                  )
+                  : ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: plugins.length,
+                    separatorBuilder:
+                        (_, _) => const Divider(height: 1, indent: 16),
+                    itemBuilder:
+                        (context, index) => _RegistryPluginItem(
+                          entry: plugins[index],
+                          githubProxy: _effectiveProxy,
+                          token: _selectedRegistry?.token ?? '',
+                          onInstalled: () {
+                            _refreshPlugins();
+                            ref.invalidate(jsPluginsProvider);
+                          },
+                        ),
+                  ),
         ),
         // 分页
         if (totalPages > 1)
@@ -581,12 +623,14 @@ class _RegistryPluginItem extends ConsumerStatefulWidget {
   final String githubProxy;
   final String token;
   final VoidCallback onInstalled;
+  final bool autofocus;
 
   const _RegistryPluginItem({
     required this.entry,
     required this.githubProxy,
     this.token = '',
     required this.onInstalled,
+    this.autofocus = false,
   });
 
   @override
@@ -635,8 +679,16 @@ class _RegistryPluginItemState extends ConsumerState<_RegistryPluginItem> {
     final entry = widget.entry;
     final theme = Theme.of(context);
 
+    if (AppConfig.isTvMode) {
+      return _buildTvCard(entry, theme);
+    }
+
     return ListTile(
-      leading: _buildIcon(entry, theme),
+      leading: PluginIcon(
+        iconUrl: entry.icon,
+        displayName: entry.name,
+        size: 48,
+      ),
       title: Text(entry.name),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -659,46 +711,130 @@ class _RegistryPluginItemState extends ConsumerState<_RegistryPluginItem> {
     );
   }
 
-  Widget _buildIcon(RegistryPluginEntry entry, ThemeData theme) {
-    if (entry.icon != null && entry.icon!.isNotEmpty) {
-      final url = entry.icon!;
-      final isSvg = url.toLowerCase().endsWith('.svg');
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child:
-            isSvg
-                ? SvgPicture.network(
-                  url,
-                  width: 40,
-                  height: 40,
-                  fit: BoxFit.contain,
-                  placeholderBuilder: (_) => _buildFallbackIcon(entry, theme),
-                  errorBuilder: (_, _, _) => _buildFallbackIcon(entry, theme),
-                )
-                : ExcludeSemantics(
-                  child: Image.network(
-                    url,
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => _buildFallbackIcon(entry, theme),
+  Widget _buildTvCard(RegistryPluginEntry entry, ThemeData theme) {
+    final colorScheme = theme.colorScheme;
+    final actionLabel =
+        entry.installed
+            ? (entry.hasUpdate ? '更新至 v${entry.version}' : '重新安装')
+            : '安装';
+
+    return TvFocusable(
+      autofocus: widget.autofocus,
+      onSelect: _installing ? null : _install,
+      focusedScale: 1.025,
+      borderRadius: 22,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.28),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                PluginIcon(
+                  iconUrl: entry.icon,
+                  displayName: entry.name,
+                  size: 72,
+                  selected: entry.installed,
+                  statusColor: entry.installed ? colorScheme.primary : null,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        entry.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        entry.author?.isNotEmpty == true
+                            ? entry.author!
+                            : 'Songloft 插件',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-      );
-    }
-    return _buildFallbackIcon(entry, theme);
-  }
-
-  Widget _buildFallbackIcon(RegistryPluginEntry entry, ThemeData theme) {
-    final color =
-        Colors.primaries[entry.entryPath.hashCode % Colors.primaries.length];
-    final initial =
-        entry.name.isNotEmpty ? entry.name.characters.first.toUpperCase() : '?';
-    return CircleAvatar(
-      backgroundColor: color.withValues(alpha: 0.2),
-      foregroundColor: color,
-      radius: 20,
-      child: Text(initial, style: const TextStyle(fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: Text(
+                entry.description?.isNotEmpty == true
+                    ? entry.description!
+                    : '暂无插件说明',
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  height: 1.45,
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+              decoration: BoxDecoration(
+                color:
+                    entry.installed
+                        ? colorScheme.primaryContainer.withValues(alpha: 0.64)
+                        : colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (_installing)
+                    const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
+                    )
+                  else
+                    Icon(
+                      entry.hasUpdate
+                          ? Icons.system_update_alt_rounded
+                          : entry.installed
+                          ? Icons.refresh_rounded
+                          : Icons.download_rounded,
+                      size: TvTheme.iconSizeSmall,
+                      color: colorScheme.primary,
+                    ),
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: Text(
+                      _installing ? '正在处理…' : actionLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
