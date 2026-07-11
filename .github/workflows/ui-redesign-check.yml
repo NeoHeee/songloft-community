@@ -55,7 +55,7 @@ jobs:
           cache: true
       - name: Install dependencies
         run: flutter pub get
-      - name: Check formatting of changed Dart files
+      - name: Verify changed Dart file hashes v3
         shell: bash
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
