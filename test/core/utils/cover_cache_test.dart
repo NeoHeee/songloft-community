@@ -21,12 +21,12 @@ void main() {
       );
     });
 
-    test('只有临时令牌时缓存键不保留空查询串', () {
+    test('只有临时令牌时缓存键彻底移除查询串并保留片段', () {
       expect(
         CoverCache.cacheKey(
-          'https://example.com/cover.jpg?access_token=abc&token=def',
+          'https://example.com/cover.jpg?access_token=abc&token=def#preview',
         ),
-        'https://example.com/cover.jpg',
+        'https://example.com/cover.jpg#preview',
       );
     });
 
