@@ -7,12 +7,20 @@ on:
     paths:
       - 'scripts/apply_mobile_second_round.py'
       - '.github/workflows/mobile-second-round.yml'
+  pull_request:
+    branches:
+      - main
+    types:
+      - edited
 
 permissions:
   contents: write
 
 jobs:
   apply-test-build:
+    if: >-
+      github.event_name == 'push' ||
+      github.event.pull_request.head.ref == 'mobile-second-round'
     runs-on: ubuntu-latest
     timeout-minutes: 50
     steps:
