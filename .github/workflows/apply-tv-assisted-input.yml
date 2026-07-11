@@ -1,0 +1,114 @@
+name: Apply TV assisted input
+
+on:
+  pull_request:
+    branches: [tv-fourth-round-login]
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    if: github.event.pull_request.head.ref == 'tv-fifth-round-assist-input'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout assisted-input branch
+        uses: actions/checkout@v4
+        with:
+          ref: tv-fifth-round-assist-input
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+
+      - name: Add QR dependency
+        run: flutter pub add qr_flutter
+
+      - name: Apply login integration patch
+        id: apply_patch
+        shell: bash
+        run: |
+          set +e
+          python tool/apply_tv_assisted_input.py > tv-assisted-input-patch.log 2>&1
+          status=$?
+          cat tv-assisted-input-patch.log
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload patch log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-tv-assisted-input-patch-log
+          path: tv-assisted-input-patch.log
+          retention-days: 7
+
+      - name: Stop when patch failed
+        if: steps.apply_patch.outputs.status != '0'
+        run: exit 1
+
+      - name: Format changed files
+        run: |
+          dart format \
+            lib/features/auth/presentation/login_page.dart \
+            lib/features/auth/presentation/tv_assisted_input_service.dart \
+            lib/features/auth/presentation/tv_assisted_input_dialog.dart
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Commit assisted-input changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            pubspec.yaml \
+            pubspec.lock \
+            lib/features/auth/presentation/login_page.dart \
+            lib/features/auth/presentation/tv_assisted_input_service.dart \
+            lib/features/auth/presentation/tv_assisted_input_dialog.dart
+          if git diff --cached --quiet; then
+            echo "No assisted-input changes to commit"
+          else
+            git commit -m "feat(tv): add phone-assisted login input"
+            git push origin HEAD:tv-fifth-round-assist-input
+          fi
+
+      - name: Build Android release APKs
+        id: android_build
+        shell: bash
+        run: |
+          set +e
+          flutter build apk --release --split-per-abi > tv-assisted-input-build.log 2>&1
+          status=$?
+          cat tv-assisted-input-build.log
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-tv-assisted-input-build-log
+          path: tv-assisted-input-build.log
+          retention-days: 7
+
+      - name: Upload APKs
+        if: steps.android_build.outputs.status == '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-tv-assisted-input-apks
+          path: build/app/outputs/flutter-apk/*-release.apk
+          retention-days: 30
+
+      - name: Fail when Android build failed
+        if: steps.android_build.outputs.status != '0'
+        run: exit 1
