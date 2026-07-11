@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/theme_tokens.dart';
-import '../../../../core/utils/url_helper.dart';
+import '../../../../shared/widgets/cover_image.dart';
 import '../../../dlna/presentation/providers/dlna_provider.dart';
 import '../providers/player_provider.dart';
 import '../queue_page.dart';
@@ -106,7 +106,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
                         padding: const EdgeInsets.fromLTRB(10, 9, 8, 6),
                         child: Row(
                           children: [
-                            _buildCover(context, song.coverUrl),
+                            _buildCover(song.coverUrl),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
@@ -200,15 +200,12 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
     );
   }
 
-  Widget _buildCover(BuildContext context, String? coverUrl) {
-    final theme = Theme.of(context);
-
+  Widget _buildCover(String? coverUrl) {
     return Container(
       width: 54,
       height: 54,
       decoration: BoxDecoration(
         borderRadius: AppRadius.mdAll,
-        color: theme.colorScheme.surfaceContainerHighest,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.16),
@@ -217,25 +214,12 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
           ),
         ],
       ),
-      clipBehavior: Clip.antiAlias,
-      child:
-          coverUrl != null && coverUrl.isNotEmpty
-              ? ExcludeSemantics(
-                child: Image.network(
-                  UrlHelper.buildCoverUrl(coverUrl),
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => _buildPlaceholder(theme),
-                ),
-              )
-              : _buildPlaceholder(theme),
-    );
-  }
-
-  Widget _buildPlaceholder(ThemeData theme) {
-    return Icon(
-      Icons.graphic_eq_rounded,
-      size: 25,
-      color: theme.colorScheme.primary,
+      child: CoverImage(
+        coverUrl: coverUrl,
+        size: 54,
+        borderRadius: AppRadius.md,
+        placeholderIcon: Icons.graphic_eq_rounded,
+      ),
     );
   }
 }
