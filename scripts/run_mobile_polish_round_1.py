@@ -38,3 +38,26 @@ if count != 1:
     raise RuntimeError(f'Unable to repair patch script, matches: {count}')
 script.write_text(text, encoding='utf-8')
 runpy.run_path(str(script), run_name='__main__')
+
+player = Path('lib/features/player/presentation/widgets/mobile_player.dart')
+player_text = player.read_text(encoding='utf-8')
+old = '''          ],
+        ),
+      ),
+    );
+  }
+
+  /// 构建页面指示器（小圆点）
+'''
+new = '''          ],
+        ),
+      ),
+    ),
+  );
+  }
+
+  /// 构建页面指示器（小圆点）
+'''
+if old not in player_text:
+    raise RuntimeError('Unable to close mobile player gesture wrapper')
+player.write_text(player_text.replace(old, new, 1), encoding='utf-8')
