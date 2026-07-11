@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import '../../core/utils/url_helper.dart';
+import '../../core/utils/cover_cache.dart';
 
 /// 统一封面图组件。
 ///
@@ -11,8 +11,6 @@ import '../../core/utils/url_helper.dart';
 /// - URL 中的临时认证参数变化时仍复用同一份缓存；
 /// - 默认作为装饰图片跳过读屏器，也可显式提供语义标签。
 class CoverImage extends StatelessWidget {
-  static const int _diskCacheExtent = 1024;
-
   /// 完整的封面 URL（后端统一处理）
   final String? coverUrl;
 
@@ -28,6 +26,9 @@ class CoverImage extends StatelessWidget {
   /// 图片填充方式
   final BoxFit fit;
 
+  /// 是否显示占位符图标。模糊背景等装饰场景可关闭。
+  final bool showPlaceholderIcon;
+
   /// 无障碍语义标签（为 null 时图片被标记为装饰性，读屏器会跳过）
   final String? semanticLabel;
 
@@ -38,21 +39,20 @@ class CoverImage extends StatelessWidget {
     this.borderRadius = 8,
     this.placeholderIcon = Icons.music_note,
     this.fit = BoxFit.cover,
+    this.showPlaceholderIcon = true,
     this.semanticLabel,
   });
 
   @override
   Widget build(BuildContext context) {
-    final rawCoverUrl = coverUrl?.trim();
-    final hasCover = rawCoverUrl != null && rawCoverUrl.isNotEmpty;
-    final displayUrl = hasCover ? UrlHelper.buildCoverUrl(rawCoverUrl) : null;
+    final displayUrl = CoverCache.displayUrl(coverUrl);
+    final cacheKey = CoverCache.cacheKey(coverUrl);
 
     // 磁盘只缓存一份 1024px 封面，足以覆盖手机全屏和大部分桌面展示；
     // 内存位图再按逻辑尺寸 × DPR 解码，避免列表里驻留大量原尺寸图片。
     final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
     final targetPixels =
         (size * devicePixelRatio).round().clamp(1, 2048).toInt();
-    final cacheKey = hasCover ? _stableCoverIdentity(rawCoverUrl) : null;
 
     final imageWidget = RepaintBoundary(
       child: ClipRRect(
@@ -61,16 +61,15 @@ class CoverImage extends StatelessWidget {
           width: size,
           height: size,
           child:
-              displayUrl != null
+              displayUrl != null && cacheKey != null
                   ? CachedNetworkImage(
                     imageUrl: displayUrl,
-                    // 去掉临时认证参数，重新登录或 token 刷新后继续复用缓存。
                     cacheKey: cacheKey,
                     fit: fit,
                     memCacheWidth: targetPixels,
                     memCacheHeight: targetPixels,
-                    maxWidthDiskCache: _diskCacheExtent,
-                    maxHeightDiskCache: _diskCacheExtent,
+                    maxWidthDiskCache: CoverCache.diskExtent,
+                    maxHeightDiskCache: CoverCache.diskExtent,
                     useOldImageOnUrlChange: true,
                     fadeInDuration: Duration.zero,
                     fadeOutDuration: Duration.zero,
@@ -93,31 +92,20 @@ class CoverImage extends StatelessWidget {
     return ExcludeSemantics(child: imageWidget);
   }
 
-  String _stableCoverIdentity(String url) {
-    final uri = Uri.tryParse(url);
-    if (uri == null || uri.queryParameters.isEmpty) return url;
-
-    final queryParameters =
-        Map<String, String>.from(uri.queryParameters)
-          ..remove('access_token')
-          ..remove('token');
-    return uri
-        .replace(
-          queryParameters: queryParameters.isEmpty ? null : queryParameters,
-        )
-        .toString();
-  }
-
   Widget _buildPlaceholder(BuildContext context) {
-    return Container(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      child: Center(
-        child: Icon(
-          placeholderIcon,
-          size: size * 0.5,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
-      ),
+    final colorScheme = Theme.of(context).colorScheme;
+    return ColoredBox(
+      color: colorScheme.surfaceContainerHighest,
+      child:
+          showPlaceholderIcon
+              ? Center(
+                child: Icon(
+                  placeholderIcon,
+                  size: size * 0.5,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              )
+              : null,
     );
   }
 }
