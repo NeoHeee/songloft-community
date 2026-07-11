@@ -99,10 +99,7 @@ final coverColorsProvider = FutureProvider.family<CoverPalette?, String?>((
 
     final paletteGenerator = await PaletteGenerator.fromImageProvider(
       imageProvider,
-      size: const Size(
-        CoverCache.paletteExtent.toDouble(),
-        CoverCache.paletteExtent.toDouble(),
-      ),
+      size: const Size(100, 100),
       maximumColorCount: 16,
     );
 
