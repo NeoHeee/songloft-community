@@ -97,11 +97,14 @@ class CoverImage extends StatelessWidget {
     final uri = Uri.tryParse(url);
     if (uri == null || uri.queryParameters.isEmpty) return url;
 
-    final queryParameters = Map<String, String>.from(uri.queryParameters)
-      ..remove('access_token')
-      ..remove('token');
+    final queryParameters =
+        Map<String, String>.from(uri.queryParameters)
+          ..remove('access_token')
+          ..remove('token');
     return uri
-        .replace(queryParameters: queryParameters.isEmpty ? null : queryParameters)
+        .replace(
+          queryParameters: queryParameters.isEmpty ? null : queryParameters,
+        )
         .toString();
   }
 
