@@ -1,0 +1,118 @@
+name: Apply TV round three
+
+on:
+  pull_request:
+    branches: [tv-second-round]
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    if: github.event.pull_request.head.ref == 'tv-third-round'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout TV third-round branch
+        uses: actions/checkout@v4
+        with:
+          ref: tv-third-round
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Apply TV round-three patch
+        id: apply_patch
+        shell: bash
+        run: |
+          set +e
+          python tool/apply_tv_round3.py > tv-round3-patch.log 2>&1
+          status=$?
+          cat tv-round3-patch.log
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload patch log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-tv-round3-patch-log
+          path: tv-round3-patch.log
+          retention-days: 7
+
+      - name: Stop when patch failed
+        if: steps.apply_patch.outputs.status != '0'
+        run: exit 1
+
+      - name: Format changed Dart files
+        run: |
+          dart format \
+            lib/shared/widgets/tv_action_dialog.dart \
+            lib/shared/widgets/tv_focusable.dart \
+            lib/features/player/presentation/providers/player_provider.dart \
+            lib/features/player/presentation/widgets/playlist_drawer.dart \
+            lib/features/library/presentation/widgets/song_list_tile.dart \
+            lib/features/library/presentation/library_page.dart
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Commit applied TV changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            lib/shared/widgets/tv_action_dialog.dart \
+            lib/shared/widgets/tv_focusable.dart \
+            lib/features/player/presentation/providers/player_provider.dart \
+            lib/features/player/presentation/widgets/playlist_drawer.dart \
+            lib/features/library/presentation/widgets/song_list_tile.dart \
+            lib/features/library/presentation/library_page.dart
+          if git diff --cached --quiet; then
+            echo "No TV round-three changes to commit"
+          else
+            git commit -m "feat(tv): complete queue search and action workflow"
+            git push origin HEAD:tv-third-round
+          fi
+
+      - name: Build Android release APKs
+        id: android_build
+        shell: bash
+        run: |
+          set +e
+          flutter build apk --release --split-per-abi > tv-round3-build.log 2>&1
+          status=$?
+          cat tv-round3-build.log
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-tv-round3-build-log
+          path: tv-round3-build.log
+          retention-days: 7
+
+      - name: Upload APKs
+        if: steps.android_build.outputs.status == '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-tv-round3-apks
+          path: build/app/outputs/flutter-apk/*-release.apk
+          retention-days: 30
+
+      - name: Fail when Android build failed
+        if: steps.android_build.outputs.status != '0'
+        run: exit 1
