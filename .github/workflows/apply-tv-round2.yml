@@ -32,6 +32,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Correct patch helper anchors
+        run: python tool/fix_tv_round2_helper.py
+
       - name: Apply TV round-two patch
         id: apply_patch
         shell: bash
