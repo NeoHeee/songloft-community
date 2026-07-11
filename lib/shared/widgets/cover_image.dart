@@ -48,7 +48,8 @@ class CoverImage extends StatelessWidget {
     // CachedNetworkImage 默认会按原图尺寸解码。音乐库中大量高分辨率封面同时
     // 出现在列表里时会造成明显内存抖动，因此按逻辑尺寸 × DPR 限制缓存位图。
     final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
-    final targetPixels = (size * devicePixelRatio).round().clamp(1, 2048);
+    final targetPixels =
+        (size * devicePixelRatio).round().clamp(1, 2048).toInt();
 
     final imageWidget = RepaintBoundary(
       child: ClipRRect(
