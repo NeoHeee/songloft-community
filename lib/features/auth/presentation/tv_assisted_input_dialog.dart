@@ -44,7 +44,8 @@ class _TvAssistedInputDialogState extends State<_TvAssistedInputDialog> {
   void dispose() {
     _countdownTimer?.cancel();
     _subscription?.cancel();
-    unawaited(_service?.close());
+    final service = _service;
+    if (service != null) unawaited(service.close());
     super.dispose();
   }
 
@@ -52,6 +53,7 @@ class _TvAssistedInputDialogState extends State<_TvAssistedInputDialog> {
     _countdownTimer?.cancel();
     await _subscription?.cancel();
     await _service?.close();
+    _service = null;
     if (mounted) {
       setState(() {
         _starting = true;
@@ -70,7 +72,8 @@ class _TvAssistedInputDialogState extends State<_TvAssistedInputDialog> {
       _remainingSeconds = service.expiresAt
           .difference(DateTime.now())
           .inSeconds
-          .clamp(0, 300);
+          .clamp(0, 300)
+          .toInt();
       _subscription = service.credentials.listen((credentials) {
         if (!mounted) return;
         setState(() => _received = credentials);
@@ -80,7 +83,8 @@ class _TvAssistedInputDialogState extends State<_TvAssistedInputDialog> {
         final remaining = _service!.expiresAt
             .difference(DateTime.now())
             .inSeconds
-            .clamp(0, 300);
+            .clamp(0, 300)
+            .toInt();
         setState(() => _remainingSeconds = remaining);
         if (remaining == 0) _countdownTimer?.cancel();
       });
