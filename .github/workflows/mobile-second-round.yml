@@ -6,6 +6,7 @@ on:
       - mobile-second-round
     paths:
       - 'scripts/apply_mobile_second_round.py'
+      - 'scripts/repair_mobile_second_round.py'
       - '.github/workflows/mobile-second-round.yml'
   pull_request:
     branches:
@@ -39,7 +40,9 @@ jobs:
         run: flutter pub get
 
       - name: Apply mobile second round
-        run: python scripts/apply_mobile_second_round.py
+        run: |
+          python scripts/apply_mobile_second_round.py
+          python scripts/repair_mobile_second_round.py
 
       - name: Format changed source
         run: |
@@ -49,7 +52,25 @@ jobs:
             lib/features/player/presentation/queue_page.dart
 
       - name: Analyze
-        run: flutter analyze
+        id: analyze
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter analyze 2>&1 | tee mobile-analyze.log
+
+      - name: Upload analyzer report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-second-round-analyzer
+          path: mobile-analyze.log
+          retention-days: 2
+          if-no-files-found: warn
+
+      - name: Stop on analyzer failure
+        if: steps.analyze.outcome == 'failure'
+        run: exit 1
 
       - name: Run focused tests
         run: |
