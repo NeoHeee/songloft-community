@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../config/constants.dart';
 import '../../../../core/theme/responsive.dart';
 import '../../../../core/utils/formatters.dart';
-import '../../../../core/utils/url_helper.dart';
 import '../../../../shared/models/song.dart';
+import '../../../../shared/widgets/cover_image.dart';
 import '../../../../shared/widgets/favorite_button.dart';
 
 /// 歌曲列表项组件
@@ -258,11 +258,10 @@ class SongListTile extends ConsumerWidget {
   }
 
   Widget _buildCoverImage(String? coverUrl, double size) {
+    final radius = size > 48 ? 15.0 : 12.0;
     return Container(
-      width: size,
-      height: size,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(size > 48 ? 15 : 12),
+        borderRadius: BorderRadius.circular(radius),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.12),
@@ -271,44 +270,12 @@ class SongListTile extends ConsumerWidget {
           ),
         ],
       ),
-      clipBehavior: Clip.antiAlias,
-      child:
-          coverUrl != null
-              ? ExcludeSemantics(
-                child: Image.network(
-                  UrlHelper.buildCoverUrl(coverUrl),
-                  width: size,
-                  height: size,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => _buildDefaultCover(size),
-                ),
-              )
-              : _buildDefaultCover(size),
-    );
-  }
-
-  Widget _buildDefaultCover(double size) {
-    return Builder(
-      builder: (context) {
-        final colorScheme = Theme.of(context).colorScheme;
-        return DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                colorScheme.primaryContainer,
-                colorScheme.tertiaryContainer,
-              ],
-            ),
-          ),
-          child: Icon(
-            _getTypeIcon(),
-            size: size * 0.48,
-            color: colorScheme.onPrimaryContainer.withValues(alpha: 0.72),
-          ),
-        );
-      },
+      child: CoverImage(
+        coverUrl: coverUrl,
+        size: size,
+        borderRadius: radius,
+        placeholderIcon: _getTypeIcon(),
+      ),
     );
   }
 
