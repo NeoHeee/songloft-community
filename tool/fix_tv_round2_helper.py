@@ -68,5 +68,32 @@ if old_focus not in text:
     raise RuntimeError('unable to locate play-mode focus helper block')
 text = text.replace(old_focus, new_focus, 1)
 
+old_mode = '''        "                             (itemContext) => TvFocusable(\\n"
+        "                               onSelect: () => onPlayModeChanged(mode),",
+        "                             (itemContext) => TvFocusable(\\n"
+        "                               autofocus: mode == playMode,\\n"
+        "                               onSelect: () => onPlayModeChanged(mode),",
+'''
+new_mode = '''        "                            (itemContext) => TvFocusable(\\n"
+        "                              onSelect: () => onPlayModeChanged(mode),",
+        "                            (itemContext) => TvFocusable(\\n"
+        "                              autofocus: mode == playMode,\\n"
+        "                              onSelect: () => onPlayModeChanged(mode),",
+'''
+if old_mode not in text:
+    raise RuntimeError('unable to locate selected play-mode helper block')
+text = text.replace(old_mode, new_mode, 1)
+
+text = text.replace(
+    'text.index("               // 封面\\n", text.index("class TvMiniPlayer"))',
+    'text.index("              // 封面\\n", text.index("class TvMiniPlayer"))',
+    1,
+)
+text = text.replace(
+    'text.index("               // 播放控制\\n", mini_start)',
+    'text.index("              // 播放控制\\n", mini_start)',
+    1,
+)
+
 path.write_text(text, encoding='utf-8')
 print('TV round-two helper anchors fixed')
