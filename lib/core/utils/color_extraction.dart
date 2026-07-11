@@ -1,10 +1,11 @@
 import 'dart:collection';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:palette_generator/palette_generator.dart';
 
 import '../../shared/models/song.dart';
-import 'url_helper.dart';
+import 'cover_cache.dart';
 
 /// 封面颜色调色板
 class CoverPalette {
@@ -81,18 +82,27 @@ final coverColorsProvider = FutureProvider.family<CoverPalette?, String?>((
   ref,
   coverUrl,
 ) async {
-  if (coverUrl == null || coverUrl.isEmpty) return null;
+  final cacheIdentity = CoverCache.cacheKey(coverUrl);
+  if (cacheIdentity == null) return null;
 
-  // 检查缓存
-  final cached = _colorCache.get(coverUrl);
+  // 调色板缓存和图片缓存使用同一稳定标识，令牌变化不会重复提取。
+  final cached = _colorCache.get(cacheIdentity);
   if (cached != null) return cached;
 
   try {
-    // 使用 UrlHelper 处理封面 URL（自动拼接 baseUrl + access_token）
-    final displayUrl = UrlHelper.buildCoverUrl(coverUrl);
+    final imageProvider = CoverCache.resizedProvider(
+      coverUrl,
+      width: CoverCache.paletteExtent,
+      height: CoverCache.paletteExtent,
+    );
+    if (imageProvider == null) return null;
+
     final paletteGenerator = await PaletteGenerator.fromImageProvider(
-      NetworkImage(displayUrl),
-      size: const Size(100, 100), // 缩小尺寸加速提取
+      imageProvider,
+      size: const Size(
+        CoverCache.paletteExtent.toDouble(),
+        CoverCache.paletteExtent.toDouble(),
+      ),
       maximumColorCount: 16,
     );
 
@@ -111,8 +121,7 @@ final coverColorsProvider = FutureProvider.family<CoverPalette?, String?>((
       onImageColor: onImageColor,
     );
 
-    // 写入缓存
-    _colorCache.put(coverUrl, palette);
+    _colorCache.put(cacheIdentity, palette);
     return palette;
   } catch (e) {
     debugPrint('[ColorExtraction] Failed to extract colors from $coverUrl: $e');
