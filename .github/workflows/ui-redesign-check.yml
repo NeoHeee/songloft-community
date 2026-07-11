@@ -78,10 +78,9 @@ jobs:
           fi
 
           printf 'Checking %s\n' "${dart_files[@]}"
-          sha256sum "${dart_files[@]}" > /tmp/dart-before.sha256
           dart format "${dart_files[@]}"
-          sha256sum "${dart_files[@]}" > /tmp/dart-after.sha256
-          diff -u /tmp/dart-before.sha256 /tmp/dart-after.sha256
+          git diff -- "${dart_files[@]}"
+          git diff --quiet -- "${dart_files[@]}"
       - name: Run theme system tests
         run: flutter test test/core/theme
       - name: Analyze
