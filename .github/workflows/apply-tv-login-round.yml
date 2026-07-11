@@ -55,6 +55,9 @@ jobs:
         if: steps.apply_patch.outputs.status != '0'
         run: exit 1
 
+      - name: Apply login focus follow-up fixes
+        run: python tool/fix_tv_login_followup.py
+
       - name: Format login page
         run: dart format lib/features/auth/presentation/login_page.dart
 
