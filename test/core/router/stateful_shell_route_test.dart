@@ -27,7 +27,9 @@ void main() {
 
     expect(shell.branches, hasLength(5));
     expect(
-      shell.branches.map((branch) => branch.routes.single.path),
+      shell.branches.map(
+        (branch) => (branch.routes.single as GoRoute).path,
+      ),
       [
         AppRoutes.home,
         AppRoutes.library,
