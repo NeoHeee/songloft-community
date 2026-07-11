@@ -35,6 +35,42 @@ jobs:
       - name: Apply TV round-one patch
         run: python tool/apply_tv_round1.py
 
+      - name: Replace TV banner with Android XML drawable
+        run: |
+          rm -f android/app/src/main/res/drawable-nodpi/tv_banner.png
+          mkdir -p android/app/src/main/res/drawable
+          cat > android/app/src/main/res/drawable/tv_banner.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+              <item>
+                  <shape android:shape="rectangle">
+                      <gradient
+                          android:angle="0"
+                          android:startColor="#24164F"
+                          android:centerColor="#49308D"
+                          android:endColor="#176D8A" />
+                      <corners android:radius="12dp" />
+                  </shape>
+              </item>
+              <item
+                  android:left="112dp"
+                  android:top="42dp"
+                  android:right="112dp"
+                  android:bottom="42dp">
+                  <shape android:shape="rectangle">
+                      <solid android:color="#F4F0FF" />
+                      <corners android:radius="18dp" />
+                  </shape>
+              </item>
+              <item android:gravity="center">
+                  <bitmap
+                      android:src="@mipmap/ic_launcher"
+                      android:gravity="center"
+                      android:filter="true" />
+              </item>
+          </layer-list>
+          EOF
+
       - name: Format changed Dart files
         run: |
           dart format \
@@ -67,8 +103,8 @@ jobs:
             lib/features/playlist/presentation/playlist_detail_page.dart \
             lib/shared/layouts/adaptive_scaffold.dart \
             lib/shared/layouts/shell_layout.dart \
-            android/app/src/main/AndroidManifest.xml \
-            android/app/src/main/res/drawable-nodpi/tv_banner.png
+            android/app/src/main/AndroidManifest.xml
+          git add -A android/app/src/main/res
           if git diff --cached --quiet; then
             echo "No TV changes to commit"
           else
