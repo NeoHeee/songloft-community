@@ -1,0 +1,39 @@
+name: Diagnose formatting drift
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - edited
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    if: github.event.pull_request.head.ref == 'mobile-polish-round-1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: mobile-polish-round-1
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Format working tree and record drift
+        run: |
+          dart format lib test
+          git diff --name-only > format_changed_files.txt
+          cat format_changed_files.txt
+      - name: Commit report
+        run: |
+          git config user.name "Songloft UI Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add format_changed_files.txt
+          git commit -m "chore: record formatting drift"
+          git push origin HEAD:mobile-polish-round-1
