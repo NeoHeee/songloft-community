@@ -32,6 +32,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Correct icon-polish patch helper
+        run: python tool/fix_tv_icon_polish_helper.py
+
       - name: Apply TV icon polish
         id: apply_patch
         shell: bash
