@@ -134,6 +134,22 @@ class _PluginTabPageState extends ConsumerState<PluginTabPage>
     );
   }
 
+  Future<bool> _handleBackButton() async {
+    if (!widget.isActive) return false;
+    final controller = _webViewController;
+    if (controller == null) return false;
+
+    try {
+      if (await controller.canGoBack()) {
+        await controller.goBack();
+        return true;
+      }
+    } catch (_) {
+      // WebView 已释放或正在切换页面时，交给外层导航继续处理。
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -148,16 +164,19 @@ class _PluginTabPageState extends ConsumerState<PluginTabPage>
       if (_pageReady) _sendThemeToPlugin(theme);
     }
 
-    return SafeArea(
-      bottom: false,
-      child: Stack(
-        children: [
-          if (_errorMessage != null)
-            _buildErrorView(colorScheme)
-          else
-            _buildWebView(theme),
-          if (_isLoading) const Center(child: CircularProgressIndicator()),
-        ],
+    return BackButtonListener(
+      onBackButtonPressed: _handleBackButton,
+      child: SafeArea(
+        bottom: false,
+        child: Stack(
+          children: [
+            if (_errorMessage != null)
+              _buildErrorView(colorScheme)
+            else
+              _buildWebView(theme),
+            if (_isLoading) const Center(child: CircularProgressIndicator()),
+          ],
+        ),
       ),
     );
   }

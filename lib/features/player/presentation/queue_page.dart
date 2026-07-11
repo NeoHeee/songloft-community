@@ -11,7 +11,7 @@ import 'providers/player_provider.dart';
 
 /// 播放队列底部弹窗
 /// 以浮层形式展示当前播放队列中的所有歌曲
-class QueueBottomSheet extends ConsumerWidget {
+class QueueBottomSheet extends ConsumerStatefulWidget {
   const QueueBottomSheet({super.key});
 
   /// 显示播放队列底部弹窗
@@ -26,7 +26,54 @@ class QueueBottomSheet extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<QueueBottomSheet> createState() => _QueueBottomSheetState();
+}
+
+class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> {
+  ScrollController? _activeScrollController;
+  int? _lastCenteredIndex;
+
+  void _scheduleCurrentSong(int currentIndex) {
+    final controller = _activeScrollController;
+    if (controller == null || currentIndex < 0) return;
+    if (_lastCenteredIndex == currentIndex) return;
+    _lastCenteredIndex = currentIndex;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !controller.hasClients) return;
+      const estimatedItemExtent = 72.0;
+      final viewport = controller.position.viewportDimension;
+      final target = (currentIndex * estimatedItemExtent - viewport * 0.34)
+          .clamp(0.0, controller.position.maxScrollExtent);
+      controller.animateTo(
+        target,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
+  String _formatQueueDuration(List<Song> songs) {
+    final totalSeconds = songs.fold<double>(
+      0,
+      (total, song) => total + (song.isLive ? 0 : song.duration),
+    );
+    if (totalSeconds <= 0) return '时长未知';
+    final duration = Duration(seconds: totalSeconds.round());
+    if (duration.inHours > 0) {
+      final minutes = duration.inMinutes.remainder(60);
+      return '约 ${duration.inHours} 小时 $minutes 分钟';
+    }
+    return '约 ${duration.inMinutes.clamp(1, 9999)} 分钟';
+  }
+
+  String _queueSummary(PlayerState state) {
+    final mode = state.playMode == PlayMode.random ? ' · 随机模式' : '';
+    return '${state.playlist.length} 首 · ${_formatQueueDuration(state.playlist)}$mode';
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(playerStateProvider);
     final notifier = ref.read(playerStateProvider.notifier);
     final theme = Theme.of(context);
@@ -40,6 +87,10 @@ class QueueBottomSheet extends ConsumerWidget {
         if (context.mounted) {
           Navigator.of(context).pop();
         }
+        return;
+      }
+      if (previous?.currentIndex != next.currentIndex) {
+        _scheduleCurrentSong(next.currentIndex);
       }
     });
 
@@ -48,6 +99,8 @@ class QueueBottomSheet extends ConsumerWidget {
       minChildSize: 0.4,
       maxChildSize: 0.95,
       builder: (context, scrollController) {
+        _activeScrollController = scrollController;
+        _scheduleCurrentSong(state.currentIndex);
         return Container(
           decoration: BoxDecoration(
             color: colorScheme.surface,
@@ -98,7 +151,7 @@ class QueueBottomSheet extends ConsumerWidget {
   /// 构建标题栏
   Widget _buildHeader(
     BuildContext context,
-    dynamic state,
+    PlayerState state,
     PlayerNotifier notifier,
     ThemeData theme,
     ColorScheme colorScheme,
@@ -108,33 +161,51 @@ class QueueBottomSheet extends ConsumerWidget {
       child: Row(
         children: [
           const SizedBox(width: 8),
-          // 标题和歌曲数量
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '播放队列',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '播放队列',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${state.playlist.length}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${state.playlist.length}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onPrimaryContainer,
+                const SizedBox(height: 2),
+                Text(
+                  _queueSummary(state),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const Spacer(),
           // 清空按钮
           if (state.playlist.isNotEmpty)
             IconButton(
@@ -228,12 +299,32 @@ class QueueBottomSheet extends ConsumerWidget {
     int index,
     Song song,
   ) {
+    final removingCurrent = ref.read(playerStateProvider).currentIndex == index;
     notifier.removeFromPlaylist(index);
-    ResponsiveSnackBar.show(
-      context,
-      message: '已移除「${song.title}」',
-      duration: const Duration(seconds: 2),
-    );
+
+    if (removingCurrent) {
+      ResponsiveSnackBar.show(
+        context,
+        message: '已移除当前歌曲「${song.title}」',
+        duration: const Duration(seconds: 2),
+      );
+      return;
+    }
+
+    final messenger = ScaffoldMessenger.of(context);
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text('已移除「${song.title}」'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: '撤销',
+            onPressed: () => notifier.insertToPlaylist(index, song),
+          ),
+        ),
+      );
   }
 
   /// 显示清空确认对话框

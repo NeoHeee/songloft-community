@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_dimensions.dart';
@@ -101,13 +102,34 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
     final velocity = details.primaryVelocity ?? 0;
     final shouldClose = _dragOffset > 110 || velocity > 700;
     if (shouldClose) {
+      HapticFeedback.mediumImpact();
       _closePlayer();
       return;
     }
+    _resetDismissDrag();
+  }
+
+  void _resetDismissDrag() {
+    if (!mounted) return;
     setState(() {
       _isDragging = false;
       _dragOffset = 0;
     });
+  }
+
+  Widget _buildDismissGesture({required Widget child}) {
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onVerticalDragStart: _handleVerticalDragStart,
+      onVerticalDragUpdate:
+          (details) => _handleVerticalDragUpdate(
+            details,
+            MediaQuery.sizeOf(context).height * 0.45,
+          ),
+      onVerticalDragEnd: _handleVerticalDragEnd,
+      onVerticalDragCancel: _resetDismissDrag,
+      child: child,
+    );
   }
 
   @override
@@ -154,215 +176,231 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
     final paletteAsync = ref.watch(playerBackgroundPaletteProvider(song));
     final palette = paletteAsync.value;
 
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onVerticalDragStart: _handleVerticalDragStart,
-      onVerticalDragUpdate:
-          (details) => _handleVerticalDragUpdate(details, size.height * 0.45),
-      onVerticalDragEnd: _handleVerticalDragEnd,
-      child: AnimatedContainer(
-        duration:
-            _isDragging ? Duration.zero : const Duration(milliseconds: 220),
-        curve: Curves.easeOutCubic,
-        transform: Matrix4.translationValues(0, _dragOffset, 0),
-        child: Scaffold(
-          backgroundColor: theme.colorScheme.surface,
-          body: Stack(
-            children: [
-              // 背景模糊封面 / 无封面时的动态渐变
-              if (coverUrl != null)
-                Positioned.fill(
-                  child: ExcludeSemantics(
-                    child: ImageFiltered(
-                      imageFilter: ImageFilter.blur(sigmaX: 70, sigmaY: 70),
-                      child: Image.network(
-                        UrlHelper.buildCoverUrl(coverUrl),
-                        fit: BoxFit.cover,
-                        errorBuilder:
-                            (_, _, _) => Container(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                            ),
+    final dragProgress = (_dragOffset / (size.height * 0.45)).clamp(0.0, 1.0);
+
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          ref.read(playerStateProvider.notifier).closeFullPlayer();
+        }
+      },
+      child: ColoredBox(
+        color: Colors.black,
+        child: AnimatedContainer(
+          duration:
+              _isDragging ? Duration.zero : const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          transform: Matrix4.translationValues(0, _dragOffset, 0),
+          transformAlignment: Alignment.topCenter,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28 * dragProgress),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Scaffold(
+            backgroundColor: theme.colorScheme.surface,
+            body: Stack(
+              children: [
+                // 背景模糊封面 / 无封面时的动态渐变
+                if (coverUrl != null)
+                  Positioned.fill(
+                    child: ExcludeSemantics(
+                      child: ImageFiltered(
+                        imageFilter: ImageFilter.blur(sigmaX: 70, sigmaY: 70),
+                        child: Image.network(
+                          UrlHelper.buildCoverUrl(coverUrl),
+                          fit: BoxFit.cover,
+                          errorBuilder:
+                              (_, _, _) => Container(
+                                color:
+                                    theme.colorScheme.surfaceContainerHighest,
+                              ),
+                        ),
+                      ),
+                    ),
+                  )
+                else if (palette != null)
+                  Positioned.fill(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 800),
+                      curve: Curves.easeInOut,
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          center: Alignment.topLeft,
+                          radius: 1.5,
+                          colors: [
+                            palette.dominantColor.withValues(alpha: 0.6),
+                            palette.darkMutedColor ?? palette.dominantColor,
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                )
-              else if (palette != null)
+                // 径向环境光晕
+                if (palette != null)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: RadialGradient(
+                            center: const Alignment(-0.6, -0.5),
+                            radius: 1.2,
+                            colors: [
+                              (palette.vibrantColor ?? palette.dominantColor)
+                                  .withValues(alpha: 0.22),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                // 背景遮罩 - 动态取色渐变
                 Positioned.fill(
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 800),
+                    duration: const Duration(milliseconds: 500),
                     curve: Curves.easeInOut,
                     decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                        center: Alignment.topLeft,
-                        radius: 1.5,
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                         colors: [
-                          palette.dominantColor.withValues(alpha: 0.6),
-                          palette.darkMutedColor ?? palette.dominantColor,
+                          (palette?.darkMutedColor ?? theme.colorScheme.surface)
+                              .withValues(alpha: 0.7),
+                          theme.colorScheme.surface.withValues(alpha: 0.85),
                         ],
                       ),
                     ),
                   ),
                 ),
-              // 径向环境光晕
-              if (palette != null)
-                Positioned.fill(
+                // 顶部渐变遮罩 — 保证顶部按钮在任何封面色下可见
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 100,
                   child: IgnorePointer(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        gradient: RadialGradient(
-                          center: const Alignment(-0.6, -0.5),
-                          radius: 1.2,
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
                           colors: [
-                            (palette.vibrantColor ?? palette.dominantColor)
-                                .withValues(alpha: 0.22),
-                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.35),
+                            Colors.black.withValues(alpha: 0.0),
                           ],
                         ),
                       ),
                     ),
                   ),
                 ),
-              // 背景遮罩 - 动态取色渐变
-              Positioned.fill(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 500),
-                  curve: Curves.easeInOut,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        (palette?.darkMutedColor ?? theme.colorScheme.surface)
-                            .withValues(alpha: 0.7),
-                        theme.colorScheme.surface.withValues(alpha: 0.85),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              // 顶部渐变遮罩 — 保证顶部按钮在任何封面色下可见
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 100,
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.black.withValues(alpha: 0.35),
-                          Colors.black.withValues(alpha: 0.0),
-                        ],
+                // 主内容
+                SafeArea(
+                  child: Column(
+                    children: [
+                      // 顶部工具栏
+                      _buildDismissGesture(
+                        child: _buildTopBar(context, notifier, state),
                       ),
-                    ),
-                  ),
-                ),
-              ),
-              // 主内容
-              SafeArea(
-                child: Column(
-                  children: [
-                    // 顶部工具栏
-                    _buildTopBar(context, notifier, state),
-                    const SizedBox(height: 16),
-                    // 封面/歌词 PageView
-                    Expanded(
-                      flex: 4,
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: PageView(
-                              controller: _pageController,
-                              onPageChanged: (index) {
-                                setState(() {
-                                  _currentPage = index;
-                                });
-                              },
-                              children: [
-                                // 页面1：封面（带唱片环旋转）
-                                Center(
-                                  child: VinylRing(
-                                    rotationAnimation: _rotationController,
-                                    child: _buildCover(
-                                      context,
-                                      coverUrl,
-                                      size.width * 0.75,
-                                      palette: palette,
+                      const SizedBox(height: 16),
+                      // 封面/歌词 PageView
+                      Expanded(
+                        flex: 4,
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: PageView(
+                                controller: _pageController,
+                                onPageChanged: (index) {
+                                  setState(() {
+                                    _currentPage = index;
+                                  });
+                                },
+                                children: [
+                                  // 页面1：封面（带唱片环旋转）
+                                  Center(
+                                    child: _buildDismissGesture(
+                                      child: VinylRing(
+                                        rotationAnimation: _rotationController,
+                                        child: _buildCover(
+                                          context,
+                                          coverUrl,
+                                          size.width * 0.75,
+                                          palette: palette,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                                // 页面2：歌词
-                                LyricsView(
-                                  currentPosition: state.currentTime,
-                                  onSeek: notifier.seek,
-                                  song: song,
-                                  editable: true,
-                                ),
-                              ],
+                                  // 页面2：歌词
+                                  LyricsView(
+                                    currentPosition: state.currentTime,
+                                    onSeek: notifier.seek,
+                                    song: song,
+                                    editable: true,
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          // 页面指示器
-                          const SizedBox(height: 12),
-                          _buildPageIndicator(theme),
-                        ],
+                            // 页面指示器
+                            const SizedBox(height: 12),
+                            _buildPageIndicator(theme),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    // 歌曲信息
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.xl,
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            song.title,
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
+                      const SizedBox(height: 12),
+                      // 歌曲信息
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xl,
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              song.title,
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            song.artist ?? '未知艺术家',
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
+                            const SizedBox(height: 8),
+                            Text(
+                              song.artist ?? '未知艺术家',
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    // 进度条
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.lg,
+                      const SizedBox(height: 24),
+                      // 进度条
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                        ),
+                        child: PlayerProgressBar(
+                          position: state.currentTime,
+                          duration: state.duration,
+                          onSeek: notifier.seek,
+                        ),
                       ),
-                      child: PlayerProgressBar(
-                        position: state.currentTime,
-                        duration: state.duration,
-                        onSeek: notifier.seek,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // 主控制行（播放模式 + 上一首/播放/下一首 + 收藏）
-                    _buildControlsRow(context, state, notifier),
-                    const SizedBox(height: 20),
-                    // 工具行（投屏 + 音量 + 队列 + 更多）
-                    _buildToolBar(context, state, notifier),
-                    const SizedBox(height: AppSpacing.md),
-                  ],
+                      const SizedBox(height: 16),
+                      // 主控制行（播放模式 + 上一首/播放/下一首 + 收藏）
+                      _buildControlsRow(context, state, notifier),
+                      const SizedBox(height: 20),
+                      // 工具行（投屏 + 音量 + 队列 + 更多）
+                      _buildToolBar(context, state, notifier),
+                      const SizedBox(height: AppSpacing.md),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
