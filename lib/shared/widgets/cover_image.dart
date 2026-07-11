@@ -9,6 +9,7 @@ import '../../core/utils/url_helper.dart';
 /// - 统一磁盘与内存缓存；
 /// - 按实际显示尺寸解码，减少长列表滚动时的内存和 GPU 压力；
 /// - URL 中的临时认证参数变化时仍复用同一份缓存；
+/// - 不同显示尺寸使用独立缓存档位，避免小图污染全屏大封面；
 /// - 默认作为装饰图片跳过读屏器，也可显式提供语义标签。
 class CoverImage extends StatelessWidget {
   /// 完整的封面 URL（后端统一处理）
@@ -50,6 +51,10 @@ class CoverImage extends StatelessWidget {
     final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
     final targetPixels =
         (size * devicePixelRatio).round().clamp(1, 2048).toInt();
+    final cacheKey =
+        hasCover
+            ? '${_stableCoverIdentity(rawCoverUrl)}@$targetPixels'
+            : null;
 
     final imageWidget = RepaintBoundary(
       child: ClipRRect(
@@ -61,9 +66,9 @@ class CoverImage extends StatelessWidget {
               displayUrl != null
                   ? CachedNetworkImage(
                     imageUrl: displayUrl,
-                    // 使用不含临时 access_token 的原始封面标识作为缓存键，
-                    // 避免重新登录后为同一封面生成重复缓存。
-                    cacheKey: rawCoverUrl,
+                    // 去掉临时认证参数后再加入分辨率档位：重新登录不会重复
+                    // 缓存，同一封面的小图和全屏大图也不会互相覆盖。
+                    cacheKey: cacheKey,
                     fit: fit,
                     memCacheWidth: targetPixels,
                     memCacheHeight: targetPixels,
@@ -89,6 +94,18 @@ class CoverImage extends StatelessWidget {
       );
     }
     return ExcludeSemantics(child: imageWidget);
+  }
+
+  String _stableCoverIdentity(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null || uri.queryParameters.isEmpty) return url;
+
+    final queryParameters = Map<String, String>.from(uri.queryParameters)
+      ..remove('access_token')
+      ..remove('token');
+    return uri
+        .replace(queryParameters: queryParameters.isEmpty ? null : queryParameters)
+        .toString();
   }
 
   Widget _buildPlaceholder(BuildContext context) {
