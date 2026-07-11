@@ -78,7 +78,8 @@ jobs:
           fi
 
           printf 'Checking %s\n' "${dart_files[@]}"
-          dart format -o none --set-exit-if-changed "${dart_files[@]}"
+          dart format "${dart_files[@]}"
+          git diff --exit-code -- "${dart_files[@]}"
       - name: Run theme system tests
         run: flutter test test/core/theme
       - name: Analyze
