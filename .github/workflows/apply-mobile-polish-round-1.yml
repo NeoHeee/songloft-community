@@ -6,6 +6,7 @@ on:
       - mobile-polish-round-1
     paths:
       - 'scripts/apply_mobile_polish_round_1.py'
+      - 'scripts/run_mobile_polish_round_1.py'
       - '.github/workflows/apply-mobile-polish-round-1.yml'
 
 permissions:
@@ -28,7 +29,7 @@ jobs:
           cache: true
 
       - name: Apply source changes
-        run: python scripts/apply_mobile_polish_round_1.py
+        run: python scripts/run_mobile_polish_round_1.py
 
       - name: Format
         run: |
