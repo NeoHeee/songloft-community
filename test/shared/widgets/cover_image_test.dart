@@ -71,7 +71,14 @@ void main() {
       const MaterialApp(home: Scaffold(body: CoverImage(size: 48))),
     );
 
-    expect(find.byType(ExcludeSemantics), findsOneWidget);
+    final cover = find.byType(CoverImage);
+    expect(
+      find.descendant(
+        of: cover,
+        matching: find.byType(ExcludeSemantics),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('提供语义标签时向读屏器说明封面内容', (tester) async {
@@ -81,8 +88,12 @@ void main() {
       ),
     );
 
-    final semantics = tester.widget<Semantics>(find.byType(Semantics).last);
-    expect(semantics.properties.image, isTrue);
-    expect(semantics.properties.label, '歌曲《测试》封面');
+    final labeledSemantics = find.byWidgetPredicate(
+      (widget) =>
+          widget is Semantics &&
+          widget.properties.image == true &&
+          widget.properties.label == '歌曲《测试》封面',
+    );
+    expect(labeledSemantics, findsOneWidget);
   });
 }
