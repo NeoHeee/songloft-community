@@ -4,11 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart';
+import '../../../core/storage/mobile_tab_memory.dart';
 import '../../../core/theme/app_dimensions.dart';
 import '../../../core/theme/responsive.dart';
 import '../../../core/utils/url_helper.dart';
 import '../../../features/jsplugin/presentation/widgets/jsplugin_grid.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/utils/responsive_snackbar.dart';
 import '../../../shared/widgets/loading_indicator.dart';
 import '../../player/presentation/providers/player_provider.dart';
 import '../../playlist/domain/playlist.dart';
@@ -18,11 +20,52 @@ import 'widgets/section_header.dart';
 import 'widgets/stats_strip.dart';
 
 /// 新版首页仪表盘
-class HomePage extends ConsumerWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends ConsumerState<HomePage> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController(
+      initialScrollOffset: MobileTabMemory.homeScrollOffset,
+    )..addListener(_rememberScrollOffset);
+  }
+
+  void _rememberScrollOffset() {
+    if (_scrollController.hasClients) {
+      MobileTabMemory.homeScrollOffset = _scrollController.offset;
+    }
+  }
+
+  Future<void> _refreshHome() async {
+    ref.invalidate(playlistListProvider(null));
+    ref.invalidate(playlistListProvider('normal'));
+    ref.invalidate(playlistListProvider('radio'));
+    await Future.wait([
+      ref.read(playlistListProvider(null).future),
+      ref.read(playlistListProvider('normal').future),
+      ref.read(playlistListProvider('radio').future),
+    ]);
+    if (!mounted) return;
+    ResponsiveSnackBar.showSuccess(context, message: '首页内容已刷新');
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_rememberScrollOffset);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final playlistsAsync = ref.watch(playlistListProvider(null));
     final normalAsync = ref.watch(playlistListProvider('normal'));
     final radioAsync = ref.watch(playlistListProvider('radio'));
@@ -32,12 +75,11 @@ class HomePage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(playlistListProvider(null));
-          ref.invalidate(playlistListProvider('normal'));
-          ref.invalidate(playlistListProvider('radio'));
-        },
+        onRefresh: _refreshHome,
         child: CustomScrollView(
+          key: const PageStorageKey<String>('home-scroll'),
+          controller: _scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(
               child: _DashboardHeader(

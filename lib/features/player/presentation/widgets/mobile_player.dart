@@ -30,17 +30,18 @@ class MobilePlayer extends ConsumerStatefulWidget {
     return Navigator.of(context).push(
       PageRouteBuilder(
         opaque: true,
-        pageBuilder:
-            (context, animation, secondaryAnimation) => const MobilePlayer(),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const MobilePlayer(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           // 从下往上滑入动画
           return SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 1),
-              end: Offset.zero,
-            ).animate(
-              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-            ),
+            position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
+                .animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
             child: child,
           );
         },
@@ -59,6 +60,8 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
 
   /// 当前页面索引（0: 封面, 1: 歌词）
   int _currentPage = 0;
+  double _dragOffset = 0;
+  bool _isDragging = false;
 
   /// 唱片环旋转动画控制器
   late final AnimationController _rotationController;
@@ -77,6 +80,35 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
     _pageController.dispose();
     _rotationController.dispose();
     super.dispose();
+  }
+
+  void _closePlayer() {
+    ref.read(playerStateProvider.notifier).closeFullPlayer();
+    Navigator.of(context).pop();
+  }
+
+  void _handleVerticalDragStart(DragStartDetails details) {
+    setState(() => _isDragging = true);
+  }
+
+  void _handleVerticalDragUpdate(DragUpdateDetails details, double maxOffset) {
+    final next = (_dragOffset + details.delta.dy).clamp(0.0, maxOffset);
+    if (next != _dragOffset) {
+      setState(() => _dragOffset = next.toDouble());
+    }
+  }
+
+  void _handleVerticalDragEnd(DragEndDetails details) {
+    final velocity = details.primaryVelocity ?? 0;
+    final shouldClose = _dragOffset > 110 || velocity > 700;
+    if (shouldClose) {
+      _closePlayer();
+      return;
+    }
+    setState(() {
+      _isDragging = false;
+      _dragOffset = 0;
+    });
   }
 
   @override
@@ -123,204 +155,217 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
     final paletteAsync = ref.watch(playerBackgroundPaletteProvider(song));
     final palette = paletteAsync.value;
 
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      body: Stack(
-        children: [
-          // 背景模糊封面 / 无封面时的动态渐变
-          if (coverUrl != null)
-            Positioned.fill(
-              child: ExcludeSemantics(
-                child: ImageFiltered(
-                  imageFilter: ImageFilter.blur(sigmaX: 70, sigmaY: 70),
-                  child: Image.network(
-                    UrlHelper.buildCoverUrl(coverUrl),
-                    fit: BoxFit.cover,
-                    errorBuilder:
-                        (_, _, _) => Container(
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onVerticalDragStart: _handleVerticalDragStart,
+      onVerticalDragUpdate: (details) =>
+          _handleVerticalDragUpdate(details, size.height * 0.45),
+      onVerticalDragEnd: _handleVerticalDragEnd,
+      child: AnimatedContainer(
+        duration: _isDragging
+            ? Duration.zero
+            : const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        transform: Matrix4.translationValues(0, _dragOffset, 0),
+        child: Scaffold(
+          backgroundColor: theme.colorScheme.surface,
+          body: Stack(
+            children: [
+              // 背景模糊封面 / 无封面时的动态渐变
+              if (coverUrl != null)
+                Positioned.fill(
+                  child: ExcludeSemantics(
+                    child: ImageFiltered(
+                      imageFilter: ImageFilter.blur(sigmaX: 70, sigmaY: 70),
+                      child: Image.network(
+                        UrlHelper.buildCoverUrl(coverUrl),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => Container(
                           color: theme.colorScheme.surfaceContainerHighest,
                         ),
+                      ),
+                    ),
+                  ),
+                )
+              else if (palette != null)
+                Positioned.fill(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 800),
+                    curve: Curves.easeInOut,
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        center: Alignment.topLeft,
+                        radius: 1.5,
+                        colors: [
+                          palette.dominantColor.withValues(alpha: 0.6),
+                          palette.darkMutedColor ?? palette.dominantColor,
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            )
-          else if (palette != null)
-            Positioned.fill(
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 800),
-                curve: Curves.easeInOut,
-                decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    center: Alignment.topLeft,
-                    radius: 1.5,
-                    colors: [
-                      palette.dominantColor.withValues(alpha: 0.6),
-                      palette.darkMutedColor ?? palette.dominantColor,
-                    ],
+              // 径向环境光晕
+              if (palette != null)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          center: const Alignment(-0.6, -0.5),
+                          radius: 1.2,
+                          colors: [
+                            (palette.vibrantColor ?? palette.dominantColor)
+                                .withValues(alpha: 0.22),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-          // 径向环境光晕
-          if (palette != null)
-            Positioned.fill(
-              child: IgnorePointer(
-                child: DecoratedBox(
+              // 背景遮罩 - 动态取色渐变
+              Positioned.fill(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
                   decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: const Alignment(-0.6, -0.5),
-                      radius: 1.2,
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
                       colors: [
-                        (palette.vibrantColor ?? palette.dominantColor)
-                            .withValues(alpha: 0.22),
-                        Colors.transparent,
+                        (palette?.darkMutedColor ?? theme.colorScheme.surface)
+                            .withValues(alpha: 0.7),
+                        theme.colorScheme.surface.withValues(alpha: 0.85),
                       ],
                     ),
                   ),
                 ),
               ),
-            ),
-          // 背景遮罩 - 动态取色渐变
-          Positioned.fill(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 500),
-              curve: Curves.easeInOut,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    (palette?.darkMutedColor ?? theme.colorScheme.surface)
-                        .withValues(alpha: 0.7),
-                    theme.colorScheme.surface.withValues(alpha: 0.85),
+              // 顶部渐变遮罩 — 保证顶部按钮在任何封面色下可见
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 100,
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.35),
+                          Colors.black.withValues(alpha: 0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // 主内容
+              SafeArea(
+                child: Column(
+                  children: [
+                    // 顶部工具栏
+                    _buildTopBar(context, notifier, state),
+                    const SizedBox(height: 16),
+                    // 封面/歌词 PageView
+                    Expanded(
+                      flex: 4,
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: PageView(
+                              controller: _pageController,
+                              onPageChanged: (index) {
+                                setState(() {
+                                  _currentPage = index;
+                                });
+                              },
+                              children: [
+                                // 页面1：封面（带唱片环旋转）
+                                Center(
+                                  child: VinylRing(
+                                    rotationAnimation: _rotationController,
+                                    child: _buildCover(
+                                      context,
+                                      coverUrl,
+                                      size.width * 0.75,
+                                      palette: palette,
+                                    ),
+                                  ),
+                                ),
+                                // 页面2：歌词
+                                LyricsView(
+                                  currentPosition: state.currentTime,
+                                  onSeek: notifier.seek,
+                                  song: song,
+                                  editable: true,
+                                ),
+                              ],
+                            ),
+                          ),
+                          // 页面指示器
+                          const SizedBox(height: 12),
+                          _buildPageIndicator(theme),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // 歌曲信息
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xl,
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            song.title,
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            song.artist ?? '未知艺术家',
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // 进度条
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                      ),
+                      child: PlayerProgressBar(
+                        position: state.currentTime,
+                        duration: state.duration,
+                        onSeek: notifier.seek,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // 主控制行（播放模式 + 上一首/播放/下一首 + 收藏）
+                    _buildControlsRow(context, state, notifier),
+                    const SizedBox(height: 20),
+                    // 工具行（投屏 + 音量 + 队列 + 更多）
+                    _buildToolBar(context, state, notifier),
+                    const SizedBox(height: AppSpacing.md),
                   ],
                 ),
               ),
-            ),
+            ],
           ),
-          // 顶部渐变遮罩 — 保证顶部按钮在任何封面色下可见
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 100,
-            child: IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.35),
-                      Colors.black.withValues(alpha: 0.0),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          // 主内容
-          SafeArea(
-            child: Column(
-              children: [
-                // 顶部工具栏
-                _buildTopBar(context, notifier, state),
-                const SizedBox(height: 16),
-                // 封面/歌词 PageView
-                Expanded(
-                  flex: 4,
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: PageView(
-                          controller: _pageController,
-                          onPageChanged: (index) {
-                            setState(() {
-                              _currentPage = index;
-                            });
-                          },
-                          children: [
-                            // 页面1：封面（带唱片环旋转）
-                            Center(
-                              child: VinylRing(
-                                rotationAnimation: _rotationController,
-                                child: _buildCover(
-                                  context,
-                                  coverUrl,
-                                  size.width * 0.75,
-                                  palette: palette,
-                                ),
-                              ),
-                            ),
-                            // 页面2：歌词
-                            LyricsView(
-                              currentPosition: state.currentTime,
-                              onSeek: notifier.seek,
-                              song: song,
-                              editable: true,
-                            ),
-                          ],
-                        ),
-                      ),
-                      // 页面指示器
-                      const SizedBox(height: 12),
-                      _buildPageIndicator(theme),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // 歌曲信息
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xl,
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        song.title,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        song.artist ?? '未知艺术家',
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // 进度条
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                  ),
-                  child: PlayerProgressBar(
-                    position: state.currentTime,
-                    duration: state.duration,
-                    onSeek: notifier.seek,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // 主控制行（播放模式 + 上一首/播放/下一首 + 收藏）
-                _buildControlsRow(context, state, notifier),
-                const SizedBox(height: 20),
-                // 工具行（投屏 + 音量 + 队列 + 更多）
-                _buildToolBar(context, state, notifier),
-                const SizedBox(height: AppSpacing.md),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -337,10 +382,9 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
           margin: const EdgeInsets.symmetric(horizontal: 4),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color:
-                isActive
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurface.withValues(alpha: 0.3),
+            color: isActive
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurface.withValues(alpha: 0.3),
           ),
         );
       }),
@@ -362,10 +406,7 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
         children: [
           // 返回按钮
           IconButton(
-            onPressed: () {
-              notifier.closeFullPlayer();
-              Navigator.of(context).pop();
-            },
+            onPressed: _closePlayer,
             icon: const Icon(Icons.keyboard_arrow_down_rounded),
             iconSize: 32,
             color: topBarColor,
@@ -391,10 +432,9 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
           PopupMenuButton<String>(
             icon: Icon(
               Icons.more_horiz_rounded,
-              color:
-                  state.sleepTimer != null
-                      ? Theme.of(context).colorScheme.primary
-                      : topBarColor,
+              color: state.sleepTimer != null
+                  ? Theme.of(context).colorScheme.primary
+                  : topBarColor,
             ),
             onSelected: (value) {
               switch (value) {
@@ -478,22 +518,20 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
       decoration: BoxDecoration(
         borderRadius: AppRadius.xlAll,
         color: theme.colorScheme.surfaceContainerHighest,
-        boxShadow:
-            glowColor != null
-                ? AppEffects.primaryGlow(glowColor)
-                : AppEffects.softGlow(theme.colorScheme.onSurface),
+        boxShadow: glowColor != null
+            ? AppEffects.primaryGlow(glowColor)
+            : AppEffects.softGlow(theme.colorScheme.onSurface),
       ),
       clipBehavior: Clip.antiAlias,
-      child:
-          coverUrl != null
-              ? ExcludeSemantics(
-                child: Image.network(
-                  UrlHelper.buildCoverUrl(coverUrl),
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => _buildPlaceholder(theme, size),
-                ),
-              )
-              : _buildPlaceholder(theme, size),
+      child: coverUrl != null
+          ? ExcludeSemantics(
+              child: Image.network(
+                UrlHelper.buildCoverUrl(coverUrl),
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => _buildPlaceholder(theme, size),
+              ),
+            )
+          : _buildPlaceholder(theme, size),
     );
   }
 
