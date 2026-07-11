@@ -1,0 +1,90 @@
+name: Apply TV round one
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    if: github.event.pull_request.head.ref == 'tv-first-round'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout TV branch
+        uses: actions/checkout@v4
+        with:
+          ref: tv-first-round
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Apply TV round-one patch
+        run: python tool/apply_tv_round1.py
+
+      - name: Format changed Dart files
+        run: |
+          dart format \
+            lib/config/app_config.dart \
+            lib/core/theme/responsive.dart \
+            lib/shared/widgets/tv_focusable.dart \
+            lib/features/library/presentation/widgets/song_list_tile.dart \
+            lib/features/playlist/presentation/widgets/playlist_card.dart \
+            lib/features/playlist/presentation/widgets/playlist_list_item.dart \
+            lib/features/playlist/presentation/playlists_page.dart \
+            lib/features/playlist/presentation/playlist_detail_page.dart \
+            lib/shared/layouts/adaptive_scaffold.dart \
+            lib/shared/layouts/shell_layout.dart
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run theme tests
+        run: flutter test test/app_theme_pack_test.dart
+
+      - name: Build Android release APKs
+        run: flutter build apk --release --split-per-abi
+
+      - name: Commit applied TV changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            lib/config/app_config.dart \
+            lib/core/theme/responsive.dart \
+            lib/shared/widgets/tv_focusable.dart \
+            lib/features/library/presentation/widgets/song_list_tile.dart \
+            lib/features/playlist/presentation/widgets/playlist_card.dart \
+            lib/features/playlist/presentation/widgets/playlist_list_item.dart \
+            lib/features/playlist/presentation/playlists_page.dart \
+            lib/features/playlist/presentation/playlist_detail_page.dart \
+            lib/shared/layouts/adaptive_scaffold.dart \
+            lib/shared/layouts/shell_layout.dart \
+            android/app/src/main/AndroidManifest.xml \
+            android/app/src/main/res/drawable-nodpi/tv_banner.png
+          if git diff --cached --quiet; then
+            echo "No TV changes to commit"
+          else
+            git commit -m "feat(tv): complete first-round TV usability improvements"
+            git push origin HEAD:tv-first-round
+          fi
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-tv-round1-apks
+          path: build/app/outputs/flutter-apk/*-release.apk
+          retention-days: 30
