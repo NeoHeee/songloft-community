@@ -32,6 +32,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Correct third-round patch helper
+        run: python tool/fix_tv_round3_helper.py
+
       - name: Apply TV round-three patch
         id: apply_patch
         shell: bash
