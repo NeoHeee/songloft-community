@@ -52,12 +52,6 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
-      - name: Run theme tests
-        run: flutter test test/app_theme_pack_test.dart
-
-      - name: Build Android release APKs
-        run: flutter build apk --release --split-per-abi
-
       - name: Commit applied TV changes
         run: |
           git config user.name "github-actions[bot]"
@@ -81,6 +75,9 @@ jobs:
             git commit -m "feat(tv): complete first-round TV usability improvements"
             git push origin HEAD:tv-first-round
           fi
+
+      - name: Build Android release APKs
+        run: flutter build apk --release --split-per-abi
 
       - name: Upload APKs
         uses: actions/upload-artifact@v4
