@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/formatters.dart';
@@ -11,7 +12,7 @@ import 'providers/player_provider.dart';
 
 /// 播放队列底部弹窗
 /// 以浮层形式展示当前播放队列中的所有歌曲
-class QueueBottomSheet extends ConsumerWidget {
+class QueueBottomSheet extends ConsumerStatefulWidget {
   const QueueBottomSheet({super.key});
 
   /// 显示播放队列底部弹窗
@@ -26,7 +27,17 @@ class QueueBottomSheet extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<QueueBottomSheet> createState() => _QueueBottomSheetState();
+}
+
+class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> {
+  static const double _estimatedItemExtent = 64;
+
+  int? _lastAutoScrolledIndex;
+  bool _scrollScheduled = false;
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(playerStateProvider);
     final notifier = ref.read(playerStateProvider.notifier);
     final theme = Theme.of(context);
@@ -67,7 +78,6 @@ class QueueBottomSheet extends ConsumerWidget {
                         ? _buildEmptyState(context, colorScheme, theme)
                         : _buildQueueList(
                           context,
-                          ref,
                           state,
                           notifier,
                           scrollController,
@@ -98,7 +108,7 @@ class QueueBottomSheet extends ConsumerWidget {
   /// 构建标题栏
   Widget _buildHeader(
     BuildContext context,
-    dynamic state,
+    PlayerState state,
     PlayerNotifier notifier,
     ThemeData theme,
     ColorScheme colorScheme,
@@ -108,33 +118,50 @@ class QueueBottomSheet extends ConsumerWidget {
       child: Row(
         children: [
           const SizedBox(width: 8),
-          // 标题和歌曲数量
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '播放队列',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      '播放队列',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${state.playlist.length}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${state.playlist.length}',
+                const SizedBox(height: 2),
+                Text(
+                  _buildQueueSummary(state),
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onPrimaryContainer,
+                    color: colorScheme.onSurfaceVariant,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const Spacer(),
           // 清空按钮
           if (state.playlist.isNotEmpty)
             IconButton(
@@ -190,18 +217,22 @@ class QueueBottomSheet extends ConsumerWidget {
   /// 构建播放队列列表
   Widget _buildQueueList(
     BuildContext context,
-    WidgetRef ref,
-    dynamic state,
+    PlayerState state,
     PlayerNotifier notifier,
     ScrollController scrollController,
   ) {
+    _scheduleCurrentSongScroll(scrollController, state.currentIndex);
+
     return ReorderableListView.builder(
       scrollController: scrollController,
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).padding.bottom + 16,
       ),
       itemCount: state.playlist.length,
-      onReorder: notifier.reorderPlaylist,
+      onReorder: (oldIndex, newIndex) {
+        HapticFeedback.mediumImpact();
+        notifier.reorderPlaylist(oldIndex, newIndex);
+      },
       buildDefaultDragHandles: false,
       itemBuilder: (context, index) {
         final song = state.playlist[index];
@@ -221,6 +252,53 @@ class QueueBottomSheet extends ConsumerWidget {
     );
   }
 
+  String _buildQueueSummary(PlayerState state) {
+    final totalSeconds = state.playlist.fold<double>(
+      0,
+      (sum, song) => sum + song.duration,
+    );
+    final durationLabel =
+        totalSeconds > 0 ? Formatters.formatDuration(totalSeconds) : '--:--';
+    final modeLabel = switch (state.playMode) {
+      PlayMode.order => '顺序播放',
+      PlayMode.loop => '列表循环',
+      PlayMode.single => '单曲循环',
+      PlayMode.random => '随机播放 · 按当前队列展示',
+      PlayMode.singlePlay => '播完停止',
+    };
+    return '$modeLabel · 约 $durationLabel';
+  }
+
+  void _scheduleCurrentSongScroll(
+    ScrollController scrollController,
+    int currentIndex,
+  ) {
+    if (currentIndex < 0 ||
+        _lastAutoScrolledIndex == currentIndex ||
+        _scrollScheduled) {
+      return;
+    }
+
+    _scrollScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollScheduled = false;
+      if (!mounted || !scrollController.hasClients) return;
+
+      _lastAutoScrolledIndex = currentIndex;
+      final position = scrollController.position;
+      final target =
+          currentIndex * _estimatedItemExtent -
+          position.viewportDimension * 0.35;
+      final clampedTarget =
+          target.clamp(0.0, position.maxScrollExtent).toDouble();
+      scrollController.animateTo(
+        clampedTarget,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
   /// 移除歌曲
   void _removeSong(
     BuildContext context,
@@ -228,6 +306,7 @@ class QueueBottomSheet extends ConsumerWidget {
     int index,
     Song song,
   ) {
+    HapticFeedback.lightImpact();
     notifier.removeFromPlaylist(index);
     ResponsiveSnackBar.show(
       context,
