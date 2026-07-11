@@ -20,8 +20,29 @@ import 'lyrics_view.dart';
 /// - 加粗进度条
 /// - 大按钮（最小 80x80），支持 D-Pad 焦点导航
 /// - 渐变背景
+/// - 媒体播放键：播放/暂停、切歌和音量控制
 class TvPlayer extends ConsumerStatefulWidget {
   const TvPlayer({super.key});
+
+  static Future<void> show(BuildContext context) async {
+    final container = ProviderScope.containerOf(context, listen: false);
+    final notifier = container.read(playerStateProvider.notifier);
+    final state = container.read(playerStateProvider);
+    if (!state.showFullPlayer) notifier.toggleFullPlayer();
+
+    await Navigator.of(context, rootNavigator: true).push(
+      PageRouteBuilder<void>(
+        opaque: true,
+        pageBuilder: (_, _, _) => const TvPlayer(),
+        transitionsBuilder:
+            (_, animation, _, child) =>
+                FadeTransition(opacity: animation, child: child),
+        transitionDuration: const Duration(milliseconds: 180),
+        reverseTransitionDuration: const Duration(milliseconds: 140),
+      ),
+    );
+    notifier.closeFullPlayer();
+  }
 
   @override
   ConsumerState<TvPlayer> createState() => _TvPlayerState();
@@ -29,11 +50,52 @@ class TvPlayer extends ConsumerStatefulWidget {
 
 class _TvPlayerState extends ConsumerState<TvPlayer> {
   final _playlistButtonFocusNode = FocusNode();
+  final _playModeButtonFocusNode = FocusNode();
 
   @override
   void dispose() {
     _playlistButtonFocusNode.dispose();
+    _playModeButtonFocusNode.dispose();
     super.dispose();
+  }
+
+  KeyEventResult _handleRemoteKey(
+    KeyEvent event,
+    PlayerState state,
+    PlayerNotifier notifier,
+  ) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    final key = event.logicalKey;
+
+    if (key == LogicalKeyboardKey.mediaPlayPause) {
+      notifier.togglePlay();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.mediaPlay && !state.isPlaying) {
+      notifier.togglePlay();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.mediaPause && state.isPlaying) {
+      notifier.togglePlay();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.mediaTrackNext && state.hasNext) {
+      notifier.playNext();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.mediaTrackPrevious && state.hasPrev) {
+      notifier.playPrev();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.audioVolumeDown) {
+      notifier.setVolume((state.volume - 10).clamp(0.0, 100.0));
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.audioVolumeUp) {
+      notifier.setVolume((state.volume + 10).clamp(0.0, 100.0));
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
   @override
@@ -51,71 +113,75 @@ class _TvPlayerState extends ConsumerState<TvPlayer> {
       palette =
           ref.watch(playerBackgroundPaletteProvider(state.currentSong!)).value;
     }
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          // 渐变背景
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              (palette?.darkMutedColor ?? colorScheme.primaryContainer)
-                  .withValues(alpha: 0.4),
-              colorScheme.surface,
-              colorScheme.surface,
-            ],
-            stops: const [0.0, 0.5, 1.0],
+    return Focus(
+      canRequestFocus: false,
+      onKeyEvent: (_, event) => _handleRemoteKey(event, state, notifier),
+      child: Scaffold(
+        body: Container(
+          decoration: BoxDecoration(
+            // 渐变背景
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                (palette?.darkMutedColor ?? colorScheme.primaryContainer)
+                    .withValues(alpha: 0.4),
+                colorScheme.surface,
+                colorScheme.surface,
+              ],
+              stops: const [0.0, 0.5, 1.0],
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: FocusTraversalGroup(
-            child: Column(
-              children: [
-                // 顶部工具栏
-                _buildTopBar(context, notifier),
-                // 主内容：左右分栏
-                Expanded(
-                  child: Row(
-                    children: [
-                      // 左侧：封面 + 歌曲信息
-                      Expanded(
-                        flex: 4,
-                        child: Center(
-                          child: SingleChildScrollView(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _buildCoverArt(context, coverUrl),
-                                const SizedBox(height: TvTheme.spacingLarge),
-                                _buildSongInfo(context, state),
-                              ],
+          child: SafeArea(
+            child: FocusTraversalGroup(
+              child: Column(
+                children: [
+                  // 顶部工具栏
+                  _buildTopBar(context, notifier),
+                  // 主内容：左右分栏
+                  Expanded(
+                    child: Row(
+                      children: [
+                        // 左侧：封面 + 歌曲信息
+                        Expanded(
+                          flex: 4,
+                          child: Center(
+                            child: SingleChildScrollView(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  _buildCoverArt(context, coverUrl),
+                                  const SizedBox(height: TvTheme.spacingLarge),
+                                  _buildSongInfo(context, state),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      // 右侧：歌词
-                      Expanded(
-                        flex: 5,
-                        child: _buildLyricsArea(context, state, notifier),
-                      ),
-                    ],
+                        // 右侧：歌词
+                        Expanded(
+                          flex: 5,
+                          child: _buildLyricsArea(context, state, notifier),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                // 进度条
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: TvTheme.contentPadding,
+                  // 进度条
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: TvTheme.contentPadding,
+                    ),
+                    child: _TvFocusableProgressBar(
+                      state: state,
+                      notifier: notifier,
+                    ),
                   ),
-                  child: _TvFocusableProgressBar(
-                    state: state,
-                    notifier: notifier,
-                  ),
-                ),
-                const SizedBox(height: TvTheme.spacingMedium),
-                // 播放控制 + 附加控制（合并为一行）
-                _buildControlsRow(context, state, notifier),
-                const SizedBox(height: TvTheme.spacingMedium),
-              ],
+                  const SizedBox(height: TvTheme.spacingMedium),
+                  // 播放控制 + 附加控制（合并为一行）
+                  _buildControlsRow(context, state, notifier),
+                  const SizedBox(height: TvTheme.spacingMedium),
+                ],
+              ),
             ),
           ),
         ),
@@ -126,9 +192,12 @@ class _TvPlayerState extends ConsumerState<TvPlayer> {
   /// 顶部工具栏
   Widget _buildTopBar(BuildContext context, PlayerNotifier notifier) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
+      padding: EdgeInsets.symmetric(
         horizontal: TvTheme.contentPadding,
-        vertical: TvTheme.spacingMedium,
+        vertical:
+            MediaQuery.sizeOf(context).height < 780
+                ? TvTheme.spacingSmall
+                : TvTheme.spacingMedium,
       ),
       child: Row(
         children: [
@@ -164,9 +233,12 @@ class _TvPlayerState extends ConsumerState<TvPlayer> {
   Widget _buildCoverArt(BuildContext context, String? coverUrl) {
     final theme = Theme.of(context);
 
+    final compact = MediaQuery.sizeOf(context).height < 780;
+    final coverSize = compact ? 250.0 : 360.0;
+
     return Container(
-      width: 360,
-      height: 360,
+      width: coverSize,
+      height: coverSize,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(TvTheme.cardRadius),
         color: theme.colorScheme.surfaceContainerHighest,
@@ -272,107 +344,111 @@ class _TvPlayerState extends ConsumerState<TvPlayer> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: TvTheme.contentPadding),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // 播放模式
-          Builder(
-            builder:
-                (buttonContext) => _TvPlayerControlButton(
-                  icon: _getPlayModeIcon(state.playMode),
-                  label: '播放模式',
-                  onPressed:
-                      () => _showPlayModeOverlay(
-                        buttonContext,
-                        notifier,
-                        state,
-                        theme,
-                      ),
-                  size: 64,
-                  iconSize: 28,
-                  iconColor:
-                      state.playMode != PlayMode.order
-                          ? theme.colorScheme.primary
-                          : null,
-                ),
-          ),
-          const SizedBox(width: TvTheme.spacingMedium),
-          // 音量减
-          _TvPlayerControlButton(
-            icon: Icons.volume_down_rounded,
-            label: '音量-',
-            onPressed: () {
-              final newVolume = (state.volume - 10).clamp(0.0, 100.0);
-              notifier.setVolume(newVolume);
-            },
-            size: 64,
-            iconSize: 28,
-          ),
-          const SizedBox(width: TvTheme.spacingSmall),
-          // 音量显示
-          SizedBox(
-            width: 60,
-            child: Text(
-              '${state.volume.round()}%',
-              style: TvTheme.bodyStyle(context),
-              textAlign: TextAlign.center,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // 播放模式
+            Builder(
+              builder:
+                  (buttonContext) => _TvPlayerControlButton(
+                    icon: _getPlayModeIcon(state.playMode),
+                    focusNode: _playModeButtonFocusNode,
+                    label: '播放模式',
+                    onPressed:
+                        () => _showPlayModeOverlay(
+                          buttonContext,
+                          notifier,
+                          state,
+                          theme,
+                        ),
+                    size: 64,
+                    iconSize: 28,
+                    iconColor:
+                        state.playMode != PlayMode.order
+                            ? theme.colorScheme.primary
+                            : null,
+                  ),
             ),
-          ),
-          const SizedBox(width: TvTheme.spacingSmall),
-          // 音量加
-          _TvPlayerControlButton(
-            icon: Icons.volume_up_rounded,
-            label: '音量+',
-            onPressed: () {
-              final newVolume = (state.volume + 10).clamp(0.0, 100.0);
-              notifier.setVolume(newVolume);
-            },
-            size: 64,
-            iconSize: 28,
-          ),
-          const SizedBox(width: TvTheme.spacingLarge),
-          // 上一首
-          _TvPlayerControlButton(
-            icon: Icons.skip_previous_rounded,
-            label: '上一首',
-            onPressed: state.hasPrev ? notifier.playPrev : null,
-            size: TvTheme.minButtonSize,
-            iconSize: 40,
-            autofocus: true,
-          ),
-          const SizedBox(width: TvTheme.spacingMedium),
-          // 播放/暂停（主按钮）
-          _buildPlayPauseButton(context, state, notifier),
-          const SizedBox(width: TvTheme.spacingMedium),
-          // 下一首
-          _TvPlayerControlButton(
-            icon: Icons.skip_next_rounded,
-            label: '下一首',
-            onPressed: state.hasNext ? notifier.playNext : null,
-            size: TvTheme.minButtonSize,
-            iconSize: 40,
-          ),
-          const SizedBox(width: TvTheme.spacingLarge),
-          // 播放列表
-          _TvPlayerControlButton(
-            icon: Icons.queue_music_rounded,
-            label: '播放列表',
-            focusNode: _playlistButtonFocusNode,
-            onPressed: () {
-              final wasOpen = state.showPlaylistDrawer;
-              notifier.togglePlaylistDrawer();
-              if (wasOpen) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _playlistButtonFocusNode.requestFocus();
-                });
-              }
-            },
-            size: 64,
-            iconSize: 28,
-            iconColor:
-                state.showPlaylistDrawer ? theme.colorScheme.primary : null,
-          ),
-        ],
+            const SizedBox(width: TvTheme.spacingMedium),
+            // 音量减
+            _TvPlayerControlButton(
+              icon: Icons.volume_down_rounded,
+              label: '音量-',
+              onPressed: () {
+                final newVolume = (state.volume - 10).clamp(0.0, 100.0);
+                notifier.setVolume(newVolume);
+              },
+              size: 64,
+              iconSize: 28,
+            ),
+            const SizedBox(width: TvTheme.spacingSmall),
+            // 音量显示
+            SizedBox(
+              width: 60,
+              child: Text(
+                '${state.volume.round()}%',
+                style: TvTheme.bodyStyle(context),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(width: TvTheme.spacingSmall),
+            // 音量加
+            _TvPlayerControlButton(
+              icon: Icons.volume_up_rounded,
+              label: '音量+',
+              onPressed: () {
+                final newVolume = (state.volume + 10).clamp(0.0, 100.0);
+                notifier.setVolume(newVolume);
+              },
+              size: 64,
+              iconSize: 28,
+            ),
+            const SizedBox(width: TvTheme.spacingLarge),
+            // 上一首
+            _TvPlayerControlButton(
+              icon: Icons.skip_previous_rounded,
+              label: '上一首',
+              onPressed: state.hasPrev ? notifier.playPrev : null,
+              size: TvTheme.minButtonSize,
+              iconSize: 40,
+              autofocus: true,
+            ),
+            const SizedBox(width: TvTheme.spacingMedium),
+            // 播放/暂停（主按钮）
+            _buildPlayPauseButton(context, state, notifier),
+            const SizedBox(width: TvTheme.spacingMedium),
+            // 下一首
+            _TvPlayerControlButton(
+              icon: Icons.skip_next_rounded,
+              label: '下一首',
+              onPressed: state.hasNext ? notifier.playNext : null,
+              size: TvTheme.minButtonSize,
+              iconSize: 40,
+            ),
+            const SizedBox(width: TvTheme.spacingLarge),
+            // 播放列表
+            _TvPlayerControlButton(
+              icon: Icons.queue_music_rounded,
+              label: '播放列表',
+              focusNode: _playlistButtonFocusNode,
+              onPressed: () {
+                final wasOpen = state.showPlaylistDrawer;
+                notifier.togglePlaylistDrawer();
+                if (wasOpen) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _playlistButtonFocusNode.requestFocus();
+                  });
+                }
+              },
+              size: 64,
+              iconSize: 28,
+              iconColor:
+                  state.showPlaylistDrawer ? theme.colorScheme.primary : null,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -466,15 +542,25 @@ class _TvPlayerState extends ConsumerState<TvPlayer> {
     final size = button.size;
 
     late OverlayEntry overlayEntry;
+    var removed = false;
+    void closeOverlay() {
+      if (removed) return;
+      removed = true;
+      overlayEntry.remove();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _playModeButtonFocusNode.requestFocus();
+      });
+    }
+
     overlayEntry = OverlayEntry(
       builder:
           (context) => _TvPlayModeOverlayPanel(
             playMode: state.playMode,
             onPlayModeChanged: (mode) {
               notifier.setPlayMode(mode);
-              overlayEntry.remove();
+              closeOverlay();
             },
-            onDismiss: () => overlayEntry.remove(),
+            onDismiss: closeOverlay,
             anchorPosition: position,
             anchorSize: size,
             getIcon: _getPlayModeIcon,
@@ -900,84 +986,97 @@ class _TvPlayModeOverlayPanel extends StatelessWidget {
       top = anchorPosition.dy + anchorSize.height + 8;
     }
 
-    return Stack(
-      children: [
-        // 透明背景层，点击关闭
-        Positioned.fill(
-          child: Semantics(
-            label: '关闭',
-            child: GestureDetector(
-              onTap: onDismiss,
-              behavior: HitTestBehavior.opaque,
-              child: Container(color: Colors.transparent),
+    return Focus(
+      canRequestFocus: false,
+      onKeyEvent: (_, event) {
+        if (event is KeyDownEvent &&
+            (event.logicalKey == LogicalKeyboardKey.escape ||
+                event.logicalKey == LogicalKeyboardKey.goBack)) {
+          onDismiss();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: Stack(
+        children: [
+          // 透明背景层，点击关闭
+          Positioned.fill(
+            child: Semantics(
+              label: '关闭',
+              child: GestureDetector(
+                onTap: onDismiss,
+                behavior: HitTestBehavior.opaque,
+                child: Container(color: Colors.transparent),
+              ),
             ),
           ),
-        ),
-        // 播放模式面板
-        Positioned(
-          left: left,
-          top: top,
-          child: Material(
-            elevation: 8,
-            borderRadius: BorderRadius.circular(12),
-            color: theme.colorScheme.surfaceContainerHigh,
-            child: Container(
-              width: panelWidth,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: FocusTraversalGroup(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (final mode in PlayMode.values)
-                      Builder(
-                        builder:
-                            (itemContext) => TvFocusable(
-                              onSelect: () => onPlayModeChanged(mode),
-                              borderRadius: 8,
-                              child: Container(
-                                width: double.infinity,
-                                height: itemHeight,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      getIcon(mode),
-                                      size: iconSize,
-                                      color:
-                                          playMode == mode
-                                              ? theme.colorScheme.primary
-                                              : theme.colorScheme.onSurface,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      getTooltip(mode),
-                                      style: TextStyle(
-                                        fontSize: fontSize,
+          // 播放模式面板
+          Positioned(
+            left: left,
+            top: top,
+            child: Material(
+              elevation: 8,
+              borderRadius: BorderRadius.circular(12),
+              color: theme.colorScheme.surfaceContainerHigh,
+              child: Container(
+                width: panelWidth,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: FocusTraversalGroup(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final mode in PlayMode.values)
+                        Builder(
+                          builder:
+                              (itemContext) => TvFocusable(
+                                autofocus: mode == playMode,
+                                onSelect: () => onPlayModeChanged(mode),
+                                borderRadius: 8,
+                                child: Container(
+                                  width: double.infinity,
+                                  height: itemHeight,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        getIcon(mode),
+                                        size: iconSize,
                                         color:
                                             playMode == mode
                                                 ? theme.colorScheme.primary
                                                 : theme.colorScheme.onSurface,
-                                        fontWeight:
-                                            playMode == mode
-                                                ? FontWeight.w500
-                                                : FontWeight.normal,
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        getTooltip(mode),
+                                        style: TextStyle(
+                                          fontSize: fontSize,
+                                          color:
+                                              playMode == mode
+                                                  ? theme.colorScheme.primary
+                                                  : theme.colorScheme.onSurface,
+                                          fontWeight:
+                                              playMode == mode
+                                                  ? FontWeight.w500
+                                                  : FontWeight.normal,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                      ),
-                  ],
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -1017,53 +1116,67 @@ class TvMiniPlayer extends ConsumerWidget {
         child: FocusTraversalGroup(
           child: Row(
             children: [
-              // 封面
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: theme.colorScheme.surfaceContainerHighest,
-                ),
-                clipBehavior: Clip.antiAlias,
-                child:
-                    coverUrl != null
-                        ? ExcludeSemantics(
-                          child: Image.network(
-                            UrlHelper.buildCoverUrl(coverUrl),
-                            fit: BoxFit.cover,
+              // 点击歌曲信息进入 TV 全屏播放器
+              Expanded(
+                child: TvFocusable(
+                  onSelect: () => TvPlayer.show(context),
+                  focusedScale: 1.015,
+                  borderRadius: 14,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: theme.colorScheme.surfaceContainerHighest,
                           ),
-                        )
-                        : Icon(
-                          Icons.music_note_rounded,
-                          color: theme.colorScheme.onSurfaceVariant,
+                          clipBehavior: Clip.antiAlias,
+                          child:
+                              coverUrl != null
+                                  ? ExcludeSemantics(
+                                    child: Image.network(
+                                      UrlHelper.buildCoverUrl(coverUrl),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                  : Icon(
+                                    Icons.music_note_rounded,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
                         ),
+                        const SizedBox(width: TvTheme.spacingMedium),
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                song.title,
+                                style: TvTheme.bodyStyle(
+                                  context,
+                                ).copyWith(fontWeight: FontWeight.w500),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${song.artist ?? '未知艺术家'} · 按确认键展开播放器',
+                                style: TvTheme.captionStyle(context),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(width: TvTheme.spacingMedium),
-              // 歌曲信息
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      song.title,
-                      style: TvTheme.bodyStyle(
-                        context,
-                      ).copyWith(fontWeight: FontWeight.w500),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      song.artist ?? '未知艺术家',
-                      style: TvTheme.captionStyle(context),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
               // 播放控制
               Row(
                 mainAxisSize: MainAxisSize.min,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/responsive.dart';
+import '../../../../core/theme/tv_theme.dart';
+import '../../../../shared/widgets/tv_focusable.dart';
 
 class SettingsCategory {
   final IconData icon;
@@ -33,10 +35,87 @@ class SettingsMasterDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (context.isWideScreen && !context.isTv && !context.isAuto) {
+    if (context.isTv) {
+      return _buildTvLayout(context);
+    }
+    if (context.isWideScreen && !context.isAuto) {
       return _buildWideLayout(context);
     }
     return _buildMobileLayout(context);
+  }
+
+  Widget _buildTvLayout(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(
+            TvTheme.contentPadding,
+            TvTheme.spacingLarge,
+            TvTheme.contentPadding,
+            TvTheme.spacingMedium,
+          ),
+          sliver: SliverToBoxAdapter(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1180),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (header != null) ...[
+                    FocusTraversalGroup(child: header!),
+                    const SizedBox(height: TvTheme.spacingLarge),
+                  ],
+                  Text(
+                    '设置分类',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '使用方向键选择分类，按确认键进入',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(
+            TvTheme.contentPadding,
+            0,
+            TvTheme.contentPadding,
+            120,
+          ),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 18,
+              crossAxisSpacing: 18,
+              childAspectRatio: 2.45,
+            ),
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final category = categories[index];
+              return TvFocusable(
+                autofocus: index == selectedIndex,
+                onSelect: () => onCategorySelected(index),
+                focusedScale: 1.025,
+                borderRadius: 22,
+                child: _TvCategoryCard(
+                  category: category,
+                  selected: index == selectedIndex,
+                ),
+              );
+            }, childCount: categories.length),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildMobileLayout(BuildContext context) {
@@ -178,6 +257,85 @@ class SettingsMasterDetail extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _TvCategoryCard extends StatelessWidget {
+  final SettingsCategory category;
+  final bool selected;
+
+  const _TvCategoryCard({required this.category, required this.selected});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return AnimatedContainer(
+      duration: TvTheme.focusAnimationDuration,
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+      decoration: BoxDecoration(
+        color:
+            selected
+                ? colorScheme.primaryContainer.withValues(alpha: 0.7)
+                : colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color:
+              selected
+                  ? colorScheme.primary.withValues(alpha: 0.45)
+                  : colorScheme.outlineVariant.withValues(alpha: 0.28),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              color:
+                  selected
+                      ? colorScheme.primary.withValues(alpha: 0.16)
+                      : colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Icon(
+              category.icon,
+              size: 30,
+              color:
+                  selected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(width: 18),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  category.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  category.subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right_rounded, color: colorScheme.primary),
+        ],
+      ),
     );
   }
 }
