@@ -33,7 +33,17 @@ abstract final class CoverCache {
         Map<String, String>.from(uri.queryParameters)
           ..remove('access_token')
           ..remove('token');
+    if (queryParameters.isEmpty) return _removeQuery(normalized);
     return uri.replace(queryParameters: queryParameters).toString();
+  }
+
+  static String _removeQuery(String url) {
+    final queryStart = url.indexOf('?');
+    if (queryStart < 0) return url;
+
+    final fragmentStart = url.indexOf('#', queryStart);
+    if (fragmentStart < 0) return url.substring(0, queryStart);
+    return '${url.substring(0, queryStart)}${url.substring(fragmentStart)}';
   }
 
   static CachedNetworkImageProvider? provider(String? coverUrl) {
