@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../config/app_config.dart';
 import '../../features/auth/domain/auth_state.dart';
 import '../../features/auth/presentation/login_page.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
-import '../../config/app_config.dart';
 import '../../features/home/presentation/home_page.dart';
-import '../../features/home/presentation/tv_home_page.dart';
 import '../../features/home/presentation/plugin_webview_page.dart';
+import '../../features/home/presentation/tv_home_page.dart';
+import '../../features/jsplugin/presentation/widgets/plugin_registry.dart';
 import '../../features/library/presentation/library_page.dart';
-import '../../features/playlist/presentation/playlists_page.dart';
 import '../../features/playlist/presentation/playlist_detail_page.dart';
+import '../../features/playlist/presentation/playlists_page.dart';
+import '../../features/settings/presentation/duplicate_check_page.dart';
 import '../../features/settings/presentation/servers_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
 import '../../features/settings/presentation/tab_config_page.dart';
-import '../../features/jsplugin/presentation/widgets/plugin_registry.dart';
-import '../../features/settings/presentation/duplicate_check_page.dart';
 import '../../shared/layouts/shell_layout.dart';
 
 /// 路由路径常量
@@ -48,12 +48,21 @@ class _AuthChangeNotifier extends ChangeNotifier {
 /// GoRouter Provider
 final routerProvider = Provider<GoRouter>((ref) {
   final authChangeNotifier = _AuthChangeNotifier(ref);
+  final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
+  final homeNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'home');
+  final libraryNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'library');
+  final playlistsNavigatorKey = GlobalKey<NavigatorState>(
+    debugLabel: 'playlists',
+  );
+  final pluginsNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'plugins');
+  final settingsNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'settings');
 
   ref.onDispose(() {
     authChangeNotifier.dispose();
   });
 
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: AppRoutes.home,
     debugLogDiagnostics: true,
     refreshListenable: authChangeNotifier,
@@ -80,19 +89,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         return AppRoutes.home;
       }
 
-      // 其他情况不做跳转
       return null;
     },
     routes: [
-      // 登录页面（独立路由，不使用 ShellRoute）
+      // 登录页面（独立路由，不使用主导航 Shell）
       GoRoute(
         path: AppRoutes.login,
+        parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => const LoginPage(),
       ),
 
       // 插件 WebView 页面（独立路由，全屏显示，不显示底部导航）
       GoRoute(
         path: AppRoutes.plugin,
+        parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) {
           final url = state.uri.queryParameters['url'] ?? '';
           final name = state.uri.queryParameters['name'] ?? '';
@@ -100,91 +110,114 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // 主应用路由（使用 ShellRoute 包含导航和播放器）
-      ShellRoute(
-        builder: (context, state, child) => ShellLayout(child: child),
-        routes: [
-          // 首页
-          GoRoute(
-            path: AppRoutes.home,
-            pageBuilder:
-                (context, state) => NoTransitionPage(
-                  child:
-                      AppConfig.isTvMode
-                          ? const TvHomePage()
-                          : const HomePage(),
-                ),
+      // 每个一级栏目拥有独立 Navigator，切换标签不会销毁页面和子路由栈。
+      StatefulShellRoute.indexedStack(
+        builder:
+            (context, state, navigationShell) =>
+                ShellLayout(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            navigatorKey: homeNavigatorKey,
+            initialLocation: AppRoutes.home,
+            routes: [
+              GoRoute(
+                path: AppRoutes.home,
+                pageBuilder:
+                    (context, state) => NoTransitionPage(
+                      key: state.pageKey,
+                      child:
+                          AppConfig.isTvMode
+                              ? const TvHomePage()
+                              : const HomePage(),
+                    ),
+              ),
+            ],
           ),
-
-          // 歌曲库
-          GoRoute(
-            path: AppRoutes.library,
-            pageBuilder:
-                (context, state) =>
-                    const NoTransitionPage(child: LibraryPage()),
+          StatefulShellBranch(
+            navigatorKey: libraryNavigatorKey,
+            initialLocation: AppRoutes.library,
+            routes: [
+              GoRoute(
+                path: AppRoutes.library,
+                pageBuilder:
+                    (context, state) => NoTransitionPage(
+                      key: state.pageKey,
+                      child: const LibraryPage(),
+                    ),
+              ),
+            ],
           ),
-
-          // 歌单列表
-          GoRoute(
-            path: AppRoutes.playlists,
-            pageBuilder:
-                (context, state) =>
-                    const NoTransitionPage(child: PlaylistsPage()),
+          StatefulShellBranch(
+            navigatorKey: playlistsNavigatorKey,
+            initialLocation: AppRoutes.playlists,
+            routes: [
+              GoRoute(
+                path: AppRoutes.playlists,
+                pageBuilder:
+                    (context, state) => NoTransitionPage(
+                      key: state.pageKey,
+                      child: const PlaylistsPage(),
+                    ),
+                routes: [
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) {
+                      final id = state.pathParameters['id'] ?? '';
+                      return PlaylistDetailPage(playlistId: id);
+                    },
+                  ),
+                ],
+              ),
+            ],
           ),
-
-          // 歌单详情
-          GoRoute(
-            path: AppRoutes.playlistDetail,
-            builder: (context, state) {
-              final id = state.pathParameters['id'] ?? '';
-              return PlaylistDetailPage(playlistId: id);
-            },
+          StatefulShellBranch(
+            navigatorKey: pluginsNavigatorKey,
+            initialLocation: '/plugin-tab/_empty',
+            routes: [
+              // 实际插件页面由 ShellLayout 按 entryPath 保活并渲染。
+              GoRoute(
+                path: AppRoutes.pluginTab,
+                pageBuilder: (context, state) {
+                  final entryPath = state.pathParameters['entryPath'] ?? '';
+                  return NoTransitionPage(
+                    key: ValueKey('plugin-tab-$entryPath'),
+                    child: const SizedBox.shrink(),
+                  );
+                },
+              ),
+            ],
           ),
-
-          // 设置
-          GoRoute(
-            path: AppRoutes.settings,
-            pageBuilder:
-                (context, state) =>
-                    const NoTransitionPage(child: SettingsPage()),
-          ),
-
-          // 服务器列表管理
-          GoRoute(
-            path: AppRoutes.servers,
-            pageBuilder:
-                (context, state) =>
-                    const NoTransitionPage(child: ServersPage()),
-          ),
-
-          // 菜单设置
-          GoRoute(
-            path: AppRoutes.tabConfig,
-            builder: (context, state) => const TabConfigPage(),
-          ),
-
-          // 重复歌曲检测
-          GoRoute(
-            path: AppRoutes.duplicateCheck,
-            builder: (context, state) => const DuplicateCheckPage(),
-          ),
-
-          // 插件商店
-          GoRoute(
-            path: AppRoutes.pluginRegistry,
-            builder: (context, state) => const PluginRegistryPage(),
-          ),
-
-          // 插件 Tab 页面（实际渲染由 ShellLayout 管理，此处仅作路由占位）
-          GoRoute(
-            path: AppRoutes.pluginTab,
-            pageBuilder: (context, state) {
-              final entryPath = state.pathParameters['entryPath'] ?? '';
-              return NoTransitionPage(
-                key: ValueKey('plugin-tab-$entryPath'),
-                child: const SizedBox.shrink(),
-              );
-            },
+          StatefulShellBranch(
+            navigatorKey: settingsNavigatorKey,
+            initialLocation: AppRoutes.settings,
+            routes: [
+              GoRoute(
+                path: AppRoutes.settings,
+                pageBuilder:
+                    (context, state) => NoTransitionPage(
+                      key: state.pageKey,
+                      child: const SettingsPage(),
+                    ),
+                routes: [
+                  GoRoute(
+                    path: 'servers',
+                    builder: (context, state) => const ServersPage(),
+                  ),
+                  GoRoute(
+                    path: 'tab-config',
+                    builder: (context, state) => const TabConfigPage(),
+                  ),
+                  GoRoute(
+                    path: 'duplicate-check',
+                    builder: (context, state) => const DuplicateCheckPage(),
+                  ),
+                  GoRoute(
+                    path: 'plugin-registry',
+                    builder: (context, state) => const PluginRegistryPage(),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),
