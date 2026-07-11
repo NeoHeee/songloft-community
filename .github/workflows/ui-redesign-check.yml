@@ -56,6 +56,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Verify changed Dart file hashes v3
+        id: format_check
         shell: bash
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
@@ -74,6 +75,8 @@ jobs:
 
           if [[ ${#dart_files[@]} -eq 0 ]]; then
             echo "No changed Dart files to format-check."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            : > /tmp/dart-format.patch
             exit 0
           fi
 
@@ -81,7 +84,24 @@ jobs:
           sha256sum "${dart_files[@]}" > /tmp/dart-before.sha256
           dart format "${dart_files[@]}"
           sha256sum "${dart_files[@]}" > /tmp/dart-after.sha256
-          diff -u /tmp/dart-before.sha256 /tmp/dart-after.sha256
+          git diff -- "${dart_files[@]}" > /tmp/dart-format.patch
+
+          if diff -u /tmp/dart-before.sha256 /tmp/dart-after.sha256; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Upload formatter patch
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dart-format-patch
+          path: /tmp/dart-format.patch
+          if-no-files-found: error
+          retention-days: 1
+      - name: Fail on unformatted Dart files
+        if: steps.format_check.outputs.changed == 'true'
+        run: exit 1
       - name: Run theme system tests
         run: flutter test test/core/theme
       - name: Analyze
