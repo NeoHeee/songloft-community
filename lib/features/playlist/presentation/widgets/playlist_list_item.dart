@@ -1,7 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../core/utils/url_helper.dart';
+import '../../../../shared/widgets/cover_image.dart';
 import '../../domain/playlist.dart';
 
 /// 新版歌单列表项组件
@@ -268,57 +267,29 @@ class _Cover extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (playlist.coverImageUrl != null)
-            ExcludeSemantics(
-              child: CachedNetworkImage(
-                imageUrl: UrlHelper.buildCoverUrl(playlist.coverImageUrl!),
-                fit: BoxFit.cover,
-                placeholder:
-                    (_, _) =>
-                        _CoverPlaceholder(isRadio: playlist.type == 'radio'),
-                errorWidget:
-                    (_, _, _) =>
-                        _CoverPlaceholder(isRadio: playlist.type == 'radio'),
-              ),
-            )
-          else
-            _CoverPlaceholder(isRadio: playlist.type == 'radio'),
+          CoverImage(
+            coverUrl: playlist.coverImageUrl,
+            size: 64,
+            borderRadius: 17,
+            placeholderIcon:
+                playlist.type == 'radio'
+                    ? Icons.radio_rounded
+                    : Icons.graphic_eq_rounded,
+          ),
           if (isCurrentPlaylist && isPlaying)
-            Container(
-              color: Colors.black.withValues(alpha: 0.45),
-              child: Icon(
-                Icons.equalizer_rounded,
-                size: 27,
-                color: colorScheme.primary,
+            ExcludeSemantics(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.45),
+                ),
+                child: Icon(
+                  Icons.equalizer_rounded,
+                  size: 27,
+                  color: colorScheme.primary,
+                ),
               ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _CoverPlaceholder extends StatelessWidget {
-  final bool isRadio;
-
-  const _CoverPlaceholder({required this.isRadio});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [colorScheme.primaryContainer, colorScheme.tertiaryContainer],
-        ),
-      ),
-      child: Icon(
-        isRadio ? Icons.radio_rounded : Icons.graphic_eq_rounded,
-        size: 30,
-        color: colorScheme.onPrimaryContainer.withValues(alpha: 0.72),
       ),
     );
   }
