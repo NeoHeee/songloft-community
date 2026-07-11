@@ -49,6 +49,9 @@ class TvFocusable extends StatefulWidget {
   /// 获得焦点时自动滚动到可视区域
   final bool scrollIntoView;
 
+  /// 自定义按键处理，优先于默认确认键逻辑
+  final KeyEventResult Function(FocusNode node, KeyEvent event)? onKeyEvent;
+
   const TvFocusable({
     super.key,
     required this.child,
@@ -64,6 +67,7 @@ class TvFocusable extends StatefulWidget {
     this.enabled = true,
     this.onFocusChange,
     this.scrollIntoView = true,
+    this.onKeyEvent,
   });
 
   @override
@@ -101,6 +105,11 @@ class _TvFocusableState extends State<TvFocusable> {
 
   /// 处理按键事件
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    final customResult = widget.onKeyEvent?.call(node, event);
+    if (customResult != null && customResult != KeyEventResult.ignored) {
+      return customResult;
+    }
+
     if (!widget.enabled || widget.onSelect == null) {
       return KeyEventResult.ignored;
     }

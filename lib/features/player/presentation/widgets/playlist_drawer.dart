@@ -29,9 +29,10 @@ class _PlaylistDrawerState extends ConsumerState<PlaylistDrawer> {
   void initState() {
     super.initState();
     final currentIndex = ref.read(playerStateProvider).currentIndex;
-    final initialOffset = currentIndex > 0
-        ? (currentIndex * 76.0 - 120).clamp(0.0, double.infinity).toDouble()
-        : 0.0;
+    final initialOffset =
+        currentIndex > 0
+            ? (currentIndex * 76.0 - 120).clamp(0.0, double.infinity).toDouble()
+            : 0.0;
     _scrollController = ScrollController(initialScrollOffset: initialOffset);
   }
 
@@ -48,11 +49,12 @@ class _PlaylistDrawerState extends ConsumerState<PlaylistDrawer> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isTv = AppConfig.isTvMode;
-    final drawerWidth = isTv
-        ? (MediaQuery.sizeOf(context).width * 0.38)
-            .clamp(420.0, 560.0)
-            .toDouble()
-        : 320.0;
+    final drawerWidth =
+        isTv
+            ? (MediaQuery.sizeOf(context).width * 0.38)
+                .clamp(420.0, 560.0)
+                .toDouble()
+            : 320.0;
 
     return Container(
       width: drawerWidth,
@@ -69,9 +71,10 @@ class _PlaylistDrawerState extends ConsumerState<PlaylistDrawer> {
             _buildHeader(context, state, notifier, theme, colorScheme),
             const Divider(height: 1),
             Expanded(
-              child: state.playlist.isEmpty
-                  ? _buildEmptyState(context, colorScheme, theme)
-                  : _buildQueueList(context, state, notifier),
+              child:
+                  state.playlist.isEmpty
+                      ? _buildEmptyState(context, colorScheme, theme)
+                      : _buildQueueList(context, state, notifier),
             ),
           ],
         ),
@@ -96,7 +99,9 @@ class _PlaylistDrawerState extends ConsumerState<PlaylistDrawer> {
         children: [
           Text(
             '播放队列',
-            style: (isTv ? theme.textTheme.titleLarge : theme.textTheme.titleSmall)
+            style: (isTv
+                    ? theme.textTheme.titleLarge
+                    : theme.textTheme.titleSmall)
                 ?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(width: 10),
@@ -116,10 +121,7 @@ class _PlaylistDrawerState extends ConsumerState<PlaylistDrawer> {
           const Spacer(),
           if (state.playlist.isNotEmpty)
             IconButton(
-              icon: Icon(
-                Icons.delete_outline_rounded,
-                size: isTv ? 26 : 18,
-              ),
+              icon: Icon(Icons.delete_outline_rounded, size: isTv ? 26 : 18),
               tooltip: '清空播放列表',
               onPressed: () => _showClearConfirmation(context, notifier),
             ),
@@ -190,18 +192,20 @@ class _PlaylistDrawerState extends ConsumerState<PlaylistDrawer> {
               isCurrentSong: isCurrentSong,
               isPlaying: isCurrentSong && state.isPlaying,
               autofocus: isCurrentSong,
-              onTap: () => notifier.playPlaylist(
-                List<Song>.from(state.playlist),
-                startIndex: index,
-              ),
+              onTap:
+                  () => notifier.playPlaylist(
+                    List<Song>.from(state.playlist),
+                    startIndex: index,
+                  ),
               onRemove: () => _removeSong(context, notifier, index, song),
-              onShowActions: () => _showQueueItemActions(
-                context,
-                notifier,
-                state.playlist.length,
-                index,
-                song,
-              ),
+              onShowActions:
+                  () => _showQueueItemActions(
+                    context,
+                    notifier,
+                    state.playlist.length,
+                    index,
+                    song,
+                  ),
             ),
           );
         },
@@ -222,18 +226,20 @@ class _PlaylistDrawerState extends ConsumerState<PlaylistDrawer> {
           index: index,
           isCurrentSong: isCurrentSong,
           isPlaying: isCurrentSong && state.isPlaying,
-          onTap: () => notifier.playPlaylist(
-            List<Song>.from(state.playlist),
-            startIndex: index,
-          ),
+          onTap:
+              () => notifier.playPlaylist(
+                List<Song>.from(state.playlist),
+                startIndex: index,
+              ),
           onRemove: () => _removeSong(context, notifier, index, song),
-          onShowActions: () => _showQueueItemActions(
-            context,
-            notifier,
-            state.playlist.length,
-            index,
-            song,
-          ),
+          onShowActions:
+              () => _showQueueItemActions(
+                context,
+                notifier,
+                state.playlist.length,
+                index,
+                song,
+              ),
         );
       },
     );
@@ -253,10 +259,11 @@ class _PlaylistDrawerState extends ConsumerState<PlaylistDrawer> {
         TvActionItem(
           icon: Icons.play_arrow_rounded,
           label: '立即播放',
-          onPressed: () => notifier.playPlaylist(
-            List<Song>.from(ref.read(playerStateProvider).playlist),
-            startIndex: index,
-          ),
+          onPressed:
+              () => notifier.playPlaylist(
+                List<Song>.from(ref.read(playerStateProvider).playlist),
+                startIndex: index,
+              ),
         ),
         if (index > 0)
           TvActionItem(
@@ -318,24 +325,25 @@ class _PlaylistDrawerState extends ConsumerState<PlaylistDrawer> {
 
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('清空播放队列'),
-        content: const Text('确定要清空播放队列吗？'),
-        actions: [
-          TextButton(
-            autofocus: true,
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('取消'),
+      builder:
+          (dialogContext) => AlertDialog(
+            title: const Text('清空播放队列'),
+            content: const Text('确定要清空播放队列吗？'),
+            actions: [
+              TextButton(
+                autofocus: true,
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('取消'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  notifier.clearPlaylist();
+                  Navigator.pop(dialogContext);
+                },
+                child: const Text('清空'),
+              ),
+            ],
           ),
-          FilledButton(
-            onPressed: () {
-              notifier.clearPlaylist();
-              Navigator.pop(dialogContext);
-            },
-            child: const Text('清空'),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -413,9 +421,10 @@ class _DrawerSongItem extends StatelessWidget {
     final coverSize = isTv ? 52.0 : 36.0;
 
     return Material(
-      color: isCurrentSong
-          ? colorScheme.primaryContainer.withValues(alpha: isTv ? 0.5 : 0.3)
-          : Colors.transparent,
+      color:
+          isCurrentSong
+              ? colorScheme.primaryContainer.withValues(alpha: isTv ? 0.5 : 0.3)
+              : Colors.transparent,
       borderRadius: BorderRadius.circular(isTv ? 16 : 0),
       child: InkWell(
         onTap: onTap,
@@ -456,14 +465,12 @@ class _DrawerSongItem extends StatelessWidget {
                           fit: BoxFit.cover,
                           width: coverSize,
                           height: coverSize,
-                          placeholder: (_, _) => _buildCoverPlaceholder(
-                            colorScheme,
-                            isTv,
-                          ),
-                          errorWidget: (_, _, _) => _buildCoverPlaceholder(
-                            colorScheme,
-                            isTv,
-                          ),
+                          placeholder:
+                              (_, _) =>
+                                  _buildCoverPlaceholder(colorScheme, isTv),
+                          errorWidget:
+                              (_, _, _) =>
+                                  _buildCoverPlaceholder(colorScheme, isTv),
                         ),
                       )
                     else
@@ -494,12 +501,14 @@ class _DrawerSongItem extends StatelessWidget {
                               ? textTheme.titleMedium
                               : textTheme.bodySmall)
                           ?.copyWith(
-                            fontWeight: isCurrentSong
-                                ? FontWeight.w700
-                                : FontWeight.w600,
-                            color: isCurrentSong
-                                ? colorScheme.primary
-                                : colorScheme.onSurface,
+                            fontWeight:
+                                isCurrentSong
+                                    ? FontWeight.w700
+                                    : FontWeight.w600,
+                            color:
+                                isCurrentSong
+                                    ? colorScheme.primary
+                                    : colorScheme.onSurface,
                           ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

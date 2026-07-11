@@ -498,6 +498,38 @@ class PlayerNotifier extends Notifier<PlayerState> {
     _savePlaybackState();
   }
 
+  /// 将歌曲安排为下一首播放。
+  ///
+  /// 若歌曲已在队列中，会先移动到当前歌曲之后，避免重复条目；
+  /// 当前没有播放内容时则直接开始播放该歌曲。
+  Future<void> queueNext(Song song) async {
+    if (!state.hasSong || state.currentIndex < 0 || state.playlist.isEmpty) {
+      await playSong(song);
+      return;
+    }
+
+    final newPlaylist = List<Song>.from(state.playlist);
+    var currentIndex = state.currentIndex;
+    final existingIndex = newPlaylist.indexWhere(
+      (item) => item.id == song.id && item.type == song.type,
+    );
+
+    if (existingIndex == currentIndex) return;
+    if (existingIndex >= 0) {
+      newPlaylist.removeAt(existingIndex);
+      if (existingIndex < currentIndex) currentIndex--;
+    }
+
+    final insertIndex = (currentIndex + 1).clamp(0, newPlaylist.length);
+    newPlaylist.insert(insertIndex, song);
+    state = state.copyWith(
+      playlist: newPlaylist,
+      currentIndex: currentIndex,
+      currentSong: newPlaylist[currentIndex],
+    );
+    _savePlaybackState();
+  }
+
   /// 将歌曲插入到播放列表的指定位置
   /// 用于撤销删除等场景，不会触发播放
   void insertToPlaylist(int index, Song song) {

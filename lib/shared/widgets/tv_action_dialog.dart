@@ -67,18 +67,20 @@ Future<void> showTvActionDialog({
                         children: [
                           Icon(
                             actions[index].icon,
-                            color: actions[index].destructive
-                                ? colorScheme.error
-                                : colorScheme.primary,
+                            color:
+                                actions[index].destructive
+                                    ? colorScheme.error
+                                    : colorScheme.primary,
                           ),
                           const SizedBox(width: 14),
                           Expanded(
                             child: Text(
                               actions[index].label,
                               style: theme.textTheme.titleMedium?.copyWith(
-                                color: actions[index].destructive
-                                    ? colorScheme.error
-                                    : null,
+                                color:
+                                    actions[index].destructive
+                                        ? colorScheme.error
+                                        : null,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -91,8 +93,7 @@ Future<void> showTvActionDialog({
                       ),
                     ),
                   ),
-                  if (index < actions.length - 1)
-                    const SizedBox(height: 10),
+                  if (index < actions.length - 1) const SizedBox(height: 10),
                 ],
               ],
             ),
