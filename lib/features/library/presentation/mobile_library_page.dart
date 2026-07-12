@@ -126,7 +126,7 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
             SliverPersistentHeader(
               pinned: true,
               delegate: _LibraryControlsDelegate(
-                extent: state.isSelectionMode ? 144 : 142,
+                extent: state.isSelectionMode ? 160 : 142,
                 child:
                     state.isSelectionMode
                         ? SongFilterBar(
@@ -153,9 +153,7 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
       snap: true,
       pinned: false,
       title: Text(
-        state.isSelectionMode
-            ? '已选择 ${state.selectedSongIds.length} 首'
-            : '歌曲库',
+        state.isSelectionMode ? '已选择 ${state.selectedSongIds.length} 首' : '歌曲库',
       ),
       leading:
           state.isSelectionMode
@@ -164,7 +162,9 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
                 tooltip: '退出多选',
                 onPressed:
                     () =>
-                        ref.read(songsListProvider.notifier).exitSelectionMode(),
+                        ref
+                            .read(songsListProvider.notifier)
+                            .exitSelectionMode(),
               )
               : null,
       actions: [
@@ -173,9 +173,7 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
             icon: const Icon(Icons.checklist_rounded),
             tooltip: '多选歌曲',
             onPressed:
-                () => ref
-                    .read(songsListProvider.notifier)
-                    .enterSelectionMode(),
+                () => ref.read(songsListProvider.notifier).enterSelectionMode(),
           ),
       ],
     );
@@ -264,8 +262,7 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
             Row(
               children: [
                 FilledButton.icon(
-                  onPressed:
-                      state.songs.isEmpty ? null : () => _playAll(state),
+                  onPressed: state.songs.isEmpty ? null : () => _playAll(state),
                   icon: const Icon(Icons.play_arrow_rounded, size: 20),
                   label: const Text('播放全部'),
                   style: FilledButton.styleFrom(
@@ -280,9 +277,7 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
                   onPressed: () => _showActionsSheet(state),
                   icon: const Icon(Icons.tune_rounded),
                   tooltip: '更多操作',
-                  style: IconButton.styleFrom(
-                    minimumSize: const Size(46, 46),
-                  ),
+                  style: IconButton.styleFrom(minimumSize: const Size(46, 46)),
                 ),
               ],
             ),
@@ -341,9 +336,7 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
                 label: Text(filter.$2),
                 onSelected: (_) {
                   HapticFeedback.selectionClick();
-                  ref
-                      .read(songsListProvider.notifier)
-                      .setTypeFilter(filter.$1);
+                  ref.read(songsListProvider.notifier).setTypeFilter(filter.$1);
                 },
                 materialTapTargetSize: MaterialTapTargetSize.padded,
                 visualDensity: VisualDensity.compact,
@@ -406,8 +399,7 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
                 ),
               ),
               TextButton(
-                onPressed:
-                    () => ref.read(songsListProvider.notifier).refresh(),
+                onPressed: () => ref.read(songsListProvider.notifier).refresh(),
                 child: const Text('重试'),
               ),
               IconButton(
@@ -454,9 +446,10 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
             isSelectionMode: state.isSelectionMode,
             isCurrentSong: currentSong?.id == song.id,
             onTap: () => _onSongTap(song, index),
-            onLongPress: () => ref
-                .read(songsListProvider.notifier)
-                .enterSelectionMode(initialSongId: song.id),
+            onLongPress:
+                () => ref
+                    .read(songsListProvider.notifier)
+                    .enterSelectionMode(initialSongId: song.id),
             onSelect:
                 () => ref
                     .read(songsListProvider.notifier)
