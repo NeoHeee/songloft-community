@@ -84,17 +84,76 @@ jobs:
           if (( ${#files[@]} > 0 )); then
             dart format "${files[@]}"
           fi
-      - name: Run focused tests
+      - name: Run library tests
+        id: library_tests
         if: steps.patch.outcome == 'success'
+        continue-on-error: true
+        shell: bash
         run: |
-          flutter test test/features/library
-          flutter test test/features/player/presentation/widgets
-          flutter test test/shared/utils
+          set -o pipefail
+          flutter test test/features/library 2>&1 | tee /tmp/library-tests.log
+      - name: Run player widget tests
+        id: player_tests
+        if: steps.patch.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter test test/features/player/presentation/widgets 2>&1 | tee /tmp/player-tests.log
+      - name: Run shared utility tests
+        id: shared_tests
+        if: steps.patch.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter test test/shared/utils 2>&1 | tee /tmp/shared-tests.log
       - name: Analyze
-        if: steps.patch.outcome == 'success'
-        run: flutter analyze
+        id: analyze
+        if: >-
+          steps.patch.outcome == 'success' &&
+          steps.library_tests.outcome == 'success' &&
+          steps.player_tests.outcome == 'success' &&
+          steps.shared_tests.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter analyze 2>&1 | tee /tmp/analyze.log
+      - name: Publish verification diagnostic
+        if: >-
+          steps.patch.outcome == 'success' &&
+          (steps.library_tests.outcome == 'failure' ||
+           steps.player_tests.outcome == 'failure' ||
+           steps.shared_tests.outcome == 'failure' ||
+           steps.analyze.outcome == 'failure')
+        shell: bash
+        run: |
+          {
+            echo '===== LIBRARY TESTS ====='
+            cat /tmp/library-tests.log 2>/dev/null || true
+            echo '===== PLAYER TESTS ====='
+            cat /tmp/player-tests.log 2>/dev/null || true
+            echo '===== SHARED TESTS ====='
+            cat /tmp/shared-tests.log 2>/dev/null || true
+            echo '===== ANALYZE ====='
+            cat /tmp/analyze.log 2>/dev/null || true
+          } > /tmp/mobile-experience-verification.log
+          git reset --hard HEAD
+          cp /tmp/mobile-experience-verification.log MOBILE_EXPERIENCE_PATCH_ERROR.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add MOBILE_EXPERIENCE_PATCH_ERROR.txt
+          git commit -m 'chore: capture mobile experience verification error'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          exit 1
       - name: Commit implementation
-        if: steps.patch.outcome == 'success'
+        if: >-
+          steps.patch.outcome == 'success' &&
+          steps.library_tests.outcome == 'success' &&
+          steps.player_tests.outcome == 'success' &&
+          steps.shared_tests.outcome == 'success' &&
+          steps.analyze.outcome == 'success'
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
