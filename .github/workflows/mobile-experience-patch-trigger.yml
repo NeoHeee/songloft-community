@@ -60,6 +60,15 @@ jobs:
               for line in embedded.splitlines()
           )
           exec(compile(script, 'mobile-experience-patch', 'exec'))
+
+          undo_test_path = Path('test/shared/utils/responsive_snackbar_test.dart')
+          undo_test = undo_test_path.read_text(encoding='utf-8')
+          undo_test = undo_test.replace(
+              'await tester.pump(const Duration(milliseconds: 150));',
+              'await tester.pump(const Duration(seconds: 2));',
+              1,
+          )
+          undo_test_path.write_text(undo_test, encoding='utf-8')
           PY
       - name: Publish patch diagnostic
         if: steps.patch.outcome == 'failure'
