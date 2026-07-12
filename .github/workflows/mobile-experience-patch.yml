@@ -1,0 +1,1414 @@
+name: Mobile Experience Completion Patch
+
+on:
+  push:
+    branches:
+      - mobile-experience-completion
+    paths:
+      - '.github/workflows/mobile-experience-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: mobile-experience-completion
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Apply experience completion patch
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          def read(path):
+              return Path(path).read_text(encoding='utf-8')
+
+          def write(path, content):
+              Path(path).parent.mkdir(parents=True, exist_ok=True)
+              Path(path).write_text(content, encoding='utf-8')
+
+          def replace_once(path, old, new):
+              text = read(path)
+              count = text.count(old)
+              if count != 1:
+                  raise RuntimeError(f'{path}: expected one match, found {count}: {old[:120]!r}')
+              write(path, text.replace(old, new, 1))
+
+          def replace_regex(path, pattern, replacement, flags=re.S):
+              text = read(path)
+              updated, count = re.subn(pattern, replacement, text, count=1, flags=flags)
+              if count != 1:
+                  raise RuntimeError(f'{path}: regex expected one match, found {count}: {pattern[:120]!r}')
+              write(path, updated)
+
+          # ------------------------------------------------------------------
+          # Undo-capable SnackBar
+          # ------------------------------------------------------------------
+          path = 'lib/shared/utils/responsive_snackbar.dart'
+          marker = "  /// 显示错误类型的响应式 SnackBar\n"
+          addition = r'''  /// 显示带撤销操作的短时提示，并返回用户是否点击了撤销。
+          static Future<bool> showUndo(
+            BuildContext context, {
+            required String message,
+            String actionLabel = '撤销',
+            Duration duration = const Duration(seconds: 5),
+          }) async {
+            var undone = false;
+            final messenger = ScaffoldMessenger.of(context);
+            final colorScheme = Theme.of(context).colorScheme;
+            messenger.hideCurrentSnackBar();
+            final controller = messenger.showSnackBar(
+              SnackBar(
+                content: Text(
+                  message,
+                  style: TextStyle(color: colorScheme.onInverseSurface),
+                ),
+                behavior: SnackBarBehavior.floating,
+                duration: duration,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                action: SnackBarAction(
+                  label: actionLabel,
+                  onPressed: () => undone = true,
+                ),
+              ),
+            );
+            await controller.closed;
+            return undone;
+          }
+
+'''
+          replace_once(path, marker, addition + marker)
+
+          # ------------------------------------------------------------------
+          # Deterministic selection setter and delayed deletion helpers
+          # ------------------------------------------------------------------
+          path = 'lib/features/library/presentation/providers/songs_provider.dart'
+          replace_once(
+              path,
+              "import '../../data/songs_repository.dart';\n\n",
+              "import '../../data/songs_repository.dart';\n\n"
+              "Set<int> updatedSongSelection(\n"
+              "  Set<int> current,\n"
+              "  int songId,\n"
+              "  bool selected,\n"
+              ") {\n"
+              "  final next = Set<int>.from(current);\n"
+              "  if (selected) {\n"
+              "    next.add(songId);\n"
+              "  } else {\n"
+              "    next.remove(songId);\n"
+              "  }\n"
+              "  return next;\n"
+              "}\n\n",
+          )
+          toggle_marker = r'''  /// 清除选择，可选择同时退出多选模式。
+'''
+          setter = r'''  /// 将指定歌曲设置为明确的选中或未选中状态，供连续滑动勾选使用。
+          void setSongSelection(int songId, bool selected) {
+            if (!state.isSelectionMode) {
+              enterSelectionMode(initialSongId: selected ? songId : null);
+              if (!selected) return;
+            }
+            state = state.copyWith(
+              selectedSongIds: updatedSongSelection(
+                state.selectedSongIds,
+                songId,
+                selected,
+              ),
+            );
+          }
+
+'''
+          replace_once(path, toggle_marker, setter + toggle_marker)
+          replace_regex(
+              path,
+              r'''  /// 删除歌曲\n  Future<void> deleteSong\(int songId, \{bool deleteFiles = false\}\) async \{.*?\n  \}\n\n  /// 批量删除歌曲''',
+              r'''  /// 删除歌曲
+          Future<bool> deleteSong(int songId, {bool deleteFiles = false}) async {
+            try {
+              await _repository.deleteSong(songId, deleteFiles: deleteFiles);
+              state = state.copyWith(
+                songs: state.songs.where((s) => s.id != songId).toList(),
+                total: (state.total - 1).clamp(0, state.total),
+                selectedSongIds: state.selectedSongIds.difference({songId}),
+              );
+              return true;
+            } catch (e) {
+              state = state.copyWith(error: e.toString());
+              return false;
+            }
+          }
+
+          /// 删除明确指定的一组歌曲，不依赖当前选择状态。
+          Future<int> deleteSongsByIds(
+            List<int> songIds, {
+            bool deleteFiles = false,
+          }) async {
+            if (songIds.isEmpty) return 0;
+            final ids = songIds.toSet();
+            try {
+              final deleted = await _repository.batchDeleteSongs(
+                ids.toList(),
+                deleteFiles: deleteFiles,
+              );
+              if (deleted != ids.length) {
+                await refresh();
+                return deleted;
+              }
+              state = state.copyWith(
+                songs: state.songs.where((s) => !ids.contains(s.id)).toList(),
+                total: (state.total - deleted).clamp(0, state.total),
+                selectedSongIds: state.selectedSongIds.difference(ids),
+              );
+              return deleted;
+            } catch (e) {
+              state = state.copyWith(error: e.toString());
+              return 0;
+            }
+          }
+
+          /// 批量删除歌曲''',
+          )
+
+          # ------------------------------------------------------------------
+          # Song tile drag-selection gesture surface
+          # ------------------------------------------------------------------
+          path = 'lib/features/library/presentation/widgets/song_list_tile.dart'
+          replace_once(
+              path,
+              "  final VoidCallback? onAddToPlaylist;\n",
+              "  final VoidCallback? onAddToPlaylist;\n"
+              "  final ValueChanged<Offset>? onSelectionDragStart;\n"
+              "  final ValueChanged<Offset>? onSelectionDragUpdate;\n"
+              "  final VoidCallback? onSelectionDragEnd;\n",
+          )
+          replace_once(
+              path,
+              "    this.onAddToPlaylist,\n  });",
+              "    this.onAddToPlaylist,\n"
+              "    this.onSelectionDragStart,\n"
+              "    this.onSelectionDragUpdate,\n"
+              "    this.onSelectionDragEnd,\n"
+              "  });",
+          )
+          replace_once(
+              path,
+              "                  _buildMobileLeading(context),\n",
+              "                  _buildMobileSelectionLeading(context),\n",
+          )
+          leading_marker = "  Widget _buildMobileLeading(BuildContext context) {\n"
+          leading_wrapper = r'''  Widget _buildMobileSelectionLeading(BuildContext context) {
+            final leading = _buildMobileLeading(context);
+            if (!isSelectionMode || onSelectionDragStart == null) return leading;
+
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _handleTap,
+              onPanStart:
+                  (details) => onSelectionDragStart?.call(details.globalPosition),
+              onPanUpdate:
+                  (details) => onSelectionDragUpdate?.call(details.globalPosition),
+              onPanEnd: (_) => onSelectionDragEnd?.call(),
+              onPanCancel: () => onSelectionDragEnd?.call(),
+              child: leading,
+            );
+          }
+
+'''
+          replace_once(path, leading_marker, leading_wrapper + leading_marker)
+
+          # ------------------------------------------------------------------
+          # Batch delete callback for delayed undo flow
+          # ------------------------------------------------------------------
+          path = 'lib/features/library/presentation/widgets/song_filter_bar.dart'
+          replace_once(
+              path,
+              "  final int songCount;\n",
+              "  final int songCount;\n"
+              "  final Future<void> Function(bool deleteFiles)? onBatchDelete;\n",
+          )
+          replace_once(
+              path,
+              "    this.songCount = 0,\n  });",
+              "    this.songCount = 0,\n"
+              "    this.onBatchDelete,\n"
+              "  });",
+          )
+          replace_once(
+              path,
+              "    if (result == null) return;\n\n    final deleted = await ref",
+              "    if (result == null) return;\n\n"
+              "    if (onBatchDelete != null) {\n"
+              "      await onBatchDelete!(result.deleteFiles);\n"
+              "      return;\n"
+              "    }\n\n"
+              "    final deleted = await ref",
+          )
+
+          # ------------------------------------------------------------------
+          # Mobile library: drag selection and true delayed delete/undo
+          # ------------------------------------------------------------------
+          path = 'lib/features/library/presentation/mobile_library_page.dart'
+          replace_once(
+              path,
+              "  Timer? _searchDebounce;\n",
+              "  Timer? _searchDebounce;\n"
+              "  final Map<int, GlobalKey> _songItemKeys = {};\n"
+              "  final Set<int> _pendingDeletedSongIds = {};\n"
+              "  final Set<int> _dragVisitedSongIds = {};\n"
+              "  bool? _dragSelectionValue;\n",
+          )
+          replace_once(
+              path,
+              "                            songCount: state.total,\n                          )",
+              "                            songCount: state.total,\n"
+              "                            onBatchDelete: _stageBatchDelete,\n"
+              "                          )",
+          )
+          replace_regex(
+              path,
+              r'''  List<Widget> _buildSongSlivers\(SongsListState state, Song\? currentSong\) \{.*?\n  \}\n\n  Widget _buildEmptyState''',
+              r'''  List<Widget> _buildSongSlivers(SongsListState state, Song? currentSong) {
+            if (state.isLoading && state.songs.isEmpty) {
+              return [
+                SliverList.builder(
+                  itemCount: 8,
+                  itemBuilder: (_, index) => const _SongSkeleton(),
+                ),
+              ];
+            }
+
+            final visibleSongs =
+                state.songs
+                    .where((song) => !_pendingDeletedSongIds.contains(song.id))
+                    .toList();
+
+            if (visibleSongs.isEmpty) {
+              return [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: _buildEmptyState(state),
+                ),
+              ];
+            }
+
+            return [
+              SliverList.builder(
+                itemCount: visibleSongs.length,
+                itemBuilder: (context, index) {
+                  final song = visibleSongs[index];
+                  final itemKey = _songItemKeys.putIfAbsent(song.id, GlobalKey.new);
+                  return KeyedSubtree(
+                    key: itemKey,
+                    child: SongListTile(
+                      song: song,
+                      index: index,
+                      isSelected: state.selectedSongIds.contains(song.id),
+                      isSelectionMode: state.isSelectionMode,
+                      isCurrentSong:
+                          currentSong?.id == song.id && currentSong?.type == song.type,
+                      onTap: () => _onSongTap(song, index),
+                      onLongPress:
+                          () => ref
+                              .read(songsListProvider.notifier)
+                              .enterSelectionMode(initialSongId: song.id),
+                      onSelect:
+                          () => ref
+                              .read(songsListProvider.notifier)
+                              .toggleSongSelection(song.id),
+                      onSelectionDragStart:
+                          (_) => _startSelectionDrag(song.id),
+                      onSelectionDragUpdate: _updateSelectionDrag,
+                      onSelectionDragEnd: _endSelectionDrag,
+                      onDelete: () => _showDeleteConfirmDialog(context, song),
+                      onEdit:
+                          song.type == AppConstants.songTypeLocal
+                              ? null
+                              : () => _navigateToEditSong(context, song),
+                      onAddToPlaylist:
+                          () => AddToPlaylistModal.show(
+                            context,
+                            songIds: [song.id],
+                          ),
+                    ),
+                  );
+                },
+              ),
+              if (state.isLoadingMore)
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.all(18),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ),
+            ];
+          }
+
+          void _startSelectionDrag(int songId) {
+            final state = ref.read(songsListProvider);
+            _dragSelectionValue = !state.selectedSongIds.contains(songId);
+            _dragVisitedSongIds.clear();
+            _applySelectionDrag(songId);
+          }
+
+          void _updateSelectionDrag(Offset globalPosition) {
+            final songId = _songIdAtGlobalPosition(globalPosition);
+            if (songId != null) _applySelectionDrag(songId);
+          }
+
+          int? _songIdAtGlobalPosition(Offset globalPosition) {
+            for (final entry in _songItemKeys.entries) {
+              if (_pendingDeletedSongIds.contains(entry.key)) continue;
+              final itemContext = entry.value.currentContext;
+              final renderObject = itemContext?.findRenderObject();
+              if (renderObject is! RenderBox || !renderObject.hasSize) continue;
+              final rect = renderObject.localToGlobal(Offset.zero) & renderObject.size;
+              if (rect.contains(globalPosition)) return entry.key;
+            }
+            return null;
+          }
+
+          void _applySelectionDrag(int songId) {
+            final selected = _dragSelectionValue;
+            if (selected == null || !_dragVisitedSongIds.add(songId)) return;
+            HapticFeedback.selectionClick();
+            ref
+                .read(songsListProvider.notifier)
+                .setSongSelection(songId, selected);
+          }
+
+          void _endSelectionDrag() {
+            _dragSelectionValue = null;
+            _dragVisitedSongIds.clear();
+          }
+
+          Future<void> _stageSingleDelete(
+            Song song, {
+            required bool deleteFiles,
+          }) async {
+            final notifier = ref.read(songsListProvider.notifier);
+            setState(() => _pendingDeletedSongIds.add(song.id));
+            final undone = await ResponsiveSnackBar.showUndo(
+              context,
+              message: '已移除「${song.title}」',
+            );
+            if (undone) {
+              if (mounted) {
+                setState(() => _pendingDeletedSongIds.remove(song.id));
+              }
+              return;
+            }
+
+            final success = await notifier.deleteSong(
+              song.id,
+              deleteFiles: deleteFiles,
+            );
+            if (!mounted) return;
+            setState(() => _pendingDeletedSongIds.remove(song.id));
+            if (!success) {
+              ResponsiveSnackBar.showError(context, message: '删除失败，歌曲已恢复');
+            }
+          }
+
+          Future<void> _stageBatchDelete(bool deleteFiles) async {
+            final notifier = ref.read(songsListProvider.notifier);
+            final ids = ref.read(songsListProvider).selectedSongIds.toList();
+            if (ids.isEmpty) return;
+
+            setState(() => _pendingDeletedSongIds.addAll(ids));
+            notifier.exitSelectionMode();
+            final undone = await ResponsiveSnackBar.showUndo(
+              context,
+              message: '已移除 ${ids.length} 首歌曲',
+            );
+            if (undone) {
+              if (mounted) {
+                setState(() => _pendingDeletedSongIds.removeAll(ids));
+              }
+              return;
+            }
+
+            final deleted = await notifier.deleteSongsByIds(
+              ids,
+              deleteFiles: deleteFiles,
+            );
+            if (!mounted) return;
+            setState(() => _pendingDeletedSongIds.removeAll(ids));
+            if (deleted != ids.length) {
+              ResponsiveSnackBar.showError(context, message: '部分歌曲删除失败，列表已刷新');
+            }
+          }
+
+          Widget _buildEmptyState''',
+          )
+          replace_regex(
+              path,
+              r'''  Future<void> _showDeleteConfirmDialog\(\n    BuildContext context,\n    int songId,\n  \) async \{.*?\n  \}\n\n  void _showCleanConfirmDialog''',
+              r'''  Future<void> _showDeleteConfirmDialog(
+            BuildContext context,
+            Song song,
+          ) async {
+            final result = await DeleteSongDialog.show(
+              context,
+              title: '确认删除',
+              content: '确定要删除「${song.title}」吗？删除后可在短时间内撤销。',
+            );
+            if (result == null) return;
+            await _stageSingleDelete(song, deleteFiles: result.deleteFiles);
+          }
+
+          void _showCleanConfirmDialog''',
+          )
+
+          # ------------------------------------------------------------------
+          # Player song actions: favorite, long-press menu and delayed deletion
+          # ------------------------------------------------------------------
+          write(
+              'lib/features/player/presentation/utils/player_song_actions.dart',
+              r'''import 'package:flutter/material.dart';
+          import 'package:flutter/services.dart';
+          import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+          import '../../../../config/constants.dart';
+          import '../../../../shared/utils/responsive_snackbar.dart';
+          import '../../../../shared/widgets/add_to_playlist_modal.dart';
+          import '../../../../shared/widgets/delete_song_dialog.dart';
+          import '../../../library/presentation/providers/favorite_provider.dart';
+          import '../../../library/presentation/providers/songs_provider.dart';
+          import '../providers/player_provider.dart';
+
+          Future<bool> toggleCurrentSongFavorite(
+            BuildContext context,
+            WidgetRef ref,
+          ) async {
+            final song = ref.read(playerStateProvider).currentSong;
+            if (song == null) return false;
+            final isRadio = song.type == AppConstants.songTypeRadio;
+            try {
+              final notifier = ref.read(favoriteProvider.notifier);
+              final favorited =
+                  isRadio
+                      ? await notifier.toggleRadioFavorite(song.id)
+                      : await notifier.toggleFavorite(song.id);
+              HapticFeedback.selectionClick();
+              if (context.mounted) {
+                ResponsiveSnackBar.show(
+                  context,
+                  message: favorited ? '已添加到收藏' : '已取消收藏',
+                  duration: const Duration(seconds: 1),
+                );
+              }
+              return favorited;
+            } catch (_) {
+              if (context.mounted) {
+                ResponsiveSnackBar.showError(context, message: '收藏操作失败');
+              }
+              return false;
+            }
+          }
+
+          Future<void> showCurrentSongActionsSheet(
+            BuildContext context,
+            WidgetRef ref,
+          ) async {
+            final state = ref.read(playerStateProvider);
+            final song = state.currentSong;
+            if (song == null) return;
+            final isRadio = song.type == AppConstants.songTypeRadio;
+            final isFavorited =
+                isRadio
+                    ? ref.read(isRadioFavoritedProvider(song.id))
+                    : ref.read(isSongFavoritedProvider(song.id));
+
+            final action = await showModalBottomSheet<String>(
+              context: context,
+              useSafeArea: true,
+              showDragHandle: true,
+              builder:
+                  (sheetContext) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          leading: Icon(
+                            isFavorited
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border_rounded,
+                          ),
+                          title: Text(isFavorited ? '取消收藏' : '收藏歌曲'),
+                          onTap: () => Navigator.pop(sheetContext, 'favorite'),
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.playlist_add_rounded),
+                          title: const Text('添加到歌单'),
+                          onTap: () => Navigator.pop(sheetContext, 'playlist'),
+                        ),
+                        ListTile(
+                          leading: Icon(
+                            Icons.delete_outline_rounded,
+                            color: Theme.of(sheetContext).colorScheme.error,
+                          ),
+                          title: Text(
+                            '删除歌曲',
+                            style: TextStyle(
+                              color: Theme.of(sheetContext).colorScheme.error,
+                            ),
+                          ),
+                          onTap: () => Navigator.pop(sheetContext, 'delete'),
+                        ),
+                      ],
+                    ),
+                  ),
+            );
+            if (!context.mounted || action == null) return;
+
+            switch (action) {
+              case 'favorite':
+                await toggleCurrentSongFavorite(context, ref);
+              case 'playlist':
+                await AddToPlaylistModal.show(context, songIds: [song.id]);
+              case 'delete':
+                await deleteCurrentSongFromPlayer(context, ref);
+            }
+          }
+
+          Future<bool> deleteCurrentSongFromPlayer(
+            BuildContext context,
+            WidgetRef ref,
+          ) async {
+            final state = ref.read(playerStateProvider);
+            final song = state.currentSong;
+            if (song == null) return false;
+
+            final result = await DeleteSongDialog.show(
+              context,
+              title: '删除歌曲',
+              content: '确定要从歌曲库中删除「${song.title}」吗？删除后可在短时间内撤销。',
+            );
+            if (result == null || !context.mounted) return false;
+
+            final undone = await ResponsiveSnackBar.showUndo(
+              context,
+              message: '即将删除「${song.title}」',
+            );
+            if (undone) return false;
+
+            try {
+              await ref
+                  .read(songsApiProvider)
+                  .deleteSong(song.id, deleteFiles: result.deleteFiles);
+              final latest = ref.read(playerStateProvider);
+              final index = latest.playlist.indexWhere(
+                (item) => item.id == song.id && item.type == song.type,
+              );
+              if (index >= 0) {
+                final notifier = ref.read(playerStateProvider.notifier);
+                notifier.removeFromPlaylist(index);
+                final nextState = ref.read(playerStateProvider);
+                if (index == latest.currentIndex && nextState.currentSong != null) {
+                  await notifier.playSong(nextState.currentSong!);
+                }
+              }
+              ref.invalidate(songsListProvider);
+              if (context.mounted) {
+                ResponsiveSnackBar.showSuccess(context, message: '歌曲已删除');
+              }
+              return true;
+            } catch (_) {
+              if (context.mounted) {
+                ResponsiveSnackBar.showError(context, message: '删除失败');
+              }
+              return false;
+            }
+          }
+          ''',
+          )
+
+          # ------------------------------------------------------------------
+          # Full-screen cover gesture host
+          # ------------------------------------------------------------------
+          write(
+              'lib/features/player/presentation/widgets/mobile_player_gesture_host.dart',
+              r'''import 'dart:async';
+
+          import 'package:flutter/material.dart';
+          import 'package:flutter/services.dart';
+          import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+          import '../../../../core/theme/accessibility.dart';
+          import '../queue_page.dart';
+          import '../utils/player_song_actions.dart';
+          import 'mobile_player.dart';
+
+          /// 为现有全屏播放器叠加不抢占 PageView 的封面快捷手势。
+          ///
+          /// - 封面区域上滑：打开播放队列
+          /// - 封面区域双击：收藏或取消收藏当前歌曲
+          /// - 封面区域长按：打开当前歌曲操作菜单
+          class MobilePlayerGestureHost extends ConsumerStatefulWidget {
+            const MobilePlayerGestureHost({super.key});
+
+            static Future<void> show(BuildContext context) {
+              final reduceMotion = AppAccessibility.reduceMotionOf(context);
+              return Navigator.of(context).push(
+                PageRouteBuilder<void>(
+                  opaque: true,
+                  transitionDuration:
+                      reduceMotion
+                          ? Duration.zero
+                          : const Duration(milliseconds: 280),
+                  reverseTransitionDuration:
+                      reduceMotion
+                          ? Duration.zero
+                          : const Duration(milliseconds: 220),
+                  pageBuilder:
+                      (context, animation, secondaryAnimation) =>
+                          const MobilePlayerGestureHost(),
+                  transitionsBuilder: (
+                    context,
+                    animation,
+                    secondaryAnimation,
+                    child,
+                  ) {
+                    if (reduceMotion) return child;
+                    return SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0, 1),
+                        end: Offset.zero,
+                      ).animate(
+                        CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOutCubic,
+                        ),
+                      ),
+                      child: child,
+                    );
+                  },
+                ),
+              );
+            }
+
+            @override
+            ConsumerState<MobilePlayerGestureHost> createState() =>
+                _MobilePlayerGestureHostState();
+          }
+
+          class _MobilePlayerGestureHostState
+              extends ConsumerState<MobilePlayerGestureHost> {
+            static const _doubleTapWindow = Duration(milliseconds: 320);
+            static const _longPressDelay = Duration(milliseconds: 520);
+            static const _tapSlop = 14.0;
+            static const _swipeThreshold = 72.0;
+
+            int? _trackedPointer;
+            Offset? _pointerStart;
+            Offset? _pointerLatest;
+            DateTime? _pointerStartedAt;
+            DateTime? _lastTapAt;
+            Offset? _lastTapPosition;
+            Timer? _longPressTimer;
+            bool _longPressTriggered = false;
+
+            bool _isInsideCoverGestureArea(Offset localPosition) {
+              final mediaQuery = MediaQuery.of(context);
+              final top = mediaQuery.padding.top + 62;
+              final bottom = mediaQuery.size.height * 0.64;
+              return localPosition.dy >= top && localPosition.dy <= bottom;
+            }
+
+            void _onPointerDown(PointerDownEvent event) {
+              if (_trackedPointer != null ||
+                  !_isInsideCoverGestureArea(event.localPosition)) {
+                return;
+              }
+
+              _trackedPointer = event.pointer;
+              _pointerStart = event.localPosition;
+              _pointerLatest = event.localPosition;
+              _pointerStartedAt = DateTime.now();
+              _longPressTriggered = false;
+              _longPressTimer?.cancel();
+              _longPressTimer = Timer(_longPressDelay, () {
+                final start = _pointerStart;
+                final latest = _pointerLatest;
+                if (!mounted ||
+                    _trackedPointer == null ||
+                    start == null ||
+                    latest == null ||
+                    (latest - start).distance > _tapSlop) {
+                  return;
+                }
+                _longPressTriggered = true;
+                HapticFeedback.mediumImpact();
+                unawaited(showCurrentSongActionsSheet(context, ref));
+              });
+            }
+
+            void _onPointerMove(PointerMoveEvent event) {
+              if (event.pointer != _trackedPointer) return;
+              _pointerLatest = event.localPosition;
+              final start = _pointerStart;
+              if (start != null &&
+                  (event.localPosition - start).distance > _tapSlop) {
+                _longPressTimer?.cancel();
+              }
+            }
+
+            void _onPointerUp(PointerUpEvent event) {
+              if (event.pointer != _trackedPointer) return;
+
+              final start = _pointerStart;
+              final end = _pointerLatest ?? event.localPosition;
+              final startedAt = _pointerStartedAt;
+              final longPressTriggered = _longPressTriggered;
+              _clearTrackedPointer();
+
+              if (longPressTriggered || start == null || startedAt == null) return;
+
+              final delta = end - start;
+              final isVerticalSwipe =
+                  delta.dy.abs() > delta.dx.abs() * 1.25 &&
+                  delta.dy < -_swipeThreshold;
+
+              if (isVerticalSwipe) {
+                HapticFeedback.mediumImpact();
+                QueueBottomSheet.show(context);
+                return;
+              }
+
+              final elapsed = DateTime.now().difference(startedAt);
+              final isTap =
+                  delta.distance <= _tapSlop &&
+                  elapsed <= const Duration(milliseconds: 260);
+              if (!isTap) return;
+
+              final now = DateTime.now();
+              final previousTapAt = _lastTapAt;
+              final previousTapPosition = _lastTapPosition;
+              final isDoubleTap =
+                  previousTapAt != null &&
+                  previousTapPosition != null &&
+                  now.difference(previousTapAt) <= _doubleTapWindow &&
+                  (start - previousTapPosition).distance <= 40;
+
+              if (isDoubleTap) {
+                _lastTapAt = null;
+                _lastTapPosition = null;
+                unawaited(toggleCurrentSongFavorite(context, ref));
+                return;
+              }
+
+              _lastTapAt = now;
+              _lastTapPosition = start;
+            }
+
+            void _onPointerCancel(PointerCancelEvent event) {
+              if (event.pointer == _trackedPointer) {
+                _clearTrackedPointer();
+              }
+            }
+
+            void _clearTrackedPointer() {
+              _longPressTimer?.cancel();
+              _longPressTimer = null;
+              _trackedPointer = null;
+              _pointerStart = null;
+              _pointerLatest = null;
+              _pointerStartedAt = null;
+              _longPressTriggered = false;
+            }
+
+            @override
+            void dispose() {
+              _longPressTimer?.cancel();
+              super.dispose();
+            }
+
+            @override
+            Widget build(BuildContext context) {
+              return Listener(
+                behavior: HitTestBehavior.translucent,
+                onPointerDown: _onPointerDown,
+                onPointerMove: _onPointerMove,
+                onPointerUp: _onPointerUp,
+                onPointerCancel: _onPointerCancel,
+                child: const MobilePlayer(),
+              );
+            }
+          }
+          ''',
+          )
+
+          # ------------------------------------------------------------------
+          # Mini player playback failure retry surface
+          # ------------------------------------------------------------------
+          path = 'lib/features/player/presentation/widgets/mini_player.dart'
+          replace_once(
+              path,
+              "  double _horizontalDragDistance = 0;\n",
+              "  double _horizontalDragDistance = 0;\n"
+              "  bool _retryRequested = false;\n",
+          )
+          retry_method_marker = "  void _openQueue() {\n"
+          retry_method = r'''  Future<void> _retryPlayback() async {
+            if (_retryRequested) return;
+            setState(() => _retryRequested = true);
+            final notifier = ref.read(playerStateProvider.notifier);
+            notifier.clearError();
+            try {
+              await notifier.togglePlay();
+            } finally {
+              if (mounted) setState(() => _retryRequested = false);
+            }
+          }
+
+'''
+          replace_once(path, retry_method_marker, retry_method + retry_method_marker)
+          replace_once(
+              path,
+              "    final textScaleDelta = textScaleFactor - 1.0;\n",
+              "    final textScaleDelta = textScaleFactor - 1.0;\n"
+              "    final hasPlaybackError = state.errorMessage?.isNotEmpty == true;\n",
+          )
+          replace_once(
+              path,
+              "            label: _isCompact ? '展开薄版播放器' : '展开播放器',\n            hint: '左右滑动切歌，长按打开播放队列',",
+              "            label:\n"
+              "                hasPlaybackError\n"
+              "                    ? '当前歌曲播放失败'\n"
+              "                    : (_isCompact ? '展开薄版播放器' : '展开播放器'),\n"
+              "            hint:\n"
+              "                hasPlaybackError\n"
+              "                    ? '点击重试按钮重新播放，左右滑动可切歌'\n"
+              "                    : '左右滑动切歌，长按打开播放队列',",
+          )
+          replace_once(
+              path,
+              "                                           song.artist ?? '未知艺术家',\n",
+              "                                           hasPlaybackError\n"
+              "                                               ? state.errorMessage!\n"
+              "                                               : (song.artist ?? '未知艺术家'),\n",
+          )
+          replace_once(
+              path,
+              "                                                     colorScheme\n                                                         .onSurfaceVariant,\n",
+              "                                                     hasPlaybackError\n"
+              "                                                         ? colorScheme.error\n"
+              "                                                         : colorScheme\n"
+              "                                                             .onSurfaceVariant,\n",
+          )
+          replace_regex(
+              path,
+              r'''                            Material\(\n                              color: colorScheme\.primaryContainer,\n                              shape: const CircleBorder\(\),\n                              child: CompactPlayButton\(.*?\n                              \),\n                            \),''',
+              r'''                            Material(
+                              color:
+                                  hasPlaybackError
+                                      ? colorScheme.errorContainer
+                                      : colorScheme.primaryContainer,
+                              shape: const CircleBorder(),
+                              child:
+                                  hasPlaybackError
+                                      ? SizedBox(
+                                        width: playButtonSize,
+                                        height: playButtonSize,
+                                        child: IconButton(
+                                          onPressed:
+                                              _retryRequested || state.isRetrying
+                                                  ? null
+                                                  : _retryPlayback,
+                                          tooltip: '重试播放',
+                                          icon:
+                                              _retryRequested || state.isRetrying
+                                                  ? const SizedBox(
+                                                    width: 20,
+                                                    height: 20,
+                                                    child: CircularProgressIndicator(
+                                                      strokeWidth: 2.2,
+                                                    ),
+                                                  )
+                                                  : const Icon(
+                                                    Icons.refresh_rounded,
+                                                  ),
+                                        ),
+                                      )
+                                      : CompactPlayButton(
+                                        isPlaying: state.isPlaying,
+                                        isBuffering: state.isBuffering,
+                                        onPlay: notifier.togglePlay,
+                                        onPause: notifier.togglePlay,
+                                        size: playButtonSize,
+                                      ),
+                            ),''',
+          )
+
+          # ------------------------------------------------------------------
+          # Shared collection skeleton used by home and playlists
+          # ------------------------------------------------------------------
+          path = 'lib/shared/widgets/loading_indicator.dart'
+          marker = "/// 加载遮罩组件\n"
+          collection_skeleton = r'''/// 首页与歌单页共用的集合型骨架屏。
+          class CollectionPageSkeleton extends StatelessWidget {
+            final bool showHero;
+            final int itemCount;
+
+            const CollectionPageSkeleton({
+              super.key,
+              this.showHero = false,
+              this.itemCount = 6,
+            });
+
+            @override
+            Widget build(BuildContext context) {
+              return Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (showHero) ...[
+                      SkeletonLoader(
+                        height: 124,
+                        borderRadius: BorderRadius.circular(28),
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+                    ],
+                    SkeletonLoader(
+                      height: 22,
+                      width: 164,
+                      borderRadius: AppRadius.smAll,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final columns =
+                            constraints.maxWidth >= 900
+                                ? 5
+                                : constraints.maxWidth >= 600
+                                ? 4
+                                : 2;
+                        final spacing = AppSpacing.md;
+                        final width =
+                            (constraints.maxWidth - spacing * (columns - 1)) /
+                            columns;
+                        return Wrap(
+                          spacing: spacing,
+                          runSpacing: AppSpacing.lg,
+                          children: List.generate(
+                            itemCount,
+                            (_) => SizedBox(
+                              width: width,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SkeletonLoader(
+                                    width: width,
+                                    height: width,
+                                    borderRadius: AppRadius.mdAll,
+                                  ),
+                                  const SizedBox(height: 10),
+                                  SkeletonLoader(
+                                    height: 14,
+                                    width: width * 0.78,
+                                    borderRadius: AppRadius.smAll,
+                                  ),
+                                  const SizedBox(height: 7),
+                                  SkeletonLoader(
+                                    height: 11,
+                                    width: width * 0.5,
+                                    borderRadius: AppRadius.smAll,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              );
+            }
+          }
+
+'''
+          replace_once(path, marker, collection_skeleton + marker)
+
+          path = 'lib/features/home/presentation/home_page.dart'
+          replace_regex(
+              path,
+              r'''class _LoadingContent extends StatelessWidget \{.*?\n\}\n\nclass _ErrorContent''',
+              r'''class _LoadingContent extends StatelessWidget {
+            const _LoadingContent();
+
+            @override
+            Widget build(BuildContext context) {
+              return const CollectionPageSkeleton(showHero: true);
+            }
+          }
+
+          class _ErrorContent''',
+          )
+
+          path = 'lib/features/playlist/presentation/playlists_page.dart'
+          replace_once(
+              path,
+              "import '../../../shared/utils/responsive_snackbar.dart';\n",
+              "import '../../../shared/utils/responsive_snackbar.dart';\n"
+              "import '../../../shared/widgets/loading_indicator.dart';\n",
+          )
+          replace_regex(
+              path,
+              r'''                            loading:\n                                \(\) => const SliverToBoxAdapter\(\n                                  child: Padding\(\n                                    padding: EdgeInsets\.all\(64\),\n                                    child: Center\(\n                                      child: CircularProgressIndicator\(\),\n                                    \),\n                                  \),\n                                \),''',
+              r'''                            loading:
+                                () => const SliverToBoxAdapter(
+                                  child: CollectionPageSkeleton(),
+                                ),''',
+          )
+
+          # ------------------------------------------------------------------
+          # Android edge-to-edge and system bar theme adaptation
+          # ------------------------------------------------------------------
+          write(
+              'android/app/src/main/kotlin/com/songloft/songloft_flutter/MainActivity.kt',
+              r'''package com.songloft.songloft_flutter
+
+          import android.app.UiModeManager
+          import android.content.Context
+          import android.content.res.Configuration
+          import android.graphics.Color
+          import android.media.AudioManager
+          import android.os.Build
+          import android.os.Bundle
+          import androidx.core.view.WindowCompat
+          import io.flutter.embedding.engine.FlutterEngine
+          import io.flutter.plugin.common.MethodChannel
+          import com.ryanheise.audioservice.AudioServiceActivity
+
+          class MainActivity : AudioServiceActivity() {
+              companion object {
+                  private const val CHANNEL = "com.songloft/tv_detector"
+              }
+
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  WindowCompat.setDecorFitsSystemWindows(window, false)
+                  window.statusBarColor = Color.TRANSPARENT
+                  window.navigationBarColor = Color.TRANSPARENT
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                      window.isNavigationBarContrastEnforced = false
+                  }
+                  super.onCreate(savedInstanceState)
+                  volumeControlStream = AudioManager.STREAM_MUSIC
+              }
+
+              override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+                  super.configureFlutterEngine(flutterEngine)
+                  MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+                      if (call.method == "isTvMode") {
+                          val uiModeManager = getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
+                          val isTv = uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
+                          result.success(isTv)
+                      } else {
+                          result.notImplemented()
+                      }
+                  }
+
+                  // 注册内嵌后端 MethodChannel（反射调用 .aar，未打包时自动降级）
+                  SongloftBackendPlugin(flutterEngine)
+              }
+          }
+          ''',
+          )
+          write(
+              'android/app/src/main/res/values/styles.xml',
+              r'''<?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+                  <item name="android:windowBackground">@drawable/launch_background</item>
+                  <item name="android:statusBarColor">@android:color/transparent</item>
+                  <item name="android:navigationBarColor">@android:color/transparent</item>
+                  <item name="android:windowLightStatusBar">true</item>
+                  <item name="android:windowLightNavigationBar">true</item>
+                  <item name="android:windowActionModeOverlay">true</item>
+                  <item name="android:windowNoTitle">true</item>
+                  <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+                  <item name="android:enforceNavigationBarContrast">false</item>
+              </style>
+              <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+                  <item name="android:windowBackground">?android:colorBackground</item>
+                  <item name="android:statusBarColor">@android:color/transparent</item>
+                  <item name="android:navigationBarColor">@android:color/transparent</item>
+                  <item name="android:windowLightStatusBar">true</item>
+                  <item name="android:windowLightNavigationBar">true</item>
+                  <item name="android:windowActionModeOverlay">true</item>
+                  <item name="android:windowNoTitle">true</item>
+                  <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+                  <item name="android:enforceNavigationBarContrast">false</item>
+              </style>
+          </resources>
+          ''',
+          )
+          write(
+              'android/app/src/main/res/values-night/styles.xml',
+              r'''<?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
+                  <item name="android:windowBackground">@drawable/launch_background</item>
+                  <item name="android:statusBarColor">@android:color/transparent</item>
+                  <item name="android:navigationBarColor">@android:color/transparent</item>
+                  <item name="android:windowLightStatusBar">false</item>
+                  <item name="android:windowLightNavigationBar">false</item>
+                  <item name="android:windowActionModeOverlay">true</item>
+                  <item name="android:windowNoTitle">true</item>
+                  <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+                  <item name="android:enforceNavigationBarContrast">false</item>
+              </style>
+              <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
+                  <item name="android:windowBackground">?android:colorBackground</item>
+                  <item name="android:statusBarColor">@android:color/transparent</item>
+                  <item name="android:navigationBarColor">@android:color/transparent</item>
+                  <item name="android:windowLightStatusBar">false</item>
+                  <item name="android:windowLightNavigationBar">false</item>
+                  <item name="android:windowActionModeOverlay">true</item>
+                  <item name="android:windowNoTitle">true</item>
+                  <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+                  <item name="android:enforceNavigationBarContrast">false</item>
+              </style>
+          </resources>
+          ''',
+          )
+
+          path = 'lib/main.dart'
+          replace_once(
+              path,
+              "import 'package:flutter/rendering.dart';\n",
+              "import 'package:flutter/rendering.dart';\n"
+              "import 'package:flutter/services.dart';\n",
+          )
+          replace_once(
+              path,
+              "  AppConfig.isTvMode = await TvDetector.isTv().timeout(\n    const Duration(seconds: 3),\n    onTimeout: () => false,\n  );\n",
+              "  AppConfig.isTvMode = await TvDetector.isTv().timeout(\n"
+              "    const Duration(seconds: 3),\n"
+              "    onTimeout: () => false,\n"
+              "  );\n\n"
+              "  if (!kIsWeb && Platform.isAndroid && !AppConfig.isTvMode) {\n"
+              "    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);\n"
+              "  }\n",
+          )
+          replace_once(
+              path,
+              "        return Theme(data: responsiveTheme, child: child!);\n",
+              "        final iconBrightness =\n"
+              "            isDark ? Brightness.light : Brightness.dark;\n"
+              "        final overlayStyle = SystemUiOverlayStyle(\n"
+              "          statusBarColor: Colors.transparent,\n"
+              "          statusBarIconBrightness: iconBrightness,\n"
+              "          systemNavigationBarColor: Colors.transparent,\n"
+              "          systemNavigationBarDividerColor: Colors.transparent,\n"
+              "          systemNavigationBarIconBrightness: iconBrightness,\n"
+              "          systemNavigationBarContrastEnforced: false,\n"
+              "        );\n"
+              "        return AnnotatedRegion<SystemUiOverlayStyle>(\n"
+              "          value: overlayStyle,\n"
+              "          child: Theme(data: responsiveTheme, child: child!),\n"
+              "        );\n",
+          )
+
+          # ------------------------------------------------------------------
+          # Tests
+          # ------------------------------------------------------------------
+          path = 'test/features/library/presentation/providers/songs_list_state_test.dart'
+          replace_once(
+              path,
+              "    test('正在全选或仅部分选中时返回 false', () {",
+              "    test('明确设置选择状态不会重复翻转', () {\n"
+              "      expect(updatedSongSelection({1}, 2, true), {1, 2});\n"
+              "      expect(updatedSongSelection({1, 2}, 2, true), {1, 2});\n"
+              "      expect(updatedSongSelection({1, 2}, 1, false), {2});\n"
+              "    });\n\n"
+              "    test('正在全选或仅部分选中时返回 false', () {",
+          )
+          write(
+              'test/shared/utils/responsive_snackbar_test.dart',
+              r'''import 'package:flutter/material.dart';
+          import 'package:flutter_test/flutter_test.dart';
+          import 'package:songloft_flutter/shared/utils/responsive_snackbar.dart';
+
+          void main() {
+            testWidgets('点击撤销时返回 true', (tester) async {
+              Future<bool>? result;
+              await tester.pumpWidget(
+                MaterialApp(
+                  home: Scaffold(
+                    body: Builder(
+                      builder:
+                          (context) => FilledButton(
+                            onPressed: () {
+                              result = ResponsiveSnackBar.showUndo(
+                                context,
+                                message: '已删除歌曲',
+                              );
+                            },
+                            child: const Text('删除'),
+                          ),
+                    ),
+                  ),
+                ),
+              );
+
+              await tester.tap(find.text('删除'));
+              await tester.pump();
+              await tester.tap(find.text('撤销'));
+              await tester.pumpAndSettle();
+
+              expect(await result, isTrue);
+            });
+
+            testWidgets('提示自然关闭时返回 false', (tester) async {
+              Future<bool>? result;
+              await tester.pumpWidget(
+                MaterialApp(
+                  home: Scaffold(
+                    body: Builder(
+                      builder:
+                          (context) => FilledButton(
+                            onPressed: () {
+                              result = ResponsiveSnackBar.showUndo(
+                                context,
+                                message: '已删除歌曲',
+                                duration: const Duration(milliseconds: 100),
+                              );
+                            },
+                            child: const Text('删除'),
+                          ),
+                    ),
+                  ),
+                ),
+              );
+
+              await tester.tap(find.text('删除'));
+              await tester.pump();
+              await tester.pump(const Duration(milliseconds: 150));
+              await tester.pumpAndSettle();
+
+              expect(await result, isFalse);
+            });
+          }
+          ''',
+          )
+          write(
+              'test/features/player/presentation/widgets/mini_player_test.dart',
+              r'''import 'package:flutter/material.dart';
+          import 'package:flutter_riverpod/flutter_riverpod.dart';
+          import 'package:flutter_test/flutter_test.dart';
+          import 'package:songloft_flutter/features/player/domain/player_state.dart';
+          import 'package:songloft_flutter/features/player/presentation/providers/player_provider.dart';
+          import 'package:songloft_flutter/features/player/presentation/widgets/mini_player.dart';
+          import 'package:songloft_flutter/shared/models/song.dart';
+
+          const testSong = Song(
+            id: 1,
+            type: 'local',
+            title: '测试歌曲',
+            artist: '测试歌手',
+            duration: 180,
+            addedAt: DateTime(2026),
+            updatedAt: DateTime(2026),
+          );
+
+          class FakePlayerNotifier extends PlayerNotifier {
+            var retryCount = 0;
+
+            @override
+            PlayerState build() => const PlayerState(
+              currentSong: testSong,
+              playlist: [testSong],
+              currentIndex: 0,
+              errorMessage: '播放失败',
+            );
+
+            @override
+            void clearError() {
+              state = state.copyWith(clearErrorMessage: true);
+            }
+
+            @override
+            Future<void> togglePlay() async {
+              retryCount++;
+              state = state.copyWith(isPlaying: true, isRetrying: false);
+            }
+          }
+
+          void main() {
+            testWidgets('播放失败时显示重试按钮并触发重新播放', (tester) async {
+              final notifier = FakePlayerNotifier();
+              await tester.pumpWidget(
+                ProviderScope(
+                  overrides: [
+                    playerStateProvider.overrideWith(() => notifier),
+                  ],
+                  child: const MaterialApp(
+                    home: Scaffold(body: MiniPlayer()),
+                  ),
+                ),
+              );
+
+              expect(find.text('播放失败'), findsOneWidget);
+              expect(find.byTooltip('重试播放'), findsOneWidget);
+
+              await tester.tap(find.byTooltip('重试播放'));
+              await tester.pump();
+
+              expect(notifier.retryCount, 1);
+            });
+          }
+          ''',
+          )
+
+          # Extend formal CI coverage.
+          path = '.github/workflows/ui-redesign-check.yml'
+          replace_once(
+              path,
+              "      - name: Run library selection tests\n        run: flutter test test/features/library\n",
+              "      - name: Run library selection tests\n"
+              "        run: flutter test test/features/library\n"
+              "      - name: Run experience completion tests\n"
+              "        run: flutter test test/features/player/presentation/widgets test/shared/utils\n",
+          )
+          PY
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Format changed Dart files
+        shell: bash
+        run: |
+          mapfile -t files < <(git diff --name-only --diff-filter=ACM -- 'lib/**/*.dart' 'test/**/*.dart')
+          if (( ${#files[@]} > 0 )); then
+            dart format "${files[@]}"
+          fi
+      - name: Run focused tests
+        run: |
+          flutter test test/features/library
+          flutter test test/features/player/presentation/widgets
+          flutter test test/shared/utils
+      - name: Analyze
+        run: flutter analyze
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib test android .github/workflows/ui-redesign-check.yml
+          git commit -m 'feat(mobile): complete second-stage experience polish'
+          git push origin HEAD:mobile-experience-completion
