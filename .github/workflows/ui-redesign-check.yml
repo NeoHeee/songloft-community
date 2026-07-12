@@ -22,6 +22,7 @@ on:
       - mobile-third-round
       - mobile-fourth-round
       - mobile-fifth-round
+      - mobile-sixth-round
     paths:
       - 'lib/**'
       - 'test/**'
@@ -93,6 +94,8 @@ jobs:
           exit "$failed"
       - name: Run theme system tests
         run: flutter test test/core/theme
+      - name: Run network recovery tests
+        run: flutter test test/core/network
       - name: Run cover cache utility tests
         run: flutter test test/core/utils/cover_cache_test.dart
       - name: Run cover image widget tests
