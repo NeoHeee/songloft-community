@@ -12,11 +12,20 @@ import 'mobile_player.dart';
 import 'play_controls.dart';
 import 'progress_bar.dart';
 
-/// 移动端悬浮迷你播放器
+enum MiniPlayerDensity { regular, compact }
+
+/// 移动端悬浮迷你播放器。
+///
+/// 普通页面使用 regular；设置页和插件页使用 compact，减少对内容区的占用。
 class MiniPlayer extends ConsumerStatefulWidget {
   final VoidCallback? onTap;
+  final MiniPlayerDensity density;
 
-  const MiniPlayer({super.key, this.onTap});
+  const MiniPlayer({
+    super.key,
+    this.onTap,
+    this.density = MiniPlayerDensity.regular,
+  });
 
   @override
   ConsumerState<MiniPlayer> createState() => _MiniPlayerState();
@@ -24,6 +33,8 @@ class MiniPlayer extends ConsumerStatefulWidget {
 
 class _MiniPlayerState extends ConsumerState<MiniPlayer> {
   double _horizontalDragDistance = 0;
+
+  bool get _isCompact => widget.density == MiniPlayerDensity.compact;
 
   void _handleHorizontalDragStart(DragStartDetails details) {
     _horizontalDragDistance = 0;
@@ -76,6 +87,9 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
         () {
           MobilePlayer.show(context);
         };
+    final height = _isCompact ? 54.0 : 76.0;
+    final coverSize = _isCompact ? 38.0 : 54.0;
+    final playButtonSize = _isCompact ? 38.0 : 46.0;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -84,30 +98,41 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
       onHorizontalDragEnd: _handleHorizontalDragEnd,
       onLongPress: _openQueue,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+        padding:
+            _isCompact
+                ? const EdgeInsets.fromLTRB(6, 3, 6, 4)
+                : const EdgeInsets.fromLTRB(8, 6, 8, 8),
         child: Material(
-          color: colorScheme.surfaceContainerHigh,
-          elevation: 10,
-          shadowColor: Colors.black.withValues(alpha: 0.22),
-          borderRadius: BorderRadius.circular(tokens.cardRadius),
+          color:
+              _isCompact
+                  ? colorScheme.surfaceContainer
+                  : colorScheme.surfaceContainerHigh,
+          elevation: _isCompact ? 3 : 10,
+          shadowColor: Colors.black.withValues(alpha: _isCompact ? 0.12 : 0.22),
+          borderRadius: BorderRadius.circular(
+            _isCompact ? tokens.controlRadius : tokens.cardRadius,
+          ),
           clipBehavior: Clip.antiAlias,
           child: Semantics(
-            label: '展开播放器',
+            label: _isCompact ? '展开薄版播放器' : '展开播放器',
             hint: '左右滑动切歌，长按打开播放队列',
             button: true,
             child: InkWell(
               onTap: openPlayer,
               child: SizedBox(
-                height: 76,
+                height: height,
                 child: Column(
                   children: [
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(10, 9, 8, 6),
+                        padding:
+                            _isCompact
+                                ? const EdgeInsets.fromLTRB(7, 5, 6, 3)
+                                : const EdgeInsets.fromLTRB(10, 9, 8, 6),
                         child: Row(
                           children: [
-                            _buildCover(song.coverUrl),
-                            const SizedBox(width: 12),
+                            _buildCover(song.coverUrl, coverSize),
+                            SizedBox(width: _isCompact ? 9 : 12),
                             Expanded(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -115,14 +140,17 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
                                 children: [
                                   Text(
                                     song.title,
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: -0.1,
-                                    ),
+                                    style: (_isCompact
+                                            ? theme.textTheme.bodySmall
+                                            : theme.textTheme.bodyMedium)
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: -0.1,
+                                        ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(height: 3),
+                                  SizedBox(height: _isCompact ? 1 : 3),
                                   Row(
                                     children: [
                                       if (ref.watch(
@@ -131,23 +159,24 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
                                         ),
                                       ))
                                         Padding(
-                                          padding: const EdgeInsets.only(
-                                            right: 5,
+                                          padding: EdgeInsets.only(
+                                            right: _isCompact ? 4 : 5,
                                           ),
                                           child: Icon(
                                             Icons.cast_connected_rounded,
-                                            size: 13,
+                                            size: _isCompact ? 11 : 13,
                                             color: colorScheme.primary,
                                           ),
                                         ),
                                       Expanded(
                                         child: Text(
                                           song.artist ?? '未知艺术家',
-                                          style: theme.textTheme.bodySmall
+                                          style: (_isCompact
+                                                  ? theme.textTheme.labelSmall
+                                                  : theme.textTheme.bodySmall)
                                               ?.copyWith(
                                                 color:
-                                                    colorScheme
-                                                        .onSurfaceVariant,
+                                                    colorScheme.onSurfaceVariant,
                                               ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
@@ -158,7 +187,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 6),
+                            SizedBox(width: _isCompact ? 4 : 6),
                             Material(
                               color: colorScheme.primaryContainer,
                               shape: const CircleBorder(),
@@ -167,22 +196,23 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
                                 isBuffering: state.isBuffering,
                                 onPlay: notifier.togglePlay,
                                 onPause: notifier.togglePlay,
-                                size: 46,
+                                size: playButtonSize,
                               ),
                             ),
-                            IconButton(
-                              onPressed:
-                                  state.hasNext ? notifier.playNext : null,
-                              tooltip: '下一首',
-                              icon: const Icon(Icons.skip_next_rounded),
-                              visualDensity: VisualDensity.compact,
-                            ),
+                            if (!_isCompact)
+                              IconButton(
+                                onPressed:
+                                    state.hasNext ? notifier.playNext : null,
+                                tooltip: '下一首',
+                                icon: const Icon(Icons.skip_next_rounded),
+                                visualDensity: VisualDensity.compact,
+                              ),
                           ],
                         ),
                       ),
                     ),
                     SizedBox(
-                      height: 3,
+                      height: _isCompact ? 2 : 3,
                       child: PlayerProgressBar(
                         position: state.currentTime,
                         duration: state.duration,
@@ -200,24 +230,24 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
     );
   }
 
-  Widget _buildCover(String? coverUrl) {
+  Widget _buildCover(String? coverUrl, double size) {
     return Container(
-      width: 54,
-      height: 54,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
-        borderRadius: AppRadius.mdAll,
+        borderRadius: BorderRadius.circular(_isCompact ? 10 : AppRadius.md),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.16),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: _isCompact ? 0.1 : 0.16),
+            blurRadius: _isCompact ? 6 : 10,
+            offset: Offset(0, _isCompact ? 2 : 4),
           ),
         ],
       ),
       child: CoverImage(
         coverUrl: coverUrl,
-        size: 54,
-        borderRadius: AppRadius.md,
+        size: size,
+        borderRadius: _isCompact ? 10 : AppRadius.md,
         placeholderIcon: Icons.graphic_eq_rounded,
       ),
     );
