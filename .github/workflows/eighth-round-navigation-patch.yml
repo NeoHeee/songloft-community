@@ -42,3 +42,5 @@ jobs:
           git add lib test .github/workflows/ui-redesign-check.yml
           git commit -m 'fix(nav): unify mobile back behavior'
           git push origin HEAD:mobile-eighth-round
+
+# Synchronize the stacked PR so the bootstrap workflow on its base can run.
