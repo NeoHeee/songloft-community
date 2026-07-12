@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:width="320dp" android:height="180dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="315"
+                android:startColor="#B65CFF"
+                android:centerColor="#6D3DE7"
+                android:endColor="#2D1B78" />
+            <corners android:radius="20dp" />
+        </shape>
+    </item>
+    <item
+        android:width="92dp"
+        android:height="92dp"
+        android:gravity="center"
+        android:drawable="@mipmap/ic_launcher" />
+</layer-list>
