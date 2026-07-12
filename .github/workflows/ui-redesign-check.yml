@@ -21,6 +21,7 @@ on:
       - main
       - mobile-third-round
       - mobile-fourth-round
+      - mobile-fifth-round
     paths:
       - 'lib/**'
       - 'test/**'
