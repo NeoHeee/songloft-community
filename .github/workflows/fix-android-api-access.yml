@@ -1,0 +1,267 @@
+name: Fix Android API Access
+
+on:
+  push:
+    branches:
+      - mobile-experience-completion
+    paths:
+      - '.github/workflows/fix-android-api-access.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: mobile-experience-completion
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Resolve dependencies
+        run: flutter pub get
+      - name: Apply Android local network and URL fixes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          manifest = Path('android/app/src/main/AndroidManifest.xml')
+          text = manifest.read_text()
+          internet = '    <uses-permission android:name="android.permission.INTERNET"/>'
+          nearby = '''    <uses-permission android:name="android.permission.INTERNET"/>
+              <!-- Android 16 局域网保护：连接 NAS / 自托管 Songloft API -->
+              <uses-permission
+                  android:name="android.permission.NEARBY_WIFI_DEVICES"
+                  android:usesPermissionFlags="neverForLocation" />'''
+          if 'android.permission.NEARBY_WIFI_DEVICES' not in text:
+              text = text.replace(internet, nearby)
+          manifest.write_text(text)
+
+          security = Path('android/app/src/main/res/xml/network_security_config.xml')
+          text = security.read_text()
+          if '<certificates src="user" />' not in text:
+              text = text.replace(
+                  '            <certificates src="system" />',
+                  '            <certificates src="system" />\n            <!-- 允许用户主动安装的私有 CA，用于 NAS / 内网 HTTPS -->\n            <certificates src="user" />',
+              )
+          security.write_text(text)
+
+          server_entry = Path('lib/core/network/server_entry.dart')
+          text = server_entry.read_text()
+          old = '''    final trimmed = input.trim().replaceAll(RegExp(r'/+$'), '');
+              if (trimmed.isEmpty) {
+                throw const FormatException('URL 不能为空');
+              }
+              final uri = Uri.tryParse(trimmed);
+              if (uri == null || !uri.hasScheme) {
+                throw const FormatException('请输入有效的 URL（包含 http:// 或 https://）');
+              }
+              return trimmed;'''
+          new = '''    final trimmed = input.trim().replaceAll(RegExp(r'/+$'), '');
+              final normalized = trimmed.replaceFirst(RegExp(r'/api/v1$'), '');
+              if (normalized.isEmpty) {
+                throw const FormatException('URL 不能为空');
+              }
+              final uri = Uri.tryParse(normalized);
+              if (uri == null ||
+                  !uri.hasScheme ||
+                  uri.host.isEmpty ||
+                  (uri.scheme != 'http' && uri.scheme != 'https')) {
+                throw const FormatException(
+                  '请输入以 http:// 或 https:// 开头的服务器根地址',
+                );
+              }
+              return normalized;'''
+          if old not in text:
+              raise SystemExit('server_entry.dart normalization block not found')
+          server_entry.write_text(text.replace(old, new))
+
+          login = Path('lib/features/auth/presentation/login_page.dart')
+          text = login.read_text()
+          permission_import = "import 'package:permission_handler/permission_handler.dart';"
+          if permission_import not in text:
+              text = text.replace(
+                  "import 'package:path_provider/path_provider.dart';",
+                  "import 'package:path_provider/path_provider.dart';\n" + permission_import,
+              )
+
+          anchor = '  Future<void> _discoverLanServers() async {'
+          helper = r'''  bool _isLikelyLocalServer(String? rawUrl) {
+            final candidate =
+                (rawUrl == null || rawUrl.isEmpty)
+                    ? ref.read(baseUrlProvider)
+                    : rawUrl;
+            final uri = Uri.tryParse(candidate);
+            if (uri == null) return false;
+
+            final host = uri.host.toLowerCase();
+            if (host == 'localhost' || host.endsWith('.local')) return true;
+            if (host == '::1' ||
+                host.startsWith('fe80:') ||
+                host.startsWith('fc') ||
+                host.startsWith('fd')) {
+              return true;
+            }
+
+            final parts = host.split('.').map(int.tryParse).toList();
+            if (parts.length != 4 || parts.any((part) => part == null)) {
+              return false;
+            }
+            final a = parts[0]!;
+            final b = parts[1]!;
+            if (a == 10 || a == 127) return true;
+            if (a == 172 && b >= 16 && b <= 31) return true;
+            if (a == 192 && b == 168) return true;
+            if (a == 169 && b == 254) return true;
+            if (a == 100 && b >= 64 && b <= 127) return true;
+            return false;
+          }
+
+          Future<void> _prepareAndroidLocalNetworkAccess({String? url}) async {
+            if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+            if (url != null && !_isLikelyLocalServer(url)) return;
+
+            try {
+              final current = await Permission.nearbyWifiDevices.status;
+              if (current.isGranted || current.isLimited) return;
+
+              final requested = await Permission.nearbyWifiDevices.request();
+              if (!mounted) return;
+              if (requested.isPermanentlyDenied) {
+                ResponsiveSnackBar.showError(
+                  context,
+                  message: '请在系统设置中允许“附近的设备”权限，才能连接局域网 Songloft 服务器',
+                  duration: const Duration(seconds: 7),
+                );
+              } else if (!requested.isGranted && !requested.isLimited) {
+                ResponsiveSnackBar.show(
+                  context,
+                  message: '未授予“附近的设备”权限，Android 16 上可能无法访问局域网 API',
+                  duration: const Duration(seconds: 6),
+                );
+              }
+            } catch (_) {
+              // 较旧 Android 版本不支持该权限时继续使用传统 INTERNET 权限。
+            }
+          }
+
+'''
+          if '_prepareAndroidLocalNetworkAccess' not in text:
+              if anchor not in text:
+                  raise SystemExit('login discovery anchor not found')
+              text = text.replace(anchor, helper + anchor)
+
+          discovery_old = '''    if (_isDiscoveringServers) return;
+
+              final savedServers ='''
+          discovery_new = '''    await _prepareAndroidLocalNetworkAccess();
+              if (!mounted) return;
+              if (_isDiscoveringServers) return;
+
+              final savedServers ='''
+          if discovery_old not in text:
+              raise SystemExit('discovery permission insertion point not found')
+          text = text.replace(discovery_old, discovery_new, 1)
+
+          login_old = '''    await authNotifier.login(
+                    username: _usernameController.text.trim(),'''
+          login_new = '''    await _prepareAndroidLocalNetworkAccess(url: apiBaseUrl);
+                if (!mounted) return;
+
+                await authNotifier.login(
+                    username: _usernameController.text.trim(),'''
+          if login_old not in text:
+              raise SystemExit('login permission insertion point not found')
+          text = text.replace(login_old, login_new, 1)
+
+          text = text.replace(
+              "          hintText: AppConfig.baseUrl,\n          prefixIcon: const Icon(Icons.cloud_outlined),",
+              "          hintText: '例如 http://192.168.1.10:58091',\n          helperText: '填写服务器根地址，不需要添加 /api/v1',\n          prefixIcon: const Icon(Icons.cloud_outlined),",
+              1,
+          )
+          text = text.replace(
+              "                                hintText: AppConfig.baseUrl,",
+              "                                hintText: '例如 http://192.168.1.10:58091',",
+              1,
+          )
+          login.write_text(text)
+
+          exceptions = Path('lib/core/network/api_exceptions.dart')
+          text = exceptions.read_text()
+          text = text.replace(
+              "③若通过 ZeroTier/VPN 访问，请确认 VPN 已连接并启用「全局路由」',",
+              "③若通过 ZeroTier/VPN 访问，请确认 VPN 已连接并启用「全局路由」 "
+              "'④Android 16 访问局域网时，请允许“附近的设备”权限',",
+          )
+          text = text.replace(
+              "'请检查 URL 是否正确；若通过 ZeroTier/VPN 访问，请确认 VPN 已启用',",
+              "'请检查 URL 是否正确；若通过 ZeroTier/VPN 访问，请确认 VPN 已启用；' "
+              "'Android 16 访问局域网时，请允许“附近的设备”权限',",
+          )
+          text = text.replace(
+              "return NetworkException(message: '证书验证失败');",
+              "return NetworkException(\n          message: '证书验证失败；若使用 NAS 私有 CA，请先在系统中安装并信任该证书',\n        );",
+          )
+          exceptions.write_text(text)
+
+          pubspec = Path('pubspec.yaml')
+          text = pubspec.read_text().replace(
+              'version: 1.0.0-community.1+1',
+              'version: 1.0.0-community.2+2',
+          )
+          pubspec.write_text(text)
+
+          test_file = Path('test/core/network/server_entry_test.dart')
+          test_file.write_text("""import 'package:flutter_test/flutter_test.dart';
+          import 'package:songloft_flutter/core/network/server_entry.dart';
+
+          void main() {
+            group('ServerEntry.normalizeUrl', () {
+              test('保留标准服务器根地址', () {
+                expect(
+                  ServerEntry.normalizeUrl(' http://192.168.1.10:58091/ '),
+                  'http://192.168.1.10:58091',
+                );
+              });
+
+              test('自动移除误填的 API 前缀', () {
+                expect(
+                  ServerEntry.normalizeUrl(
+                    'https://music.example.com/api/v1/',
+                  ),
+                  'https://music.example.com',
+                );
+              });
+
+              test('拒绝缺少协议的地址', () {
+                expect(
+                  () => ServerEntry.normalizeUrl('192.168.1.10:58091'),
+                  throwsFormatException,
+                );
+              });
+            });
+          }
+          """)
+          PY
+          dart format lib test
+          flutter pub get
+      - name: Verify focused tests and analyze
+        run: |
+          flutter test test/core/network
+          flutter analyze --no-fatal-infos
+      - name: Commit compatibility fix and remove temporary workflow
+        shell: bash
+        run: |
+          git rm .github/workflows/fix-android-api-access.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add android lib test pubspec.yaml pubspec.lock
+          git commit -m 'fix(android): restore local API access on Android 16'
+          git push origin HEAD:mobile-experience-completion
