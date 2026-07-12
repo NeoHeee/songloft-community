@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/accessibility.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/utils/color_extraction.dart';
 import '../../../../shared/widgets/cover_image.dart';
@@ -28,12 +29,18 @@ class MobilePlayer extends ConsumerStatefulWidget {
 
   /// 显示全屏播放器
   static Future<void> show(BuildContext context) {
+    final reduceMotion = AppAccessibility.reduceMotionOf(context);
     return Navigator.of(context).push(
       PageRouteBuilder(
         opaque: true,
+        transitionDuration:
+            reduceMotion ? Duration.zero : const Duration(milliseconds: 280),
+        reverseTransitionDuration:
+            reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
         pageBuilder:
             (context, animation, secondaryAnimation) => const MobilePlayer(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          if (reduceMotion) return child;
           // 从下往上滑入动画
           return SlideTransition(
             position: Tween<Offset>(
@@ -138,6 +145,7 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
     final notifier = ref.read(playerStateProvider.notifier);
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
+    final reduceMotion = AppAccessibility.reduceMotionOf(context);
 
     // 播放列表被清空时，自动关闭全屏播放器并返回上一页
     // 同时控制封面脉冲动画
@@ -149,17 +157,21 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
         }
       }
       // 控制唱片环旋转动画
-      if (next.isPlaying && !_rotationController.isAnimating) {
+      if (!reduceMotion && next.isPlaying && !_rotationController.isAnimating) {
         _rotationController.repeat();
-      } else if (!next.isPlaying && _rotationController.isAnimating) {
+      } else if ((reduceMotion || !next.isPlaying) &&
+          _rotationController.isAnimating) {
         _rotationController.stop();
       }
     });
 
     // 初始播放状态动画（listen 只响应变化，初始状态需要手动处理）
-    if (state.isPlaying && !_rotationController.isAnimating) {
+    if (!reduceMotion && state.isPlaying && !_rotationController.isAnimating) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && state.isPlaying && !_rotationController.isAnimating) {
+        if (mounted &&
+            !AppAccessibility.reduceMotionOf(context) &&
+            state.isPlaying &&
+            !_rotationController.isAnimating) {
           _rotationController.repeat();
         }
       });
@@ -190,7 +202,9 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
         color: Colors.black,
         child: AnimatedContainer(
           duration:
-              _isDragging ? Duration.zero : const Duration(milliseconds: 220),
+              _isDragging || reduceMotion
+                  ? Duration.zero
+                  : const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
           transform: Matrix4.translationValues(0, _dragOffset, 0),
           transformAlignment: Alignment.topCenter,
@@ -224,7 +238,10 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
                 else if (palette != null)
                   Positioned.fill(
                     child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 800),
+                      duration: AppAccessibility.motionDuration(
+                        context,
+                        const Duration(milliseconds: 800),
+                      ),
                       curve: Curves.easeInOut,
                       decoration: BoxDecoration(
                         gradient: RadialGradient(
@@ -260,7 +277,10 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
                 // 背景遮罩 - 动态取色渐变
                 Positioned.fill(
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 500),
+                    duration: AppAccessibility.motionDuration(
+                      context,
+                      const Duration(milliseconds: 500),
+                    ),
                     curve: Curves.easeInOut,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(

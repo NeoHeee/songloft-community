@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/accessibility.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/theme_tokens.dart';
 import '../../../../shared/widgets/cover_image.dart';
@@ -76,6 +77,8 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final tokens = SongloftThemeTokens.of(context);
+    final textScaleFactor = AppAccessibility.textScaleOf(context);
+    final textScaleDelta = textScaleFactor - 1.0;
 
     if (!state.hasSong) {
       return const SizedBox.shrink();
@@ -87,9 +90,11 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
         () {
           MobilePlayerGestureHost.show(context);
         };
-    final height = _isCompact ? 54.0 : 76.0;
+    final height =
+        (_isCompact ? 58.0 : 76.0) +
+        textScaleDelta * (_isCompact ? 18.0 : 24.0);
     final coverSize = _isCompact ? 38.0 : 54.0;
-    final playButtonSize = _isCompact ? 38.0 : 46.0;
+    final playButtonSize = 48.0 + textScaleDelta * 4;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -206,7 +211,6 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
                                     state.hasNext ? notifier.playNext : null,
                                 tooltip: '下一首',
                                 icon: const Icon(Icons.skip_next_rounded),
-                                visualDensity: VisualDensity.compact,
                               ),
                           ],
                         ),

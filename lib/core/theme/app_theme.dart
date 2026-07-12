@@ -10,11 +10,15 @@ class AppTheme {
   static ThemeData lightTheme({
     ScreenType screenType = ScreenType.mobile,
     SongloftThemePack? themePack,
+    double textScaleFactor = 1.0,
+    bool reduceMotion = false,
   }) {
     return _buildTheme(
       Brightness.light,
       screenType,
       themePack ?? SongloftThemePacks.classic,
+      textScaleFactor,
+      reduceMotion,
     );
   }
 
@@ -22,11 +26,15 @@ class AppTheme {
   static ThemeData darkTheme({
     ScreenType screenType = ScreenType.mobile,
     SongloftThemePack? themePack,
+    double textScaleFactor = 1.0,
+    bool reduceMotion = false,
   }) {
     return _buildTheme(
       Brightness.dark,
       screenType,
       themePack ?? SongloftThemePacks.classic,
+      textScaleFactor,
+      reduceMotion,
     );
   }
 
@@ -34,11 +42,30 @@ class AppTheme {
     Brightness brightness,
     ScreenType screenType,
     SongloftThemePack themePack,
+    double textScaleFactor,
+    bool reduceMotion,
   ) {
     final isDark = brightness == Brightness.dark;
     final isTv = screenType == ScreenType.tv;
     final isDesktopOrTv =
         screenType == ScreenType.desktop || screenType == ScreenType.tv;
+    final normalizedTextScale = textScaleFactor.clamp(1.0, 2.0).toDouble();
+    final textScaleDelta = normalizedTextScale - 1.0;
+    final buttonHeight =
+        isTv
+            ? 56.0 + textScaleDelta * 8
+            : isDesktopOrTv
+            ? 44.0 + textScaleDelta * 6
+            : 48.0 + textScaleDelta * 8;
+    final iconButtonExtent =
+        isTv
+            ? 56.0 + textScaleDelta * 8
+            : isDesktopOrTv
+            ? 44.0 + textScaleDelta * 6
+            : 48.0 + textScaleDelta * 8;
+    final navigationBarHeight = 72.0 + textScaleDelta * 24;
+    final toolbarHeight =
+        (isTv ? 72.0 : 56.0) + textScaleDelta * (isTv ? 16 : 12);
     final palette = themePack.paletteFor(brightness);
     final generatedScheme = ColorScheme.fromSeed(
       seedColor: palette.seedColor,
@@ -62,6 +89,23 @@ class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: background,
       canvasColor: background,
+      materialTapTargetSize: MaterialTapTargetSize.padded,
+      pageTransitionsTheme:
+          reduceMotion
+              ? const PageTransitionsTheme(
+                builders: {
+                  TargetPlatform.android:
+                      _NoTransitionsPageTransitionsBuilder(),
+                  TargetPlatform.fuchsia:
+                      _NoTransitionsPageTransitionsBuilder(),
+                  TargetPlatform.iOS: _NoTransitionsPageTransitionsBuilder(),
+                  TargetPlatform.linux: _NoTransitionsPageTransitionsBuilder(),
+                  TargetPlatform.macOS: _NoTransitionsPageTransitionsBuilder(),
+                  TargetPlatform.windows:
+                      _NoTransitionsPageTransitionsBuilder(),
+                },
+              )
+              : const PageTransitionsTheme(),
       splashFactory: InkSparkle.splashFactory,
       fontFamilyFallback: const ['NotoSansSC', 'sans-serif'],
       extensions: [
@@ -73,6 +117,7 @@ class AppTheme {
         ),
       ],
       appBarTheme: AppBarTheme(
+        toolbarHeight: toolbarHeight,
         centerTitle: false,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -109,9 +154,9 @@ class AppTheme {
         fillColor: colorScheme.surfaceContainerHighest.withValues(
           alpha: isDark ? 0.38 : 0.72,
         ),
-        contentPadding: const EdgeInsets.symmetric(
+        contentPadding: EdgeInsets.symmetric(
           horizontal: 16,
-          vertical: 14,
+          vertical: 14 + textScaleDelta * 4,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(controlRadius),
@@ -129,7 +174,7 @@ class AppTheme {
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        height: 72,
+        height: navigationBarHeight,
         elevation: 0,
         backgroundColor: panelColor,
         surfaceTintColor: Colors.transparent,
@@ -153,7 +198,7 @@ class AppTheme {
         ),
       ),
       listTileTheme: ListTileThemeData(
-        minVerticalPadding: 10,
+        minVerticalPadding: 10 + textScaleDelta * 6,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(controlRadius),
@@ -164,7 +209,7 @@ class AppTheme {
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
-          minimumSize: const Size(42, 42),
+          minimumSize: Size.square(iconButtonExtent),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(controlRadius),
           ),
@@ -172,12 +217,14 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize:
-              isTv
-                  ? const Size(120, 56)
-                  : isDesktopOrTv
-                  ? const Size(92, 44)
-                  : const Size(88, 48),
+          minimumSize: Size(
+            isTv
+                ? 120
+                : isDesktopOrTv
+                ? 92
+                : 88,
+            buttonHeight,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(controlRadius),
           ),
@@ -189,12 +236,14 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize:
-              isTv
-                  ? const Size(120, 56)
-                  : isDesktopOrTv
-                  ? const Size(92, 44)
-                  : const Size(88, 48),
+          minimumSize: Size(
+            isTv
+                ? 120
+                : isDesktopOrTv
+                ? 92
+                : 88,
+            buttonHeight,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(controlRadius),
           ),
@@ -203,12 +252,14 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          minimumSize:
-              isTv
-                  ? const Size(120, 56)
-                  : isDesktopOrTv
-                  ? const Size(88, 44)
-                  : const Size(80, 44),
+          minimumSize: Size(
+            isTv
+                ? 120
+                : isDesktopOrTv
+                ? 88
+                : 80,
+            buttonHeight,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(controlRadius),
           ),
@@ -281,5 +332,20 @@ class AppTheme {
     return ThemeData.estimateBrightnessForColor(color) == Brightness.dark
         ? Colors.white
         : const Color(0xFF15151A);
+  }
+}
+
+class _NoTransitionsPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _NoTransitionsPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return child;
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/accessibility.dart';
 import '../providers/player_provider.dart';
 import '../queue_page.dart';
 import 'mobile_player.dart';
@@ -16,13 +17,19 @@ class MobilePlayerGestureHost extends ConsumerStatefulWidget {
   const MobilePlayerGestureHost({super.key});
 
   static Future<void> show(BuildContext context) {
+    final reduceMotion = AppAccessibility.reduceMotionOf(context);
     return Navigator.of(context).push(
       PageRouteBuilder<void>(
         opaque: true,
+        transitionDuration:
+            reduceMotion ? Duration.zero : const Duration(milliseconds: 280),
+        reverseTransitionDuration:
+            reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
         pageBuilder:
             (context, animation, secondaryAnimation) =>
                 const MobilePlayerGestureHost(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          if (reduceMotion) return child;
           return SlideTransition(
             position: Tween<Offset>(
               begin: const Offset(0, 1),

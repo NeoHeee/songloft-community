@@ -25,6 +25,7 @@ import 'core/env/tv_detector.dart';
 import 'core/storage/app_preferences.dart';
 import 'core/storage/secure_storage.dart';
 import 'core/tracely/tracely_client.dart';
+import 'core/theme/accessibility.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/responsive.dart';
 import 'core/theme/theme_pack_provider.dart';
@@ -478,23 +479,27 @@ class SongloftApp extends ConsumerWidget {
       themeMode: themeMode,
       routerConfig: router,
       builder: (context, child) {
-        // 在 builder 中获取 MediaQuery 来应用响应式主题
-        final width = MediaQuery.of(context).size.width;
-        final screenType = _getScreenType(width);
+        // 在 builder 中获取系统字号和减少动画偏好，同时应用响应式主题。
+        final mediaQuery = MediaQuery.of(context);
+        final screenType = _getScreenType(mediaQuery.size.width);
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        return Theme(
-          data:
-              isDark
-                  ? AppTheme.darkTheme(
-                    screenType: screenType,
-                    themePack: themePack,
-                  )
-                  : AppTheme.lightTheme(
-                    screenType: screenType,
-                    themePack: themePack,
-                  ),
-          child: child!,
-        );
+        final textScaleFactor = AppAccessibility.textScaleOf(context);
+        final reduceMotion = AppAccessibility.reduceMotionOf(context);
+        final responsiveTheme =
+            isDark
+                ? AppTheme.darkTheme(
+                  screenType: screenType,
+                  themePack: themePack,
+                  textScaleFactor: textScaleFactor,
+                  reduceMotion: reduceMotion,
+                )
+                : AppTheme.lightTheme(
+                  screenType: screenType,
+                  themePack: themePack,
+                  textScaleFactor: textScaleFactor,
+                  reduceMotion: reduceMotion,
+                );
+        return Theme(data: responsiveTheme, child: child!);
       },
     );
   }
