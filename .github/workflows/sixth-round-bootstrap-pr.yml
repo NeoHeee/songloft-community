@@ -43,13 +43,15 @@ jobs:
       - name: Commit sixth-round implementation
         shell: bash
         run: |
+          set -euxo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git rm .github/workflows/sixth-round-bootstrap.yml
-          git rm .github/workflows/sixth-round-bootstrap-pr.yml
-          git rm .github/workflows/sixth-round-bootstrap-fix.yml
-          git rm .github/workflows/sixth-round-patch-diagnostic.yml
-          git rm .github/scripts/sixth_round_patch.py
-          git add lib test .github/workflows/ui-redesign-check.yml
+          rm -f .github/workflows/sixth-round-bootstrap.yml
+          rm -f .github/workflows/sixth-round-bootstrap-pr.yml
+          rm -f .github/workflows/sixth-round-bootstrap-fix.yml
+          rm -f .github/workflows/sixth-round-patch-diagnostic.yml
+          rm -f .github/scripts/sixth_round_patch.py
+          git add -A
+          git status --short
           git commit -m 'feat(accessibility): start sixth-round system adaptation polish'
           git push origin HEAD:${{ github.event.pull_request.head.ref }}
