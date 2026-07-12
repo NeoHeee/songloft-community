@@ -8,6 +8,10 @@
     <uses-feature android:name="android.hardware.type.automotive" android:required="false" />
 
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Android 16 局域网保护：连接 NAS / 自托管 Songloft API -->
+    <uses-permission
+        android:name="android.permission.NEARBY_WIFI_DEVICES"
+        android:usesPermissionFlags="neverForLocation" />
     <!-- 本地模式：读取设备音频文件 -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
