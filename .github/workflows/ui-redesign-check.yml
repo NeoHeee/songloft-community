@@ -85,14 +85,8 @@ jobs:
             exit 0
           fi
 
-          failed=0
-          for file in "${dart_files[@]}"; do
-            echo "Checking $file"
-            if ! dart format --output=none --set-exit-if-changed "$file"; then
-              failed=1
-            fi
-          done
-          exit "$failed"
+          printf 'Checking %s\n' "${dart_files[@]}"
+          dart format --output=none --set-exit-if-changed "${dart_files[@]}"
       - name: Run theme system tests
         run: flutter test test/core/theme
       - name: Run network recovery tests
