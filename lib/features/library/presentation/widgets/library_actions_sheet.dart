@@ -139,8 +139,7 @@ class LibraryActionsSheet extends StatelessWidget {
                     ? Icons.visibility_off_rounded
                     : Icons.visibility_rounded,
             title: showHidden ? '隐藏已隐藏歌曲' : '显示隐藏歌曲',
-            subtitle:
-                showHidden ? '恢复默认歌曲库视图' : '临时显示被隐藏歌单中的歌曲',
+            subtitle: showHidden ? '恢复默认歌曲库视图' : '临时显示被隐藏歌单中的歌曲',
             onTap: onToggleHidden,
           ),
           _ActionTile(
