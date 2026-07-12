@@ -1,9 +1,9 @@
 name: Fix Android API Access
 
 on:
-  push:
+  pull_request:
     branches:
-      - mobile-experience-completion
+      - main
     paths:
       - '.github/workflows/fix-android-api-access.yml'
 
@@ -206,11 +206,12 @@ jobs:
           exceptions.write_text(text)
 
           pubspec = Path('pubspec.yaml')
-          text = pubspec.read_text().replace(
-              'version: 1.0.0-community.1+1',
-              'version: 1.0.0-community.2+2',
+          pubspec.write_text(
+              pubspec.read_text().replace(
+                  'version: 1.0.0-community.1+1',
+                  'version: 1.0.0-community.2+2',
+              )
           )
-          pubspec.write_text(text)
 
           test_file = Path('test/core/network/server_entry_test.dart')
           test_file.write_text("""import 'package:flutter_test/flutter_test.dart';
