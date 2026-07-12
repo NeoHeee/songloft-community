@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/constants.dart';
+import '../../../../shared/utils/responsive_snackbar.dart';
+import '../../../../shared/widgets/add_to_playlist_modal.dart';
+import '../../../../shared/widgets/delete_song_dialog.dart';
+import '../providers/songs_provider.dart';
 
-/// 歌曲类型筛选栏
-class SongFilterBar extends StatelessWidget {
+/// 歌曲类型筛选栏；进入多选模式后原位切换为批量操作栏。
+class SongFilterBar extends ConsumerWidget {
   final String? currentType;
   final ValueChanged<String?> onTypeChanged;
   final int songCount;
@@ -16,7 +22,12 @@ class SongFilterBar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectionState = ref.watch(songsListProvider);
+    if (selectionState.isSelectionMode) {
+      return _buildSelectionBar(context, ref, selectionState);
+    }
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -89,6 +100,182 @@ class SongFilterBar extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildSelectionBar(
+    BuildContext context,
+    WidgetRef ref,
+    SongsListState state,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final selectedCount = state.selectedSongIds.length;
+    final hasSelection = selectedCount > 0;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+      child: Semantics(
+        container: true,
+        liveRegion: true,
+        label: '多选操作栏，已选择 $selectedCount 首歌曲',
+        child: Material(
+          color: colorScheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(20),
+          clipBehavior: Clip.antiAlias,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: colorScheme.primary.withValues(alpha: 0.2),
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      child: Icon(
+                        Icons.library_add_check_rounded,
+                        size: 20,
+                        color: colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        hasSelection ? '已选择 $selectedCount 首歌曲' : '请选择要操作的歌曲',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    if (hasSelection)
+                      TextButton(
+                        onPressed: () {
+                          HapticFeedback.selectionClick();
+                          ref
+                              .read(songsListProvider.notifier)
+                              .clearSelection();
+                        },
+                        child: const Text('清空'),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 9),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed:
+                            state.isSelectingAll
+                                ? null
+                                : () {
+                                  HapticFeedback.selectionClick();
+                                  ref
+                                      .read(songsListProvider.notifier)
+                                      .toggleSelectAll();
+                                },
+                        icon:
+                            state.isSelectingAll
+                                ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                                : Icon(
+                                  state.isAllSelected
+                                      ? Icons.deselect_rounded
+                                      : Icons.select_all_rounded,
+                                ),
+                        label: Text(state.isAllSelected ? '取消全选' : '全选'),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(0, 48),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: FilledButton.tonalIcon(
+                        onPressed:
+                            hasSelection
+                                ? () {
+                                  HapticFeedback.lightImpact();
+                                  AddToPlaylistModal.show(
+                                    context,
+                                    songIds: state.selectedSongIds.toList(),
+                                  );
+                                }
+                                : null,
+                        icon: const Icon(Icons.playlist_add_rounded),
+                        label: const Text('加入歌单'),
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size(0, 48),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed:
+                            hasSelection
+                                ? () => _showBatchDeleteDialog(context, ref)
+                                : null,
+                        icon: const Icon(Icons.delete_outline_rounded),
+                        label: const Text('删除'),
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size(0, 48),
+                          backgroundColor: colorScheme.errorContainer,
+                          foregroundColor: colorScheme.onErrorContainer,
+                          disabledBackgroundColor:
+                              colorScheme.surfaceContainerHighest,
+                          disabledForegroundColor:
+                              colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showBatchDeleteDialog(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    HapticFeedback.mediumImpact();
+    final count = ref.read(songsListProvider).selectedSongIds.length;
+    final result = await DeleteSongDialog.show(
+      context,
+      title: '批量删除',
+      content: '确定要删除选中的 $count 首歌曲吗？',
+    );
+    if (result == null) return;
+
+    final deleted = await ref
+        .read(songsListProvider.notifier)
+        .batchDeleteSongs(deleteFiles: result.deleteFiles);
+    if (!context.mounted) return;
+
+    if (deleted > 0) {
+      ResponsiveSnackBar.showSuccess(context, message: '已删除 $deleted 首歌曲');
+    } else {
+      ResponsiveSnackBar.showError(context, message: '删除失败');
+    }
   }
 }
 
