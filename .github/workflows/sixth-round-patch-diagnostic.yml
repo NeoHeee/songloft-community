@@ -13,38 +13,49 @@ permissions:
 jobs:
   diagnose:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.ref }}
-      - name: Extract and run patch script
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Generate and format sixth-round sources
+        run: |
+          python .github/scripts/sixth_round_patch.py
+          dart format \
+            lib/core/theme/accessibility.dart \
+            lib/core/theme/app_theme.dart \
+            lib/main.dart \
+            lib/features/player/presentation/widgets/mini_player.dart \
+            lib/features/player/presentation/widgets/mobile_player.dart \
+            lib/features/player/presentation/widgets/mobile_player_gesture_host.dart \
+            lib/features/player/presentation/widgets/vinyl_ring.dart \
+            test/core/theme/app_theme_accessibility_test.dart
+      - name: Stage export tree
         shell: bash
         run: |
-          python <<'PY'
-          from pathlib import Path
-
-          lines = Path('.github/workflows/sixth-round-bootstrap.yml').read_text().splitlines()
-          start = next(i for i, line in enumerate(lines) if "python <<'PY'" in line)
-          end = next(
-              i
-              for i, line in enumerate(lines[start + 1 :], start + 1)
-              if line.strip() == 'PY'
-          )
-          script_lines = []
-          for line in lines[start + 1 : end]:
-              script_lines.append(line[10:] if line.startswith('          ') else line)
-          Path('/tmp/sixth_round_patch.py').write_text('\n'.join(script_lines) + '\n')
-          PY
-          set +e
-          python /tmp/sixth_round_patch.py > /tmp/sixth-round-report.txt 2>&1
-          rc=$?
-          set -e
-          echo "RC=$rc" >> /tmp/sixth-round-report.txt
-          cat /tmp/sixth-round-report.txt
+          mkdir -p /tmp/sixth-round-sources
+          for file in \
+            lib/core/theme/accessibility.dart \
+            lib/core/theme/app_theme.dart \
+            lib/main.dart \
+            lib/features/player/presentation/widgets/mini_player.dart \
+            lib/features/player/presentation/widgets/mobile_player.dart \
+            lib/features/player/presentation/widgets/mobile_player_gesture_host.dart \
+            lib/features/player/presentation/widgets/vinyl_ring.dart \
+            test/core/theme/app_theme_accessibility_test.dart \
+            .github/workflows/ui-redesign-check.yml; do
+            cp --parents "$file" /tmp/sixth-round-sources
+          done
       - uses: actions/upload-artifact@v4
         with:
-          name: sixth-round-patch-report
-          path: /tmp/sixth-round-report.txt
+          name: sixth-round-formatted-sources
+          path: /tmp/sixth-round-sources
           if-no-files-found: error
           retention-days: 3
