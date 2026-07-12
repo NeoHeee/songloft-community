@@ -55,6 +55,9 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add android assets ios lib linux macos pubspec.lock pubspec.yaml web windows
+          git add -A
+          git restore --staged .github/workflows scripts || true
+          git status --short
+          git diff --cached --quiet && { echo 'No branding changes staged'; exit 1; }
           git commit -m 'feat(brand): introduce Songloft Community identity'
           git push origin HEAD:mobile-experience-completion
