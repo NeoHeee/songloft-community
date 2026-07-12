@@ -102,8 +102,36 @@ jobs:
           branch='${{ github.event.pull_request.head.ref }}'
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add lib test android
-          git commit -m 'feat(mobile): complete second-stage experience polish'
-          git fetch origin "$branch"
-          git rebase "origin/$branch"
+          set +e
+          {
+            echo '===== STATUS BEFORE ADD ====='
+            git status --short
+            echo '===== ADD ====='
+            git add lib test android
+            echo '===== STATUS AFTER ADD ====='
+            git status --short
+            echo '===== COMMIT ====='
+            git commit -m 'feat(mobile): complete second-stage experience polish'
+            echo '===== FETCH ====='
+            git fetch origin "$branch"
+            echo '===== REBASE ====='
+            git rebase "origin/$branch"
+            echo '===== PUSH ====='
+            git push origin HEAD:"$branch"
+          } > /tmp/mobile-experience-commit.log 2>&1
+          status=$?
+          if [ "$status" -eq 0 ]; then
+            cat /tmp/mobile-experience-commit.log
+            exit 0
+          fi
+
+          git rebase --abort 2>/dev/null || true
+          git reset --hard "origin/$branch"
+          {
+            echo "COMMIT_DIAGNOSTIC_RUN=${{ github.run_id }}"
+            cat /tmp/mobile-experience-commit.log
+          } > MOBILE_EXPERIENCE_COMMIT_ERROR.txt
+          git add MOBILE_EXPERIENCE_COMMIT_ERROR.txt
+          git commit -m 'chore: capture validated implementation commit error'
           git push origin HEAD:"$branch"
+          exit 1
