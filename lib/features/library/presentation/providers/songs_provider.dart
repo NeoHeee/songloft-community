@@ -59,6 +59,10 @@ class SongsListState {
   /// 库页面是否处于「显示隐藏歌曲」状态
   bool get showHidden => excludePlaylistLabels == 'none';
 
+  /// 当前筛选条件下的歌曲是否已全部选中
+  bool get isAllSelected =>
+      total > 0 && selectedSongIds.length >= total && !isSelectingAll;
+
   SongsListState copyWith({
     List<Song>? songs,
     int? total,
@@ -223,17 +227,41 @@ class SongsListNotifier extends Notifier<SongsListState> {
     }
   }
 
-  /// 切换多选模式
+  /// 进入多选模式，可在长按时直接选中首个项目，避免连续两次状态刷新。
+  void enterSelectionMode({int? initialSongId}) {
+    final selection = Set<int>.from(state.selectedSongIds);
+    if (initialSongId != null) selection.add(initialSongId);
+    state = state.copyWith(
+      isSelectionMode: true,
+      selectedSongIds: selection,
+    );
+  }
+
+  /// 退出多选模式并清空选择。
+  void exitSelectionMode() {
+    state = state.copyWith(
+      isSelectionMode: false,
+      selectedSongIds: {},
+      isSelectingAll: false,
+    );
+  }
+
+  /// 切换多选模式（兼容既有调用）。
   void toggleSelectMode() {
     if (state.isSelectionMode) {
-      state = state.copyWith(isSelectionMode: false, selectedSongIds: {});
+      exitSelectionMode();
     } else {
-      state = state.copyWith(isSelectionMode: true);
+      enterSelectionMode();
     }
   }
 
-  /// 切换歌曲选中状态
+  /// 切换歌曲选中状态。
   void toggleSongSelection(int songId) {
+    if (!state.isSelectionMode) {
+      enterSelectionMode(initialSongId: songId);
+      return;
+    }
+
     final newSelection = Set<int>.from(state.selectedSongIds);
     if (newSelection.contains(songId)) {
       newSelection.remove(songId);
@@ -243,9 +271,13 @@ class SongsListNotifier extends Notifier<SongsListState> {
     state = state.copyWith(selectedSongIds: newSelection);
   }
 
-  /// 清除选择
-  void clearSelection() {
-    state = state.copyWith(selectedSongIds: {});
+  /// 清除选择，可选择同时退出多选模式。
+  void clearSelection({bool exitMode = false}) {
+    state = state.copyWith(
+      selectedSongIds: {},
+      isSelectionMode: exitMode ? false : state.isSelectionMode,
+      isSelectingAll: false,
+    );
   }
 
   /// 全选/取消全选：覆盖当前筛选条件下的全部歌曲（不仅是已加载的页）
@@ -254,9 +286,7 @@ class SongsListNotifier extends Notifier<SongsListState> {
   Future<void> toggleSelectAll() async {
     if (state.isSelectingAll) return;
 
-    if (state.selectedSongIds.isNotEmpty &&
-        state.total > 0 &&
-        state.selectedSongIds.length >= state.total) {
+    if (state.isAllSelected) {
       state = state.copyWith(selectedSongIds: {});
       return;
     }
