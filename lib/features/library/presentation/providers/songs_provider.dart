@@ -6,6 +6,16 @@ import '../../../../shared/models/song.dart';
 import '../../data/songs_api.dart';
 import '../../data/songs_repository.dart';
 
+Set<int> updatedSongSelection(Set<int> current, int songId, bool selected) {
+  final next = Set<int>.from(current);
+  if (selected) {
+    next.add(songId);
+  } else {
+    next.remove(songId);
+  }
+  return next;
+}
+
 /// SongsApi Provider
 final songsApiProvider = Provider<SongsApi>((ref) {
   final dio = ref.watch(dioProvider);
@@ -268,6 +278,21 @@ class SongsListNotifier extends Notifier<SongsListState> {
     state = state.copyWith(selectedSongIds: newSelection);
   }
 
+  /// 将指定歌曲设置为明确的选中或未选中状态，供连续滑动勾选使用。
+  void setSongSelection(int songId, bool selected) {
+    if (!state.isSelectionMode) {
+      enterSelectionMode(initialSongId: selected ? songId : null);
+      if (!selected) return;
+    }
+    state = state.copyWith(
+      selectedSongIds: updatedSongSelection(
+        state.selectedSongIds,
+        songId,
+        selected,
+      ),
+    );
+  }
+
   /// 清除选择，可选择同时退出多选模式。
   void clearSelection({bool exitMode = false}) {
     state = state.copyWith(
@@ -307,16 +332,46 @@ class SongsListNotifier extends Notifier<SongsListState> {
   }
 
   /// 删除歌曲
-  Future<void> deleteSong(int songId, {bool deleteFiles = false}) async {
+  Future<bool> deleteSong(int songId, {bool deleteFiles = false}) async {
     try {
       await _repository.deleteSong(songId, deleteFiles: deleteFiles);
       state = state.copyWith(
         songs: state.songs.where((s) => s.id != songId).toList(),
-        total: state.total - 1,
+        total: (state.total - 1).clamp(0, state.total),
         selectedSongIds: state.selectedSongIds.difference({songId}),
       );
+      return true;
     } catch (e) {
       state = state.copyWith(error: e.toString());
+      return false;
+    }
+  }
+
+  /// 删除明确指定的一组歌曲，不依赖当前选择状态。
+  Future<int> deleteSongsByIds(
+    List<int> songIds, {
+    bool deleteFiles = false,
+  }) async {
+    if (songIds.isEmpty) return 0;
+    final ids = songIds.toSet();
+    try {
+      final deleted = await _repository.batchDeleteSongs(
+        ids.toList(),
+        deleteFiles: deleteFiles,
+      );
+      if (deleted != ids.length) {
+        await refresh();
+        return deleted;
+      }
+      state = state.copyWith(
+        songs: state.songs.where((s) => !ids.contains(s.id)).toList(),
+        total: (state.total - deleted).clamp(0, state.total),
+        selectedSongIds: state.selectedSongIds.difference(ids),
+      );
+      return deleted;
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+      return 0;
     }
   }
 

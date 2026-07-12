@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../../config/app_brand.dart';
 import '../../../config/app_config.dart';
 import '../../../core/backend/embedded_backend_service.dart';
 import '../../../core/backend/run_mode_provider.dart';
@@ -324,7 +325,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 'assets/icons/app_icon.png',
                 width: 64,
                 height: 64,
-                semanticLabel: 'Songloft',
+                semanticLabel: AppBrand.name,
               ),
               const SizedBox(height: 24),
               const CircularProgressIndicator(),
@@ -510,7 +511,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                       height: TvTheme.spacingSmall,
                                     ),
                                     Text(
-                                      '使用您的账号登录 Songloft',
+                                      '使用您的账号登录 ${AppBrand.name}',
                                       style: TvTheme.captionStyle(context),
                                     ),
                                   ],
@@ -632,7 +633,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
                             // 底部提示
                             Text(
-                              '© ${DateTime.now().year} Songloft',
+                              '© ${DateTime.now().year} ${AppBrand.name}',
                               textAlign: TextAlign.center,
                               style: TvTheme.captionStyle(context),
                             ),
@@ -655,11 +656,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Logo
         Container(
           width: 160,
           height: 160,
           decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(38),
             boxShadow: [
               BoxShadow(
                 color: colorScheme.primary.withValues(alpha: 0.3),
@@ -668,30 +669,34 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               ),
             ],
           ),
+          clipBehavior: Clip.antiAlias,
           child: Image.asset(
             'assets/icons/app_icon.png',
             width: 160,
             height: 160,
-            semanticLabel: 'Songloft',
+            semanticLabel: AppBrand.name,
           ),
         ),
-        const SizedBox(height: 40),
+        const SizedBox(height: 36),
         Text(
-          'Songloft',
+          AppBrand.name,
+          textAlign: TextAlign.center,
           style: theme.textTheme.displayMedium?.copyWith(
             fontWeight: FontWeight.bold,
             color: colorScheme.onSurface,
-            fontSize: 52,
+            fontSize: 48,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Text(
-          '自托管本地音乐服务',
+          AppBrand.subtitle,
           style: theme.textTheme.titleLarge?.copyWith(
             color: colorScheme.onSurfaceVariant,
             fontSize: TvTheme.fontSizeBody,
           ),
         ),
+        const SizedBox(height: 16),
+        _BrandEditionBadge(colorScheme: colorScheme),
       ],
     );
   }
@@ -863,28 +868,34 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget _buildHeader(ThemeData theme, ColorScheme colorScheme) {
     return Column(
       children: [
-        // Logo
-        Image.asset(
-          'assets/icons/app_icon.png',
-          width: 80,
-          height: 80,
-          semanticLabel: 'Songloft',
+        ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Image.asset(
+            'assets/icons/app_icon.png',
+            width: 88,
+            height: 88,
+            semanticLabel: AppBrand.name,
+          ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 22),
         Text(
-          'Songloft',
+          AppBrand.name,
+          textAlign: TextAlign.center,
           style: theme.textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w800,
             color: colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          '登录以继续',
+          AppBrand.subtitle,
+          textAlign: TextAlign.center,
           style: theme.textTheme.bodyLarge?.copyWith(
             color: colorScheme.onSurfaceVariant,
           ),
         ),
+        const SizedBox(height: 12),
+        _BrandEditionBadge(colorScheme: colorScheme),
       ],
     );
   }
@@ -1153,7 +1164,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   Widget _buildFooter(ThemeData theme) {
     return Text(
-      '© ${DateTime.now().year} Songloft',
+      '© ${DateTime.now().year} ${AppBrand.name}',
       textAlign: TextAlign.center,
       style: theme.textTheme.bodySmall?.copyWith(
         color: theme.colorScheme.onSurfaceVariant,
@@ -1527,6 +1538,32 @@ class _TvFocusableTextFieldState extends State<_TvFocusableTextField> {
               borderSide: BorderSide.none,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BrandEditionBadge extends StatelessWidget {
+  final ColorScheme colorScheme;
+
+  const _BrandEditionBadge({required this.colorScheme});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.22)),
+      ),
+      child: Text(
+        AppBrand.edition,
+        style: TextStyle(
+          color: colorScheme.onPrimaryContainer,
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
         ),
       ),
     );

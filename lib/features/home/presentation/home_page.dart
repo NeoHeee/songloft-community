@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../config/app_brand.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/storage/mobile_tab_memory.dart';
 import '../../../core/theme/app_dimensions.dart';
@@ -260,8 +261,8 @@ class _DashboardHeader extends StatelessWidget {
                           ),
                           SizedBox(width: 7),
                           Text(
-                            '你的私人音乐空间',
-                            style: TextStyle(
+                            AppBrand.edition,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
                             ),
@@ -804,39 +805,7 @@ class _LoadingContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SkeletonLoader(height: 86, borderRadius: BorderRadius.circular(22)),
-          const SizedBox(height: 28),
-          SkeletonLoader(height: 22, width: 160, borderRadius: AppRadius.smAll),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 210,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: 4,
-              separatorBuilder: (_, _) => const SizedBox(width: 16),
-              itemBuilder:
-                  (_, _) => Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SkeletonLoader.card(size: 150),
-                      const SizedBox(height: 10),
-                      SkeletonLoader(
-                        height: 13,
-                        width: 110,
-                        borderRadius: AppRadius.smAll,
-                      ),
-                    ],
-                  ),
-            ),
-          ),
-        ],
-      ),
-    );
+    return const CollectionPageSkeleton(showHero: true);
   }
 }
 

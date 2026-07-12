@@ -21,18 +21,22 @@ class ServerEntry {
     return '$ts-$rand';
   }
 
-  /// 规范化 URL：去尾斜杠 + 校验包含 scheme。
+  /// 规范化 URL：去尾斜杠、移除误填的 /api/v1，并校验服务器根地址。
   /// 失败抛 [FormatException]，由 UI 层兜底为 SnackBar。
   static String normalizeUrl(String input) {
     final trimmed = input.trim().replaceAll(RegExp(r'/+$'), '');
-    if (trimmed.isEmpty) {
+    final normalized = trimmed.replaceFirst(RegExp(r'/api/v1$'), '');
+    if (normalized.isEmpty) {
       throw const FormatException('URL 不能为空');
     }
-    final uri = Uri.tryParse(trimmed);
-    if (uri == null || !uri.hasScheme) {
-      throw const FormatException('请输入有效的 URL（包含 http:// 或 https://）');
+    final uri = Uri.tryParse(normalized);
+    if (uri == null ||
+        !uri.hasScheme ||
+        uri.host.isEmpty ||
+        (uri.scheme != 'http' && uri.scheme != 'https')) {
+      throw const FormatException('请输入以 http:// 或 https:// 开头的服务器根地址');
     }
-    return trimmed;
+    return normalized;
   }
 
   String get displayName {

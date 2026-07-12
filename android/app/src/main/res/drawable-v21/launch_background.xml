@@ -8,10 +8,9 @@
                 android:endColor="@color/launch_background_end" />
         </shape>
     </item>
-
     <item
-        android:width="112dp"
-        android:height="112dp"
+        android:width="320dp"
+        android:height="190dp"
         android:gravity="center"
-        android:drawable="@mipmap/ic_launcher" />
+        android:drawable="@drawable/launch_brand" />
 </layer-list>

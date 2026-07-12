@@ -788,7 +788,7 @@ class PlayerNotifier extends Notifier<PlayerState> {
     final song = newPlaylist.removeAt(oldIndex);
 
     // 如果新位置在旧位置之后，需要调整
-    final insertIndex = newIndex > oldIndex ? newIndex - 1 : newIndex;
+    final insertIndex = newIndex;
     newPlaylist.insert(insertIndex, song);
 
     // 调整当前索引

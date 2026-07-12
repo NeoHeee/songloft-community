@@ -14,6 +14,7 @@ import '../../../core/theme/app_dimensions.dart';
 import '../../../core/theme/responsive.dart';
 import '../../../core/utils/url_helper.dart';
 import '../../../shared/utils/responsive_snackbar.dart';
+import '../../../shared/widgets/loading_indicator.dart';
 import '../../player/presentation/providers/player_provider.dart';
 import '../domain/playlist.dart';
 import 'providers/playlist_provider.dart';
@@ -320,9 +321,6 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
   /// 拖拽排序回调
   void _onReorder(int oldIndex, int newIndex) {
     setState(() {
-      if (newIndex > oldIndex) {
-        newIndex -= 1;
-      }
       final item = _sortablePlaylists.removeAt(oldIndex);
       _sortablePlaylists.insert(newIndex, item);
     });
@@ -419,12 +417,7 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
                                 ),
                             loading:
                                 () => const SliverToBoxAdapter(
-                                  child: Padding(
-                                    padding: EdgeInsets.all(64),
-                                    child: Center(
-                                      child: CircularProgressIndicator(),
-                                    ),
-                                  ),
+                                  child: CollectionPageSkeleton(),
                                 ),
                             error:
                                 (error, stack) => SliverToBoxAdapter(

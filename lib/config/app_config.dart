@@ -62,11 +62,11 @@ class AppConfig {
       tracelyHost.isNotEmpty;
 
   /// 前端 GitHub 仓库
-  static const String frontendRepo = 'songloft-org/songloft-player';
+  static const String frontendRepo = 'NeoHeee/songloft-player';
 
   /// 前端最新发布地址
   static const String frontendReleasesUrl =
-      'https://github.com/songloft-org/songloft-player/releases/latest';
+      'https://github.com/NeoHeee/songloft-player/releases/latest';
 
   /// 格式化前端版本号用于显示
   /// 'dev' -> '开发版本', '1.0.14' -> 'v1.0.14'

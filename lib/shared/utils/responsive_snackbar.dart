@@ -69,6 +69,36 @@ class ResponsiveSnackBar {
       ..showSnackBar(snackBar);
   }
 
+  /// 显示带撤销操作的短时提示，并返回用户是否点击了撤销。
+  static Future<bool> showUndo(
+    BuildContext context, {
+    required String message,
+    String actionLabel = '撤销',
+    Duration duration = const Duration(seconds: 5),
+  }) async {
+    var undone = false;
+    final messenger = ScaffoldMessenger.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    messenger.hideCurrentSnackBar();
+    final controller = messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(color: colorScheme.onInverseSurface),
+        ),
+        behavior: SnackBarBehavior.floating,
+        duration: duration,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        action: SnackBarAction(
+          label: actionLabel,
+          onPressed: () => undone = true,
+        ),
+      ),
+    );
+    await controller.closed;
+    return undone;
+  }
+
   /// 显示错误类型的响应式 SnackBar
   static void showError(
     BuildContext context, {

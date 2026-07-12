@@ -153,6 +153,84 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
   }
 }
 
+/// 首页与歌单页共用的集合型骨架屏。
+class CollectionPageSkeleton extends StatelessWidget {
+  final bool showHero;
+  final int itemCount;
+
+  const CollectionPageSkeleton({
+    super.key,
+    this.showHero = false,
+    this.itemCount = 6,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (showHero) ...[
+            SkeletonLoader(
+              height: 124,
+              borderRadius: BorderRadius.circular(28),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+          ],
+          SkeletonLoader(height: 22, width: 164, borderRadius: AppRadius.smAll),
+          const SizedBox(height: AppSpacing.md),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns =
+                  constraints.maxWidth >= 900
+                      ? 5
+                      : constraints.maxWidth >= 600
+                      ? 4
+                      : 2;
+              const spacing = AppSpacing.md;
+              final width =
+                  (constraints.maxWidth - spacing * (columns - 1)) / columns;
+              return Wrap(
+                spacing: spacing,
+                runSpacing: AppSpacing.lg,
+                children: List.generate(
+                  itemCount,
+                  (_) => SizedBox(
+                    width: width,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SkeletonLoader(
+                          width: width,
+                          height: width,
+                          borderRadius: AppRadius.mdAll,
+                        ),
+                        const SizedBox(height: 10),
+                        SkeletonLoader(
+                          height: 14,
+                          width: width * 0.78,
+                          borderRadius: AppRadius.smAll,
+                        ),
+                        const SizedBox(height: 7),
+                        SkeletonLoader(
+                          height: 11,
+                          width: width * 0.5,
+                          borderRadius: AppRadius.smAll,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// 加载遮罩组件
 /// 在子组件上方叠加半透明遮罩和加载指示器
 class LoadingOverlay extends StatelessWidget {

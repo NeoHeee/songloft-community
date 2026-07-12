@@ -1,18 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/accessibility.dart';
-import '../providers/player_provider.dart';
 import '../queue_page.dart';
+import '../utils/player_song_actions.dart';
 import 'mobile_player.dart';
 
-/// 为现有全屏播放器叠加不抢占手势竞技场的封面快捷手势。
+/// 为现有全屏播放器叠加不抢占 PageView 的封面快捷手势。
 ///
-/// 使用 Listener 监听原始指针，因此不会破坏 PageView 左右切换、歌词滚动、
-/// 进度条拖动以及原有下滑收起：
 /// - 封面区域上滑：打开播放队列
-/// - 封面区域双击：播放/暂停
+/// - 封面区域双击：收藏或取消收藏当前歌曲
+/// - 封面区域长按：打开当前歌曲操作菜单
 class MobilePlayerGestureHost extends ConsumerStatefulWidget {
   const MobilePlayerGestureHost({super.key});
 
@@ -52,6 +53,7 @@ class MobilePlayerGestureHost extends ConsumerStatefulWidget {
 class _MobilePlayerGestureHostState
     extends ConsumerState<MobilePlayerGestureHost> {
   static const _doubleTapWindow = Duration(milliseconds: 320);
+  static const _longPressDelay = Duration(milliseconds: 520);
   static const _tapSlop = 14.0;
   static const _swipeThreshold = 72.0;
 
@@ -61,6 +63,8 @@ class _MobilePlayerGestureHostState
   DateTime? _pointerStartedAt;
   DateTime? _lastTapAt;
   Offset? _lastTapPosition;
+  Timer? _longPressTimer;
+  bool _longPressTriggered = false;
 
   bool _isInsideCoverGestureArea(Offset localPosition) {
     final mediaQuery = MediaQuery.of(context);
@@ -79,11 +83,31 @@ class _MobilePlayerGestureHostState
     _pointerStart = event.localPosition;
     _pointerLatest = event.localPosition;
     _pointerStartedAt = DateTime.now();
+    _longPressTriggered = false;
+    _longPressTimer?.cancel();
+    _longPressTimer = Timer(_longPressDelay, () {
+      final start = _pointerStart;
+      final latest = _pointerLatest;
+      if (!mounted ||
+          _trackedPointer == null ||
+          start == null ||
+          latest == null ||
+          (latest - start).distance > _tapSlop) {
+        return;
+      }
+      _longPressTriggered = true;
+      HapticFeedback.mediumImpact();
+      unawaited(showCurrentSongActionsSheet(context, ref));
+    });
   }
 
   void _onPointerMove(PointerMoveEvent event) {
     if (event.pointer != _trackedPointer) return;
     _pointerLatest = event.localPosition;
+    final start = _pointerStart;
+    if (start != null && (event.localPosition - start).distance > _tapSlop) {
+      _longPressTimer?.cancel();
+    }
   }
 
   void _onPointerUp(PointerUpEvent event) {
@@ -92,9 +116,10 @@ class _MobilePlayerGestureHostState
     final start = _pointerStart;
     final end = _pointerLatest ?? event.localPosition;
     final startedAt = _pointerStartedAt;
+    final longPressTriggered = _longPressTriggered;
     _clearTrackedPointer();
 
-    if (start == null || startedAt == null) return;
+    if (longPressTriggered || start == null || startedAt == null) return;
 
     final delta = end - start;
     final isVerticalSwipe =
@@ -124,8 +149,7 @@ class _MobilePlayerGestureHostState
     if (isDoubleTap) {
       _lastTapAt = null;
       _lastTapPosition = null;
-      HapticFeedback.selectionClick();
-      ref.read(playerStateProvider.notifier).togglePlay();
+      unawaited(toggleCurrentSongFavorite(context, ref));
       return;
     }
 
@@ -140,10 +164,19 @@ class _MobilePlayerGestureHostState
   }
 
   void _clearTrackedPointer() {
+    _longPressTimer?.cancel();
+    _longPressTimer = null;
     _trackedPointer = null;
     _pointerStart = null;
     _pointerLatest = null;
     _pointerStartedAt = null;
+    _longPressTriggered = false;
+  }
+
+  @override
+  void dispose() {
+    _longPressTimer?.cancel();
+    super.dispose();
   }
 
   @override

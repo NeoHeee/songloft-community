@@ -23,6 +23,9 @@ class SongListTile extends ConsumerWidget {
   final VoidCallback? onDelete;
   final VoidCallback? onEdit;
   final VoidCallback? onAddToPlaylist;
+  final ValueChanged<Offset>? onSelectionDragStart;
+  final ValueChanged<Offset>? onSelectionDragUpdate;
+  final VoidCallback? onSelectionDragEnd;
 
   const SongListTile({
     super.key,
@@ -38,6 +41,9 @@ class SongListTile extends ConsumerWidget {
     this.onDelete,
     this.onEdit,
     this.onAddToPlaylist,
+    this.onSelectionDragStart,
+    this.onSelectionDragUpdate,
+    this.onSelectionDragEnd,
   });
 
   @override
@@ -113,7 +119,7 @@ class SongListTile extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
               child: Row(
                 children: [
-                  _buildMobileLeading(context),
+                  _buildMobileSelectionLeading(context),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -177,6 +183,23 @@ class SongListTile extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildMobileSelectionLeading(BuildContext context) {
+    final leading = _buildMobileLeading(context);
+    if (!isSelectionMode || onSelectionDragStart == null) return leading;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: _handleTap,
+      onPanStart:
+          (details) => onSelectionDragStart?.call(details.globalPosition),
+      onPanUpdate:
+          (details) => onSelectionDragUpdate?.call(details.globalPosition),
+      onPanEnd: (_) => onSelectionDragEnd?.call(),
+      onPanCancel: () => onSelectionDragEnd?.call(),
+      child: leading,
     );
   }
 

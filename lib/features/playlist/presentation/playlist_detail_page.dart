@@ -394,12 +394,13 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final compact = constraints.maxWidth < 700;
+            final showActions = !_isSortMode && !_isSelectMode;
             final actions = Wrap(
               spacing: 8,
               runSpacing: 8,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                if (showPrimaryActions && !_isSortMode && !_isSelectMode) ...[
+                if (showPrimaryActions && showActions) ...[
                   FilledButton.icon(
                     onPressed:
                         songs.isEmpty ? null : () => _playAll(playlist, songs),
@@ -412,9 +413,8 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
                     label: const Text('添加歌曲'),
                   ),
                 ],
-                if (!_isSortMode && !_isSelectMode)
-                  _buildSortButton(state, songs),
-                if (!_isSortMode && !_isSelectMode && songs.isNotEmpty)
+                if (showActions) _buildSortButton(state, songs),
+                if (showActions && songs.isNotEmpty)
                   IconButton.filledTonal(
                     onPressed: _enterSelectMode,
                     icon: const Icon(Icons.checklist_rounded),
@@ -457,9 +457,12 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   title,
-                  if (actions.children.isNotEmpty) ...[
+                  if (showActions) ...[
                     const SizedBox(height: 10),
-                    actions,
+                    if (showPrimaryActions)
+                      _buildCompactPlaylistActions(playlist, state, songs)
+                    else if (actions.children.isNotEmpty)
+                      actions,
                   ],
                 ],
               );
@@ -469,6 +472,60 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
           },
         ),
       ),
+    );
+  }
+
+  Widget _buildCompactPlaylistActions(
+    Playlist playlist,
+    PaginatedSongsState? state,
+    List<Song> songs,
+  ) {
+    final compactButtonStyle = ButtonStyle(
+      minimumSize: const WidgetStatePropertyAll(Size(0, 48)),
+      padding: const WidgetStatePropertyAll(
+        EdgeInsets.symmetric(horizontal: 8),
+      ),
+      visualDensity: VisualDensity.compact,
+    );
+
+    return Row(
+      children: [
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: songs.isEmpty ? null : () => _playAll(playlist, songs),
+            style: compactButtonStyle,
+            icon: const Icon(Icons.play_arrow_rounded, size: 20),
+            label: const FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text('播放全部', maxLines: 1),
+            ),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: _addSongs,
+            style: compactButtonStyle,
+            icon: const Icon(Icons.add_rounded, size: 20),
+            label: const FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text('添加歌曲', maxLines: 1),
+            ),
+          ),
+        ),
+        const SizedBox(width: 4),
+        SizedBox(width: 48, height: 48, child: _buildSortButton(state, songs)),
+        if (songs.isNotEmpty)
+          SizedBox(
+            width: 48,
+            height: 48,
+            child: IconButton.filledTonal(
+              onPressed: _enterSelectMode,
+              icon: const Icon(Icons.checklist_rounded),
+              tooltip: '多选歌曲',
+            ),
+          ),
+      ],
     );
   }
 
@@ -998,7 +1055,6 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
 
   void _onReorder(int oldIndex, int newIndex) {
     setState(() {
-      if (newIndex > oldIndex) newIndex -= 1;
       final item = _sortableSongs.removeAt(oldIndex);
       _sortableSongs.insert(newIndex, item);
     });

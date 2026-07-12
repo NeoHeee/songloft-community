@@ -34,6 +34,7 @@ class MiniPlayer extends ConsumerStatefulWidget {
 
 class _MiniPlayerState extends ConsumerState<MiniPlayer> {
   double _horizontalDragDistance = 0;
+  bool _retryRequested = false;
 
   bool get _isCompact => widget.density == MiniPlayerDensity.compact;
 
@@ -65,6 +66,18 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
     }
   }
 
+  Future<void> _retryPlayback() async {
+    if (_retryRequested) return;
+    setState(() => _retryRequested = true);
+    final notifier = ref.read(playerStateProvider.notifier);
+    notifier.clearError();
+    try {
+      await notifier.togglePlay();
+    } finally {
+      if (mounted) setState(() => _retryRequested = false);
+    }
+  }
+
   void _openQueue() {
     HapticFeedback.selectionClick();
     QueueBottomSheet.show(context);
@@ -79,6 +92,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
     final tokens = SongloftThemeTokens.of(context);
     final textScaleFactor = AppAccessibility.textScaleOf(context);
     final textScaleDelta = textScaleFactor - 1.0;
+    final hasPlaybackError = state.errorMessage?.isNotEmpty == true;
 
     if (!state.hasSong) {
       return const SizedBox.shrink();
@@ -119,8 +133,11 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
           ),
           clipBehavior: Clip.antiAlias,
           child: Semantics(
-            label: _isCompact ? '展开薄版播放器' : '展开播放器',
-            hint: '左右滑动切歌，长按打开播放队列',
+            label:
+                hasPlaybackError
+                    ? '当前歌曲播放失败'
+                    : (_isCompact ? '展开薄版播放器' : '展开播放器'),
+            hint: hasPlaybackError ? '点击重试按钮重新播放，左右滑动可切歌' : '左右滑动切歌，长按打开播放队列',
             button: true,
             child: InkWell(
               onTap: openPlayer,
@@ -175,14 +192,18 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
                                         ),
                                       Expanded(
                                         child: Text(
-                                          song.artist ?? '未知艺术家',
+                                          hasPlaybackError
+                                              ? state.errorMessage!
+                                              : (song.artist ?? '未知艺术家'),
                                           style: (_isCompact
                                                   ? theme.textTheme.labelSmall
                                                   : theme.textTheme.bodySmall)
                                               ?.copyWith(
                                                 color:
-                                                    colorScheme
-                                                        .onSurfaceVariant,
+                                                    hasPlaybackError
+                                                        ? colorScheme.error
+                                                        : colorScheme
+                                                            .onSurfaceVariant,
                                               ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
@@ -195,15 +216,46 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
                             ),
                             SizedBox(width: _isCompact ? 4 : 6),
                             Material(
-                              color: colorScheme.primaryContainer,
+                              color:
+                                  hasPlaybackError
+                                      ? colorScheme.errorContainer
+                                      : colorScheme.primaryContainer,
                               shape: const CircleBorder(),
-                              child: CompactPlayButton(
-                                isPlaying: state.isPlaying,
-                                isBuffering: state.isBuffering,
-                                onPlay: notifier.togglePlay,
-                                onPause: notifier.togglePlay,
-                                size: playButtonSize,
-                              ),
+                              child:
+                                  hasPlaybackError
+                                      ? SizedBox(
+                                        width: playButtonSize,
+                                        height: playButtonSize,
+                                        child: IconButton(
+                                          onPressed:
+                                              _retryRequested ||
+                                                      state.isRetrying
+                                                  ? null
+                                                  : _retryPlayback,
+                                          tooltip: '重试播放',
+                                          icon:
+                                              _retryRequested ||
+                                                      state.isRetrying
+                                                  ? const SizedBox(
+                                                    width: 20,
+                                                    height: 20,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                          strokeWidth: 2.2,
+                                                        ),
+                                                  )
+                                                  : const Icon(
+                                                    Icons.refresh_rounded,
+                                                  ),
+                                        ),
+                                      )
+                                      : CompactPlayButton(
+                                        isPlaying: state.isPlaying,
+                                        isBuffering: state.isBuffering,
+                                        onPlay: notifier.togglePlay,
+                                        onPause: notifier.togglePlay,
+                                        size: playButtonSize,
+                                      ),
                             ),
                             if (!_isCompact)
                               IconButton(
