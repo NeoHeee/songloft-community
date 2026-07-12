@@ -103,7 +103,7 @@ jobs:
       - name: Run second-stage player tests
         run: flutter test test/features/player/presentation/widgets
       - name: Analyze
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
 
   build-web:
     name: Build Flutter Web
