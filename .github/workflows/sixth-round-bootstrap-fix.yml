@@ -1,0 +1,123 @@
+name: Sixth Round Accessibility Bootstrap Fix
+
+on:
+  pull_request:
+    branches:
+      - mobile-fifth-round
+    paths:
+      - '.github/workflows/sixth-round-bootstrap-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Extract and harden patch script
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+
+          workflow = Path('.github/workflows/sixth-round-bootstrap.yml')
+          lines = workflow.read_text().splitlines()
+          start = next(i for i, line in enumerate(lines) if "python <<'PY'" in line)
+          end = next(
+              i
+              for i, line in enumerate(lines[start + 1 :], start + 1)
+              if line.strip() == 'PY'
+          )
+          script_lines = [
+              line[10:] if line.startswith('          ') else line
+              for line in lines[start + 1 : end]
+          ]
+          script = '\n'.join(script_lines) + '\n'
+          strict = """    count = text.count(old)
+    if count != 1:
+        raise SystemExit(f'{path}: expected one match, found {count}')
+    file.write_text(text.replace(old, new, 1))
+"""
+          tolerant = """    count = text.count(old)
+    if count == 0 and new in text:
+        return
+    if count == 0:
+        raise SystemExit(f'{path}: expected at least one match, found 0')
+    file.write_text(text.replace(old, new, 1))
+"""
+          if strict not in script:
+              raise SystemExit('replace_once helper not found')
+          script = script.replace(strict, tolerant, 1)
+          Path('/tmp/sixth_round_patch.py').write_text(script)
+
+          main_path = Path('lib/main.dart')
+          main_text = main_path.read_text()
+          builder_start = main_text.index('      builder: (context, child) {')
+          builder_end = main_text.index('      },\n    );', builder_start)
+          new_builder = """      builder: (context, child) {
+        // 在 builder 中获取系统字号和减少动画偏好，同时应用响应式主题。
+        final mediaQuery = MediaQuery.of(context);
+        final screenType = _getScreenType(mediaQuery.size.width);
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final textScaleFactor = AppAccessibility.textScaleOf(context);
+        final reduceMotion = AppAccessibility.reduceMotionOf(context);
+        final responsiveTheme =
+            isDark
+                ? AppTheme.darkTheme(
+                  screenType: screenType,
+                  themePack: themePack,
+                  textScaleFactor: textScaleFactor,
+                  reduceMotion: reduceMotion,
+                )
+                : AppTheme.lightTheme(
+                  screenType: screenType,
+                  themePack: themePack,
+                  textScaleFactor: textScaleFactor,
+                  reduceMotion: reduceMotion,
+                );
+        return Theme(data: responsiveTheme, child: child!);
+      },
+"""
+          main_path.write_text(
+              main_text[:builder_start]
+              + new_builder
+              + main_text[builder_end + len('      },\n') :]
+          )
+          PY
+          python /tmp/sixth_round_patch.py
+      - name: Format changed Dart files
+        run: >-
+          dart format
+          lib/core/theme/accessibility.dart
+          lib/core/theme/app_theme.dart
+          lib/main.dart
+          lib/features/player/presentation/widgets/mini_player.dart
+          lib/features/player/presentation/widgets/mobile_player.dart
+          lib/features/player/presentation/widgets/mobile_player_gesture_host.dart
+          lib/features/player/presentation/widgets/vinyl_ring.dart
+          test/core/theme/app_theme_accessibility_test.dart
+      - name: Commit sixth-round implementation
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/sixth-round-bootstrap.yml
+          git rm .github/workflows/sixth-round-bootstrap-pr.yml
+          git rm .github/workflows/sixth-round-bootstrap-fix.yml
+          git rm .github/workflows/sixth-round-patch-diagnostic.yml
+          git add lib test .github/workflows/ui-redesign-check.yml
+          git commit -m 'feat(accessibility): start sixth-round system adaptation polish'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
