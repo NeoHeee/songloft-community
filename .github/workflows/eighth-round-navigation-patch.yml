@@ -45,3 +45,4 @@ jobs:
 
 # Synchronize the stacked PR so the bootstrap workflow on its base can run.
 # Diagnostic rerun requested after the first exact-match failure.
+# Shell reset assertion adjusted to all four occurrences.
