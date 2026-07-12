@@ -8,6 +8,7 @@ import '../backend/run_mode_provider.dart';
 import '../storage/secure_storage.dart';
 import 'auth_interceptor.dart';
 import 'base_url_provider.dart';
+import 'server_connection_provider.dart';
 
 /// 创建并配置 Dio 实例
 Dio createDio({
@@ -115,7 +116,8 @@ final publicDioProvider = Provider.family<Dio, String?>((ref, customBaseUrl) {
 final dioProvider = Provider<Dio>((ref) {
   final baseUrl = ref.watch(baseUrlProvider);
   final secureStorage = ref.watch(secureStorageProvider);
-  return createDio(
+  final connectionNotifier = ref.read(serverConnectionProvider.notifier);
+  final dio = createDio(
     customBaseUrl: baseUrl,
     secureStorage: secureStorage,
     onTokenExpired: () async {
@@ -129,6 +131,14 @@ final dioProvider = Provider<Dio>((ref) {
       return SecureStorageService.walletKey(ref.read(baseUrlProvider));
     },
   );
+
+  dio.interceptors.add(
+    ServerConnectionInterceptor(
+      onReachable: connectionNotifier.reportReachable,
+      onUnavailable: connectionNotifier.reportUnavailable,
+    ),
+  );
+  return dio;
 });
 
 /// API 客户端 Provider
