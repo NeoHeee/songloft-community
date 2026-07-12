@@ -328,111 +328,131 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
     });
   }
 
+  Future<bool> _handleBackButton() async {
+    if (MediaQuery.viewInsetsOf(context).bottom > 0) {
+      FocusManager.instance.primaryFocus?.unfocus();
+      return true;
+    }
+    if (_isSortMode) {
+      _cancelSortMode();
+      return true;
+    }
+    if (_isSelectionMode) {
+      _toggleSelectMode();
+      return true;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final playlistsAsync = ref.watch(playlistListProvider(_selectedType));
 
-    return Scaffold(
-      appBar:
-          _isSortMode
-              ? _buildSortAppBar()
-              : _isSelectionMode
-              ? _buildSelectionAppBar(playlistsAsync)
-              : _buildNormalAppBar(),
-      body:
-          _isSortMode
-              ? _buildSortModeBody()
-              : RefreshIndicator(
-                onRefresh: _refreshPlaylists,
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1200),
-                    child: CustomScrollView(
-                      key: const PageStorageKey<String>('playlists-scroll'),
-                      controller: _scrollController,
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      slivers: [
-                        SliverToBoxAdapter(child: _buildSearchBar()),
+    return BackButtonListener(
+      onBackButtonPressed: _handleBackButton,
+      child: Scaffold(
+        appBar:
+            _isSortMode
+                ? _buildSortAppBar()
+                : _isSelectionMode
+                ? _buildSelectionAppBar(playlistsAsync)
+                : _buildNormalAppBar(),
+        body:
+            _isSortMode
+                ? _buildSortModeBody()
+                : RefreshIndicator(
+                  onRefresh: _refreshPlaylists,
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1200),
+                      child: CustomScrollView(
+                        key: const PageStorageKey<String>('playlists-scroll'),
+                        controller: _scrollController,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        slivers: [
+                          SliverToBoxAdapter(child: _buildSearchBar()),
 
-                        // 类型筛选
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: context.responsive<double>(
-                                mobile: AppSpacing.md,
-                                tablet: AppSpacing.lg,
-                                desktop: AppSpacing.xl,
-                                tv: AppSpacing.xxl,
+                          // 类型筛选
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: context.responsive<double>(
+                                  mobile: AppSpacing.md,
+                                  tablet: AppSpacing.lg,
+                                  desktop: AppSpacing.xl,
+                                  tv: AppSpacing.xxl,
+                                ),
+                                vertical: AppSpacing.md,
                               ),
-                              vertical: AppSpacing.md,
-                            ),
-                            child: SegmentedButton<String?>(
-                              segments: const [
-                                ButtonSegment(
-                                  value: null,
-                                  label: Text('全部'),
-                                  icon: Icon(Icons.list),
-                                ),
-                                ButtonSegment(
-                                  value: AppConstants.playlistTypeNormal,
-                                  label: Text('歌单'),
-                                  icon: Icon(Icons.queue_music),
-                                ),
-                                ButtonSegment(
-                                  value: AppConstants.playlistTypeRadio,
-                                  label: Text('电台'),
-                                  icon: Icon(Icons.radio),
-                                ),
-                              ],
-                              selected: {_selectedType},
-                              onSelectionChanged: (selected) {
-                                _changeSelectedType(selected.first);
-                              },
+                              child: SegmentedButton<String?>(
+                                segments: const [
+                                  ButtonSegment(
+                                    value: null,
+                                    label: Text('全部'),
+                                    icon: Icon(Icons.list),
+                                  ),
+                                  ButtonSegment(
+                                    value: AppConstants.playlistTypeNormal,
+                                    label: Text('歌单'),
+                                    icon: Icon(Icons.queue_music),
+                                  ),
+                                  ButtonSegment(
+                                    value: AppConstants.playlistTypeRadio,
+                                    label: Text('电台'),
+                                    icon: Icon(Icons.radio),
+                                  ),
+                                ],
+                                selected: {_selectedType},
+                                onSelectionChanged: (selected) {
+                                  _changeSelectedType(selected.first);
+                                },
+                              ),
                             ),
                           ),
-                        ),
 
-                        // 歌单列表
-                        playlistsAsync.when(
-                          data:
-                              (state) => _buildPlaylistContent(
-                                context,
-                                _filterPlaylists(state.items),
-                              ),
-                          loading:
-                              () => const SliverToBoxAdapter(
-                                child: Padding(
-                                  padding: EdgeInsets.all(64),
-                                  child: Center(
-                                    child: CircularProgressIndicator(),
+                          // 歌单列表
+                          playlistsAsync.when(
+                            data:
+                                (state) => _buildPlaylistContent(
+                                  context,
+                                  _filterPlaylists(state.items),
+                                ),
+                            loading:
+                                () => const SliverToBoxAdapter(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(64),
+                                    child: Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
                                   ),
                                 ),
-                              ),
-                          error:
-                              (error, stack) => SliverToBoxAdapter(
-                                child: _buildErrorContent(error.toString()),
-                              ),
-                        ),
+                            error:
+                                (error, stack) => SliverToBoxAdapter(
+                                  child: _buildErrorContent(error.toString()),
+                                ),
+                          ),
 
-                        // 加载更多指示器（仅在 hasMore 或 isLoadingMore 时显示）
-                        if (playlistsAsync.value != null)
+                          // 加载更多指示器（仅在 hasMore 或 isLoadingMore 时显示）
+                          if (playlistsAsync.value != null)
+                            SliverToBoxAdapter(
+                              child: _buildLoadMoreIndicator(
+                                playlistsAsync.value!,
+                              ),
+                            ),
+
+                          // 底部安全区域
                           SliverToBoxAdapter(
-                            child: _buildLoadMoreIndicator(
-                              playlistsAsync.value!,
+                            child: SizedBox(
+                              height:
+                                  MediaQuery.of(context).padding.bottom + 80,
                             ),
                           ),
-
-                        // 底部安全区域
-                        SliverToBoxAdapter(
-                          child: SizedBox(
-                            height: MediaQuery.of(context).padding.bottom + 80,
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
+      ),
     );
   }
 

@@ -1,11 +1,10 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/formatters.dart';
-import '../../../core/utils/url_helper.dart';
 import '../../../shared/models/song.dart';
 import '../../../shared/utils/responsive_snackbar.dart';
+import '../../../shared/widgets/cover_image.dart';
 import '../domain/player_state.dart';
 import 'providers/player_provider.dart';
 
@@ -120,7 +119,6 @@ class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> {
                         ? _buildEmptyState(context, colorScheme, theme)
                         : _buildQueueList(
                           context,
-                          ref,
                           state,
                           notifier,
                           scrollController,
@@ -261,8 +259,7 @@ class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> {
   /// 构建播放队列列表
   Widget _buildQueueList(
     BuildContext context,
-    WidgetRef ref,
-    dynamic state,
+    PlayerState state,
     PlayerNotifier notifier,
     ScrollController scrollController,
   ) {
@@ -378,8 +375,6 @@ class _QueueSongItem extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    final coverUrl = song.coverUrl;
-
     return Dismissible(
       key: ValueKey('dismiss_${song.id}_${song.type}_$index'),
       direction: DismissDirection.endToStart,
@@ -402,53 +397,46 @@ class _QueueSongItem extends StatelessWidget {
             child: Row(
               children: [
                 // 拖拽手柄
-                ReorderableDragStartListener(
-                  index: index,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Icon(
-                      Icons.drag_handle_rounded,
-                      size: 20,
-                      color: colorScheme.onSurfaceVariant,
+                Semantics(
+                  label: '拖动调整「${song.title}」在播放队列中的顺序',
+                  child: ReorderableDragStartListener(
+                    index: index,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.drag_handle_rounded,
+                        size: 20,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ),
                 // 封面
-                Container(
+                SizedBox(
                   width: 48,
                   height: 48,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                    color: colorScheme.surfaceContainerHighest,
-                  ),
-                  clipBehavior: Clip.antiAlias,
                   child: Stack(
+                    fit: StackFit.expand,
                     children: [
-                      if (coverUrl != null)
-                        ExcludeSemantics(
-                          child: CachedNetworkImage(
-                            imageUrl: UrlHelper.buildCoverUrl(coverUrl),
-                            fit: BoxFit.cover,
-                            width: 48,
-                            height: 48,
-                            placeholder:
-                                (_, _) => _buildCoverPlaceholder(colorScheme),
-                            errorWidget:
-                                (_, _, _) =>
-                                    _buildCoverPlaceholder(colorScheme),
-                          ),
-                        )
-                      else
-                        _buildCoverPlaceholder(colorScheme),
+                      CoverImage(
+                        coverUrl: song.coverUrl,
+                        size: 48,
+                        borderRadius: 6,
+                        placeholderIcon: Icons.music_note_rounded,
+                      ),
                       // 正在播放指示器
                       if (isPlaying)
-                        Container(
-                          color: Colors.black54,
-                          child: Center(
-                            child: Icon(
-                              Icons.equalizer_rounded,
-                              size: 24,
-                              color: colorScheme.primary,
+                        ExcludeSemantics(
+                          child: DecoratedBox(
+                            decoration: const BoxDecoration(
+                              color: Colors.black54,
+                            ),
+                            child: Center(
+                              child: Icon(
+                                Icons.equalizer_rounded,
+                                size: 24,
+                                color: colorScheme.primary,
+                              ),
                             ),
                           ),
                         ),
@@ -513,16 +501,6 @@ class _QueueSongItem extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildCoverPlaceholder(ColorScheme colorScheme) {
-    return Center(
-      child: Icon(
-        Icons.music_note_rounded,
-        size: 24,
-        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
       ),
     );
   }

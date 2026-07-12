@@ -68,36 +68,61 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
     final playlistAsync = ref.watch(playlistDetailProvider(_playlistIdInt));
     final songsAsync = ref.watch(playlistSongsProvider(_playlistIdInt));
 
-    return playlistAsync.when(
-      data:
-          (playlist) => Scaffold(
-            backgroundColor: Colors.transparent,
-            appBar: AppBar(
-              title: Text(playlist.name),
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back_rounded),
-                tooltip: '返回',
-                onPressed: _goBack,
+    return BackButtonListener(
+      onBackButtonPressed: _handleBackButton,
+      child: playlistAsync.when(
+        data:
+            (playlist) => Scaffold(
+              backgroundColor: Colors.transparent,
+              appBar: AppBar(
+                title: Text(playlist.name),
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  tooltip: '返回',
+                  onPressed: _handleBack,
+                ),
+                actions: _buildAppBarActions(playlist, songsAsync),
               ),
-              actions: _buildAppBarActions(playlist, songsAsync),
+              body: _buildContent(context, playlist, songsAsync),
             ),
-            body: _buildContent(context, playlist, songsAsync),
-          ),
-      loading:
-          () =>
-              const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error:
-          (error, _) => Scaffold(
-            appBar: AppBar(
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back_rounded),
-                onPressed: _goBack,
+        loading:
+            () => const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            ),
+        error:
+            (error, _) => Scaffold(
+              appBar: AppBar(
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  onPressed: _handleBack,
+                ),
+                title: const Text('歌单详情'),
               ),
-              title: const Text('歌单详情'),
+              body: _buildError(error.toString()),
             ),
-            body: _buildError(error.toString()),
-          ),
+      ),
     );
+  }
+
+  Future<bool> _handleBackButton() async {
+    if (MediaQuery.viewInsetsOf(context).bottom > 0) {
+      FocusManager.instance.primaryFocus?.unfocus();
+      return true;
+    }
+    if (_isSortMode) {
+      _cancelSortMode();
+      return true;
+    }
+    if (_isSelectMode) {
+      _exitSelectMode();
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> _handleBack() async {
+    if (await _handleBackButton()) return;
+    _goBack();
   }
 
   void _goBack() {

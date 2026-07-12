@@ -18,6 +18,15 @@ class VinylRing extends StatelessWidget {
     final grooveColor = Theme.of(
       context,
     ).colorScheme.onSurface.withValues(alpha: 0.06);
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final ring = Opacity(
+      opacity: 0.5,
+      child: RepaintBoundary(
+        child: CustomPaint(
+          painter: _VinylRingPainter(grooveColor: grooveColor),
+        ),
+      ),
+    );
 
     return Stack(
       clipBehavior: Clip.none,
@@ -28,17 +37,10 @@ class VinylRing extends StatelessWidget {
           top: -ringExtent,
           right: -ringExtent,
           bottom: -ringExtent,
-          child: RotationTransition(
-            turns: rotationAnimation,
-            child: Opacity(
-              opacity: 0.5,
-              child: RepaintBoundary(
-                child: CustomPaint(
-                  painter: _VinylRingPainter(grooveColor: grooveColor),
-                ),
-              ),
-            ),
-          ),
+          child:
+              reduceMotion
+                  ? ring
+                  : RotationTransition(turns: rotationAnimation, child: ring),
         ),
         child,
       ],

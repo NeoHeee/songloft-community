@@ -5,9 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/accessibility.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/utils/color_extraction.dart';
-import '../../../../core/utils/url_helper.dart';
+import '../../../../shared/widgets/cover_image.dart';
 import '../../../../shared/widgets/favorite_button.dart';
 import '../../domain/player_state.dart';
 import '../providers/player_provider.dart';
@@ -28,12 +29,18 @@ class MobilePlayer extends ConsumerStatefulWidget {
 
   /// 显示全屏播放器
   static Future<void> show(BuildContext context) {
+    final reduceMotion = AppAccessibility.reduceMotionOf(context);
     return Navigator.of(context).push(
       PageRouteBuilder(
         opaque: true,
+        transitionDuration:
+            reduceMotion ? Duration.zero : const Duration(milliseconds: 280),
+        reverseTransitionDuration:
+            reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
         pageBuilder:
             (context, animation, secondaryAnimation) => const MobilePlayer(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          if (reduceMotion) return child;
           // 从下往上滑入动画
           return SlideTransition(
             position: Tween<Offset>(
@@ -138,6 +145,7 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
     final notifier = ref.read(playerStateProvider.notifier);
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
+    final reduceMotion = AppAccessibility.reduceMotionOf(context);
 
     // 播放列表被清空时，自动关闭全屏播放器并返回上一页
     // 同时控制封面脉冲动画
@@ -149,17 +157,21 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
         }
       }
       // 控制唱片环旋转动画
-      if (next.isPlaying && !_rotationController.isAnimating) {
+      if (!reduceMotion && next.isPlaying && !_rotationController.isAnimating) {
         _rotationController.repeat();
-      } else if (!next.isPlaying && _rotationController.isAnimating) {
+      } else if ((reduceMotion || !next.isPlaying) &&
+          _rotationController.isAnimating) {
         _rotationController.stop();
       }
     });
 
     // 初始播放状态动画（listen 只响应变化，初始状态需要手动处理）
-    if (state.isPlaying && !_rotationController.isAnimating) {
+    if (!reduceMotion && state.isPlaying && !_rotationController.isAnimating) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && state.isPlaying && !_rotationController.isAnimating) {
+        if (mounted &&
+            !AppAccessibility.reduceMotionOf(context) &&
+            state.isPlaying &&
+            !_rotationController.isAnimating) {
           _rotationController.repeat();
         }
       });
@@ -172,6 +184,7 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
 
     final song = state.currentSong!;
     final coverUrl = song.coverUrl;
+    final coverExtent = size.width * 0.75;
 
     final paletteAsync = ref.watch(playerBackgroundPaletteProvider(song));
     final palette = paletteAsync.value;
@@ -189,7 +202,9 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
         color: Colors.black,
         child: AnimatedContainer(
           duration:
-              _isDragging ? Duration.zero : const Duration(milliseconds: 220),
+              _isDragging || reduceMotion
+                  ? Duration.zero
+                  : const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
           transform: Matrix4.translationValues(0, _dragOffset, 0),
           transformAlignment: Alignment.topCenter,
@@ -201,20 +216,21 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
             backgroundColor: theme.colorScheme.surface,
             body: Stack(
               children: [
-                // 背景模糊封面 / 无封面时的动态渐变
-                if (coverUrl != null)
+                // 背景和主封面使用相同显示尺寸，复用同一份内存解码位图。
+                if (coverUrl?.isNotEmpty == true)
                   Positioned.fill(
-                    child: ExcludeSemantics(
+                    child: RepaintBoundary(
                       child: ImageFiltered(
                         imageFilter: ImageFilter.blur(sigmaX: 70, sigmaY: 70),
-                        child: Image.network(
-                          UrlHelper.buildCoverUrl(coverUrl),
+                        child: FittedBox(
                           fit: BoxFit.cover,
-                          errorBuilder:
-                              (_, _, _) => Container(
-                                color:
-                                    theme.colorScheme.surfaceContainerHighest,
-                              ),
+                          clipBehavior: Clip.hardEdge,
+                          child: CoverImage(
+                            coverUrl: coverUrl,
+                            size: coverExtent,
+                            borderRadius: 0,
+                            showPlaceholderIcon: false,
+                          ),
                         ),
                       ),
                     ),
@@ -222,7 +238,10 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
                 else if (palette != null)
                   Positioned.fill(
                     child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 800),
+                      duration: AppAccessibility.motionDuration(
+                        context,
+                        const Duration(milliseconds: 800),
+                      ),
                       curve: Curves.easeInOut,
                       decoration: BoxDecoration(
                         gradient: RadialGradient(
@@ -258,7 +277,10 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
                 // 背景遮罩 - 动态取色渐变
                 Positioned.fill(
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 500),
+                    duration: AppAccessibility.motionDuration(
+                      context,
+                      const Duration(milliseconds: 500),
+                    ),
                     curve: Curves.easeInOut,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -325,7 +347,7 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
                                         child: _buildCover(
                                           context,
                                           coverUrl,
-                                          size.width * 0.75,
+                                          coverExtent,
                                           palette: palette,
                                         ),
                                       ),
@@ -548,7 +570,6 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
     CoverPalette? palette,
   }) {
     final theme = Theme.of(context);
-
     final glowColor = palette?.vibrantColor ?? palette?.dominantColor;
 
     return Container(
@@ -556,31 +577,17 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
       height: size,
       decoration: BoxDecoration(
         borderRadius: AppRadius.xlAll,
-        color: theme.colorScheme.surfaceContainerHighest,
         boxShadow:
             glowColor != null
                 ? AppEffects.primaryGlow(glowColor)
                 : AppEffects.softGlow(theme.colorScheme.onSurface),
       ),
-      clipBehavior: Clip.antiAlias,
-      child:
-          coverUrl != null
-              ? ExcludeSemantics(
-                child: Image.network(
-                  UrlHelper.buildCoverUrl(coverUrl),
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => _buildPlaceholder(theme, size),
-                ),
-              )
-              : _buildPlaceholder(theme, size),
-    );
-  }
-
-  Widget _buildPlaceholder(ThemeData theme, double size) {
-    return Icon(
-      Icons.music_note_rounded,
-      size: size * 0.4,
-      color: theme.colorScheme.onSurfaceVariant,
+      child: CoverImage(
+        coverUrl: coverUrl,
+        size: size,
+        borderRadius: AppRadius.xl,
+        placeholderIcon: Icons.music_note_rounded,
+      ),
     );
   }
 

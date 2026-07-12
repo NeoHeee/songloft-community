@@ -4,8 +4,10 @@ import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/router/app_router.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../settings/presentation/providers/settings_provider.dart';
 import 'plugin_theme_utils.dart';
@@ -120,6 +122,14 @@ class _PluginWebViewPageState extends ConsumerState<PluginWebViewPage>
     );
   }
 
+  void _closeOrHome() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go(AppRoutes.home);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -142,7 +152,7 @@ class _PluginWebViewPageState extends ConsumerState<PluginWebViewPage>
         if (controller != null && await controller.canGoBack()) {
           await controller.goBack();
         } else if (context.mounted) {
-          Navigator.of(context).pop();
+          _closeOrHome();
         }
       },
       child: Scaffold(
@@ -155,7 +165,7 @@ class _PluginWebViewPageState extends ConsumerState<PluginWebViewPage>
               if (controller != null && await controller.canGoBack()) {
                 await controller.goBack();
               } else if (context.mounted) {
-                Navigator.of(context).pop();
+                _closeOrHome();
               }
             },
           ),
@@ -163,7 +173,7 @@ class _PluginWebViewPageState extends ConsumerState<PluginWebViewPage>
             IconButton(
               icon: const Icon(Icons.close),
               tooltip: '关闭',
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: _closeOrHome,
             ),
             IconButton(
               icon: const Icon(Icons.open_in_browser),

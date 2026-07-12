@@ -19,6 +19,11 @@ on:
   pull_request:
     branches:
       - main
+      - mobile-third-round
+      - mobile-fourth-round
+      - mobile-fifth-round
+      - mobile-sixth-round
+      - mobile-seventh-round
     paths:
       - 'lib/**'
       - 'test/**'
@@ -41,7 +46,7 @@ concurrency:
 
 jobs:
   analyze:
-    name: Flutter analyze and theme system tests
+    name: Flutter analyze and focused tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -55,19 +60,22 @@ jobs:
           cache: true
       - name: Install dependencies
         run: flutter pub get
-      - name: Verify changed Dart file hashes v3
+      - name: Verify changed Dart formatting
         shell: bash
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             base_sha="${{ github.event.pull_request.base.sha }}"
+            head_sha="${{ github.event.pull_request.head.sha }}"
           elif [[ "${{ github.event_name }}" == "push" ]]; then
             base_sha="${{ github.event.before }}"
+            head_sha="${{ github.sha }}"
           else
             base_sha="$(git rev-parse HEAD^ 2>/dev/null || git rev-parse HEAD)"
+            head_sha="$(git rev-parse HEAD)"
           fi
 
           mapfile -t dart_files < <(
-            git diff --name-only --diff-filter=ACMRT "$base_sha"...HEAD -- \
+            git diff --name-only --diff-filter=ACMRT "$base_sha" "$head_sha" -- \
               | grep -E '^(lib|test)/.*\.dart$' \
               || true
           )
@@ -77,13 +85,26 @@ jobs:
             exit 0
           fi
 
-          printf 'Checking %s\n' "${dart_files[@]}"
-          sha256sum "${dart_files[@]}" > /tmp/dart-before.sha256
-          dart format "${dart_files[@]}"
-          sha256sum "${dart_files[@]}" > /tmp/dart-after.sha256
-          diff -u /tmp/dart-before.sha256 /tmp/dart-after.sha256
+          failed=0
+          for file in "${dart_files[@]}"; do
+            echo "Checking $file"
+            if ! dart format --output=none --set-exit-if-changed "$file"; then
+              failed=1
+            fi
+          done
+          exit "$failed"
       - name: Run theme system tests
         run: flutter test test/core/theme
+      - name: Run network recovery tests
+        run: flutter test test/core/network
+      - name: Run mobile navigation tests
+        run: flutter test test/core/navigation
+      - name: Run cover cache utility tests
+        run: flutter test test/core/utils/cover_cache_test.dart
+      - name: Run cover image widget tests
+        run: flutter test test/shared/widgets/cover_image_test.dart
+      - name: Run library selection tests
+        run: flutter test test/features/library
       - name: Analyze
         run: flutter analyze
 
@@ -194,3 +215,4 @@ jobs:
           if-no-files-found: error
 
 # verifies theme packs, trusted catalog, sharing and formatted release sources
+# eighth round validates unified mobile back behavior across shell and pages

@@ -1,7 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../core/utils/url_helper.dart';
+import '../../../../shared/widgets/cover_image.dart';
 import '../../domain/playlist.dart';
 
 /// 新版歌单卡片组件
@@ -72,30 +71,32 @@ class PlaylistCard extends StatelessWidget {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        _buildCover(colorScheme),
+                        _buildCover(),
                         const _BottomCoverGradient(),
                         if (isCurrentPlaylist && isPlaying)
-                          Container(
-                            color: Colors.black.withValues(alpha: 0.42),
-                            child: Center(
-                              child: Container(
-                                width: 54,
-                                height: 54,
-                                decoration: BoxDecoration(
-                                  color: colorScheme.primary,
-                                  shape: BoxShape.circle,
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Colors.black26,
-                                      blurRadius: 14,
-                                      offset: Offset(0, 6),
-                                    ),
-                                  ],
-                                ),
-                                child: Icon(
-                                  Icons.equalizer_rounded,
-                                  color: colorScheme.onPrimary,
-                                  size: 28,
+                          ExcludeSemantics(
+                            child: Container(
+                              color: Colors.black.withValues(alpha: 0.42),
+                              child: Center(
+                                child: Container(
+                                  width: 54,
+                                  height: 54,
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.primary,
+                                    shape: BoxShape.circle,
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Colors.black26,
+                                        blurRadius: 14,
+                                        offset: Offset(0, 6),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Icon(
+                                    Icons.equalizer_rounded,
+                                    color: colorScheme.onPrimary,
+                                    size: 28,
+                                  ),
                                 ),
                               ),
                             ),
@@ -222,20 +223,20 @@ class PlaylistCard extends StatelessWidget {
   bool get _hasMenu =>
       onEdit != null || onDelete != null || onToggleVisibility != null;
 
-  Widget _buildCover(ColorScheme colorScheme) {
-    if (playlist.coverImageUrl == null) {
-      return _CoverPlaceholder(isRadio: playlist.type == 'radio');
-    }
-
-    return ExcludeSemantics(
-      child: CachedNetworkImage(
-        imageUrl: UrlHelper.buildCoverUrl(playlist.coverImageUrl!),
-        fit: BoxFit.cover,
-        placeholder:
-            (_, _) => _CoverPlaceholder(isRadio: playlist.type == 'radio'),
-        errorWidget:
-            (_, _, _) => _CoverPlaceholder(isRadio: playlist.type == 'radio'),
-      ),
+  Widget _buildCover() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = constraints.maxWidth;
+        return CoverImage(
+          coverUrl: playlist.coverImageUrl,
+          size: size,
+          borderRadius: 0,
+          placeholderIcon:
+              playlist.type == 'radio'
+                  ? Icons.radio_rounded
+                  : Icons.graphic_eq_rounded,
+        );
+      },
     );
   }
 
@@ -423,34 +424,6 @@ class _RadioBadge extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _CoverPlaceholder extends StatelessWidget {
-  final bool isRadio;
-
-  const _CoverPlaceholder({required this.isRadio});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [colorScheme.primaryContainer, colorScheme.tertiaryContainer],
-        ),
-      ),
-      child: Center(
-        child: Icon(
-          isRadio ? Icons.radio_rounded : Icons.graphic_eq_rounded,
-          size: 52,
-          color: colorScheme.onPrimaryContainer.withValues(alpha: 0.72),
-        ),
       ),
     );
   }

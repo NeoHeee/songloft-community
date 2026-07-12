@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../../config/app_config.dart';
 import '../../../core/backend/embedded_backend_service.dart';
 import '../../../core/backend/run_mode_provider.dart';
+import '../../../core/navigation/mobile_back_policy.dart';
 import '../../../core/network/base_url_provider.dart';
 import '../../../core/network/server_discovery.dart';
 import '../../../core/network/server_entry.dart';
@@ -34,6 +36,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _apiUrlController = TextEditingController();
+  final MobileExitTracker _exitTracker = MobileExitTracker();
 
   // TV 焦点节点
   final _usernameFocusNode = FocusNode();
@@ -337,7 +340,36 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       return _buildTvLayout(context, authState, theme, colorScheme);
     }
 
-    return _buildDefaultLayout(context, authState, theme, colorScheme);
+    return BackButtonListener(
+      onBackButtonPressed: _handleMobileBackButton,
+      child: _buildDefaultLayout(context, authState, theme, colorScheme),
+    );
+  }
+
+  Future<bool> _handleMobileBackButton() async {
+    if (MediaQuery.viewInsetsOf(context).bottom > 0) {
+      FocusManager.instance.primaryFocus?.unfocus();
+      return true;
+    }
+
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    if (_exitTracker.shouldExit(DateTime.now())) {
+      _exitTracker.reset();
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        SystemNavigator.pop();
+      }
+      return true;
+    }
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: const Text('再按一次退出应用'),
+        duration: _exitTracker.confirmationWindow,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    return true;
   }
 
   // ========== 默认布局（手机/平板/桌面）==========
