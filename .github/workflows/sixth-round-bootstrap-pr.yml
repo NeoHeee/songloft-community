@@ -40,18 +40,13 @@ jobs:
           lib/features/player/presentation/widgets/mobile_player_gesture_host.dart
           lib/features/player/presentation/widgets/vinyl_ring.dart
           test/core/theme/app_theme_accessibility_test.dart
-      - name: Commit sixth-round implementation
+      - name: Commit sixth-round source changes
         shell: bash
         run: |
           set -euxo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          rm -f .github/workflows/sixth-round-bootstrap.yml
-          rm -f .github/workflows/sixth-round-bootstrap-pr.yml
-          rm -f .github/workflows/sixth-round-bootstrap-fix.yml
-          rm -f .github/workflows/sixth-round-patch-diagnostic.yml
-          rm -f .github/scripts/sixth_round_patch.py
-          git add -A
+          git add lib test
           git status --short
           git commit -m 'feat(accessibility): start sixth-round system adaptation polish'
           git push origin HEAD:${{ github.event.pull_request.head.ref }}
