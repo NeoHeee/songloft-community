@@ -1,0 +1,56 @@
+name: Diagnose Batch Dart Format
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/mobile-format-batch-diagnostic.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Run exact batch format command
+        shell: bash
+        run: |
+          base_sha='${{ github.event.pull_request.base.sha }}'
+          head_sha='${{ github.event.pull_request.head.sha }}'
+          mapfile -t dart_files < <(
+            git diff --name-only --diff-filter=ACMRT "$base_sha" "$head_sha" -- \
+              | grep -E '^(lib|test)/.*\.dart$' \
+              || true
+          )
+          {
+            echo "BASE=$base_sha"
+            echo "HEAD=$head_sha"
+            echo "CHECKOUT=$(git rev-parse HEAD)"
+            echo "COUNT=${#dart_files[@]}"
+            printf 'FILE=%s\n' "${dart_files[@]}"
+          } > /tmp/batch-format.txt
+          set +e
+          dart format --output=none --set-exit-if-changed "${dart_files[@]}" >> /tmp/batch-format.txt 2>&1
+          status=$?
+          set -e
+          echo "EXIT=$status" >> /tmp/batch-format.txt
+          cat /tmp/batch-format.txt
+      - name: Upload batch diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-format-batch-diagnostic
+          path: /tmp/batch-format.txt
+          if-no-files-found: error
+          retention-days: 2
