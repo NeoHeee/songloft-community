@@ -29,9 +29,7 @@ class ApiException implements Exception {
               'Android 16 访问局域网时，请允许“附近的设备”权限',
         );
       case DioExceptionType.badCertificate:
-        return NetworkException(
-          message: '证书验证失败；若使用 NAS 私有 CA，请先在系统中安装并信任该证书',
-        );
+        return NetworkException(message: '证书验证失败；若使用 NAS 私有 CA，请先在系统中安装并信任该证书');
       case DioExceptionType.badResponse:
         return ApiException.fromResponse(e.response);
       case DioExceptionType.cancel:
