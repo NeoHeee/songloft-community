@@ -56,7 +56,7 @@ jobs:
           rm -f scripts/apply_community_branding.py
           rm -f scripts/generate_community_icons.py
           rm -f .github/workflows/apply-community-branding.yml
-          git show 1c853a94c1be1c3ed64cc0aaa76595bb32aea805:.github/workflows/ui-redesign-check.yml > .github/workflows/ui-redesign-check.yml
+          git show 04e3c2b807055ed9bc3e056319747f5490e10c9a:.github/workflows/ui-redesign-check.yml > .github/workflows/ui-redesign-check.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
