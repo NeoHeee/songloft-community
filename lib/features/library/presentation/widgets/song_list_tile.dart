@@ -266,7 +266,9 @@ class SongListTile extends ConsumerWidget {
           child: InkWell(
             onTap: _handleTap,
             onLongPress: isSelectionMode ? null : _handleLongPress,
-            hoverColor: colorScheme.surfaceContainerHigh.withValues(alpha: 0.78),
+            hoverColor: colorScheme.surfaceContainerHigh.withValues(
+              alpha: 0.78,
+            ),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
               child: Row(
