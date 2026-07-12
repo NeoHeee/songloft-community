@@ -1,0 +1,236 @@
+name: Validate Corrected Mobile Experience Completion
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/mobile-experience-patch-trigger-v2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-validate:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Apply corrected implementation
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          mini_path = Path('lib/features/player/presentation/widgets/mini_player.dart')
+          mini = mini_path.read_text(encoding='utf-8')
+          mini = re.sub(
+              r"(?m)^\s+song\.artist \?\? '未知艺术家',$",
+              "                                           song.artist ?? '未知艺术家',",
+              mini,
+              count=1,
+          )
+          mini = re.sub(
+              r"(?m)^\s+colorScheme\n\s+\.onSurfaceVariant,$",
+              "                                                     colorScheme\n                                                         .onSurfaceVariant,",
+              mini,
+              count=1,
+          )
+          mini_path.write_text(mini, encoding='utf-8')
+
+          workflow = Path('.github/workflows/mobile-experience-patch.yml').read_text(encoding='utf-8')
+          embedded = workflow.split("          python3 <<'PY'\n", 1)[1].split("\n          PY\n", 1)[0]
+          script = '\n'.join(
+              line[10:] if line.startswith('          ') else line
+              for line in embedded.splitlines()
+          )
+          exec(compile(script, 'mobile-experience-patch', 'exec'))
+
+          actions_path = Path('lib/features/player/presentation/utils/player_song_actions.dart')
+          actions = actions_path.read_text(encoding='utf-8')
+          actions = re.sub(
+              r"(case 'favorite':\s+await toggleCurrentSongFavorite\(context, ref\);)\s+(case 'playlist':)",
+              r"\1\n        break;\n      \2",
+              actions,
+              count=1,
+          )
+          actions = re.sub(
+              r"(case 'playlist':\s+await AddToPlaylistModal\.show\(context, songIds: \[song\.id\]\);)\s+(case 'delete':)",
+              r"\1\n        break;\n      \2",
+              actions,
+              count=1,
+          )
+          actions = re.sub(
+              r"(case 'delete':\s+await deleteCurrentSongFromPlayer\(context, ref\);)\s+\}",
+              r"\1\n        break;\n    }",
+              actions,
+              count=1,
+          )
+          actions_path.write_text(actions, encoding='utf-8')
+
+          Path('test/features/player/presentation/widgets/mini_player_test.dart').write_text(r'''import 'package:flutter/material.dart';
+          import 'package:flutter_riverpod/flutter_riverpod.dart';
+          import 'package:flutter_test/flutter_test.dart';
+          import 'package:songloft_flutter/features/player/domain/player_state.dart';
+          import 'package:songloft_flutter/features/player/presentation/providers/player_provider.dart';
+          import 'package:songloft_flutter/features/player/presentation/widgets/mini_player.dart';
+          import 'package:songloft_flutter/shared/models/song.dart';
+
+          final testSong = Song(
+            id: 1,
+            type: 'local',
+            title: '测试歌曲',
+            artist: '测试歌手',
+            duration: 180,
+            addedAt: DateTime.utc(2026),
+            updatedAt: DateTime.utc(2026),
+          );
+
+          class FakePlayerNotifier extends PlayerNotifier {
+            var retryCount = 0;
+
+            @override
+            PlayerState build() => PlayerState(
+              currentSong: testSong,
+              playlist: [testSong],
+              currentIndex: 0,
+              errorMessage: '播放失败',
+            );
+
+            @override
+            void clearError() {
+              state = state.copyWith(clearErrorMessage: true);
+            }
+
+            @override
+            Future<void> togglePlay() async {
+              retryCount++;
+              state = state.copyWith(isPlaying: true, isRetrying: false);
+            }
+          }
+
+          void main() {
+            testWidgets('播放失败时显示重试按钮并触发重新播放', (tester) async {
+              final notifier = FakePlayerNotifier();
+              await tester.pumpWidget(
+                ProviderScope(
+                  overrides: [
+                    playerStateProvider.overrideWith(() => notifier),
+                  ],
+                  child: const MaterialApp(
+                    home: Scaffold(body: MiniPlayer()),
+                  ),
+                ),
+              );
+
+              expect(find.text('播放失败'), findsOneWidget);
+              expect(find.byTooltip('重试播放'), findsOneWidget);
+
+              await tester.tap(find.byTooltip('重试播放'));
+              await tester.pump();
+
+              expect(notifier.retryCount, 1);
+            });
+          }
+          ''', encoding='utf-8')
+
+          Path('test/shared/utils/responsive_snackbar_test.dart').write_text(r'''import 'package:flutter/material.dart';
+          import 'package:flutter_test/flutter_test.dart';
+          import 'package:songloft_flutter/shared/utils/responsive_snackbar.dart';
+
+          void main() {
+            testWidgets('点击撤销时回调 true', (tester) async {
+              bool? undone;
+              await tester.pumpWidget(
+                MaterialApp(
+                  home: Scaffold(
+                    body: Builder(
+                      builder:
+                          (context) => FilledButton(
+                            onPressed: () {
+                              ResponsiveSnackBar.showUndo(
+                                context,
+                                message: '已删除歌曲',
+                              ).then((value) => undone = value);
+                            },
+                            child: const Text('删除'),
+                          ),
+                    ),
+                  ),
+                ),
+              );
+
+              await tester.tap(find.text('删除'));
+              await tester.pumpAndSettle();
+              await tester.tap(find.byType(SnackBarAction));
+              await tester.pumpAndSettle();
+              await tester.pump();
+
+              expect(undone, isTrue);
+            });
+
+            testWidgets('提示自然关闭时回调 false', (tester) async {
+              bool? undone;
+              await tester.pumpWidget(
+                MaterialApp(
+                  home: Scaffold(
+                    body: Builder(
+                      builder:
+                          (context) => FilledButton(
+                            onPressed: () {
+                              ResponsiveSnackBar.showUndo(
+                                context,
+                                message: '已删除歌曲',
+                                duration: const Duration(milliseconds: 100),
+                              ).then((value) => undone = value);
+                            },
+                            child: const Text('删除'),
+                          ),
+                    ),
+                  ),
+                ),
+              );
+
+              await tester.tap(find.text('删除'));
+              await tester.pumpAndSettle();
+              await tester.pump(const Duration(seconds: 2));
+              await tester.pumpAndSettle();
+              await tester.pump();
+
+              expect(undone, isFalse);
+            });
+          }
+          ''', encoding='utf-8')
+          PY
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Format changed Dart files
+        shell: bash
+        run: |
+          mapfile -t files < <(git diff --name-only --diff-filter=ACM -- 'lib/**/*.dart' 'test/**/*.dart')
+          dart format "${files[@]}"
+      - name: Run library tests
+        run: flutter test test/features/library
+      - name: Run player widget tests
+        run: flutter test test/features/player/presentation/widgets
+      - name: Run shared utility tests
+        run: flutter test test/shared/utils
+      - name: Analyze
+        run: flutter analyze
+      - name: Commit implementation
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib test android .github/workflows/ui-redesign-check.yml
+          git commit -m 'feat(mobile): complete second-stage experience polish'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
