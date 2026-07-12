@@ -707,7 +707,7 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
           physics: const NeverScrollableScrollPhysics(),
           buildDefaultDragHandles: false,
           itemCount: _sortableSongs.length,
-          onReorder: _onReorder,
+          onReorderItem: _onReorder,
           itemBuilder: (context, index) {
             final song = _sortableSongs[index];
             return _PlaylistSongTile(
@@ -998,7 +998,6 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
 
   void _onReorder(int oldIndex, int newIndex) {
     setState(() {
-      if (newIndex > oldIndex) newIndex -= 1;
       final item = _sortableSongs.removeAt(oldIndex);
       _sortableSongs.insert(newIndex, item);
     });

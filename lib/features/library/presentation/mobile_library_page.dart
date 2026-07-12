@@ -29,6 +29,10 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
   late final ScrollController _scrollController;
   final _searchController = TextEditingController();
   Timer? _searchDebounce;
+  final Map<int, GlobalKey> _songItemKeys = {};
+  final Set<int> _pendingDeletedSongIds = {};
+  final Set<int> _dragVisitedSongIds = {};
+  bool? _dragSelectionValue;
 
   @override
   void initState() {
@@ -149,6 +153,7 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
                             currentType: state.type,
                             onTypeChanged: (_) {},
                             songCount: state.total,
+                            onBatchDelete: _stageBatchDelete,
                           )
                           : _buildPinnedControls(state),
                 ),
@@ -442,7 +447,12 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
       ];
     }
 
-    if (state.songs.isEmpty) {
+    final visibleSongs =
+        state.songs
+            .where((song) => !_pendingDeletedSongIds.contains(song.id))
+            .toList();
+
+    if (visibleSongs.isEmpty) {
       return [
         SliverFillRemaining(
           hasScrollBody: false,
@@ -453,31 +463,39 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
 
     return [
       SliverList.builder(
-        itemCount: state.songs.length,
+        itemCount: visibleSongs.length,
         itemBuilder: (context, index) {
-          final song = state.songs[index];
-          return SongListTile(
-            song: song,
-            index: index,
-            isSelected: state.selectedSongIds.contains(song.id),
-            isSelectionMode: state.isSelectionMode,
-            isCurrentSong: currentSong?.id == song.id,
-            onTap: () => _onSongTap(song, index),
-            onLongPress:
-                () => ref
-                    .read(songsListProvider.notifier)
-                    .enterSelectionMode(initialSongId: song.id),
-            onSelect:
-                () => ref
-                    .read(songsListProvider.notifier)
-                    .toggleSongSelection(song.id),
-            onDelete: () => _showDeleteConfirmDialog(context, song.id),
-            onEdit:
-                song.type == AppConstants.songTypeLocal
-                    ? null
-                    : () => _navigateToEditSong(context, song),
-            onAddToPlaylist:
-                () => AddToPlaylistModal.show(context, songIds: [song.id]),
+          final song = visibleSongs[index];
+          final itemKey = _songItemKeys.putIfAbsent(song.id, GlobalKey.new);
+          return KeyedSubtree(
+            key: itemKey,
+            child: SongListTile(
+              song: song,
+              index: index,
+              isSelected: state.selectedSongIds.contains(song.id),
+              isSelectionMode: state.isSelectionMode,
+              isCurrentSong:
+                  currentSong?.id == song.id && currentSong?.type == song.type,
+              onTap: () => _onSongTap(song, index),
+              onLongPress:
+                  () => ref
+                      .read(songsListProvider.notifier)
+                      .enterSelectionMode(initialSongId: song.id),
+              onSelect:
+                  () => ref
+                      .read(songsListProvider.notifier)
+                      .toggleSongSelection(song.id),
+              onSelectionDragStart: (_) => _startSelectionDrag(song.id),
+              onSelectionDragUpdate: _updateSelectionDrag,
+              onSelectionDragEnd: _endSelectionDrag,
+              onDelete: () => _showDeleteConfirmDialog(context, song),
+              onEdit:
+                  song.type == AppConstants.songTypeLocal
+                      ? null
+                      : () => _navigateToEditSong(context, song),
+              onAddToPlaylist:
+                  () => AddToPlaylistModal.show(context, songIds: [song.id]),
+            ),
           );
         },
       ),
@@ -489,6 +507,99 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
           ),
         ),
     ];
+  }
+
+  void _startSelectionDrag(int songId) {
+    final state = ref.read(songsListProvider);
+    _dragSelectionValue = !state.selectedSongIds.contains(songId);
+    _dragVisitedSongIds.clear();
+    _applySelectionDrag(songId);
+  }
+
+  void _updateSelectionDrag(Offset globalPosition) {
+    final songId = _songIdAtGlobalPosition(globalPosition);
+    if (songId != null) _applySelectionDrag(songId);
+  }
+
+  int? _songIdAtGlobalPosition(Offset globalPosition) {
+    for (final entry in _songItemKeys.entries) {
+      if (_pendingDeletedSongIds.contains(entry.key)) continue;
+      final itemContext = entry.value.currentContext;
+      final renderObject = itemContext?.findRenderObject();
+      if (renderObject is! RenderBox || !renderObject.hasSize) continue;
+      final rect = renderObject.localToGlobal(Offset.zero) & renderObject.size;
+      if (rect.contains(globalPosition)) return entry.key;
+    }
+    return null;
+  }
+
+  void _applySelectionDrag(int songId) {
+    final selected = _dragSelectionValue;
+    if (selected == null || !_dragVisitedSongIds.add(songId)) return;
+    HapticFeedback.selectionClick();
+    ref.read(songsListProvider.notifier).setSongSelection(songId, selected);
+  }
+
+  void _endSelectionDrag() {
+    _dragSelectionValue = null;
+    _dragVisitedSongIds.clear();
+  }
+
+  Future<void> _stageSingleDelete(
+    Song song, {
+    required bool deleteFiles,
+  }) async {
+    final notifier = ref.read(songsListProvider.notifier);
+    setState(() => _pendingDeletedSongIds.add(song.id));
+    final undone = await ResponsiveSnackBar.showUndo(
+      context,
+      message: '已移除「${song.title}」',
+    );
+    if (undone) {
+      if (mounted) {
+        setState(() => _pendingDeletedSongIds.remove(song.id));
+      }
+      return;
+    }
+
+    final success = await notifier.deleteSong(
+      song.id,
+      deleteFiles: deleteFiles,
+    );
+    if (!mounted) return;
+    setState(() => _pendingDeletedSongIds.remove(song.id));
+    if (!success) {
+      ResponsiveSnackBar.showError(context, message: '删除失败，歌曲已恢复');
+    }
+  }
+
+  Future<void> _stageBatchDelete(bool deleteFiles) async {
+    final notifier = ref.read(songsListProvider.notifier);
+    final ids = ref.read(songsListProvider).selectedSongIds.toList();
+    if (ids.isEmpty) return;
+
+    setState(() => _pendingDeletedSongIds.addAll(ids));
+    notifier.exitSelectionMode();
+    final undone = await ResponsiveSnackBar.showUndo(
+      context,
+      message: '已移除 ${ids.length} 首歌曲',
+    );
+    if (undone) {
+      if (mounted) {
+        setState(() => _pendingDeletedSongIds.removeAll(ids));
+      }
+      return;
+    }
+
+    final deleted = await notifier.deleteSongsByIds(
+      ids,
+      deleteFiles: deleteFiles,
+    );
+    if (!mounted) return;
+    setState(() => _pendingDeletedSongIds.removeAll(ids));
+    if (deleted != ids.length) {
+      ResponsiveSnackBar.showError(context, message: '部分歌曲删除失败，列表已刷新');
+    }
   }
 
   Widget _buildEmptyState(SongsListState state) {
@@ -566,20 +677,14 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
     }
   }
 
-  Future<void> _showDeleteConfirmDialog(
-    BuildContext context,
-    int songId,
-  ) async {
+  Future<void> _showDeleteConfirmDialog(BuildContext context, Song song) async {
     final result = await DeleteSongDialog.show(
       context,
       title: '确认删除',
-      content: '确定要删除这首歌曲吗？',
+      content: '确定要删除「${song.title}」吗？删除后可在短时间内撤销。',
     );
-    if (result != null) {
-      await ref
-          .read(songsListProvider.notifier)
-          .deleteSong(songId, deleteFiles: result.deleteFiles);
-    }
+    if (result == null) return;
+    await _stageSingleDelete(song, deleteFiles: result.deleteFiles);
   }
 
   void _showCleanConfirmDialog(BuildContext context) {

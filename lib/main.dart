@@ -6,6 +6,7 @@ import 'package:audio_service_mpris/audio_service_mpris.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -143,6 +144,10 @@ void main(List<String> args) async {
     const Duration(seconds: 3),
     onTimeout: () => false,
   );
+
+  if (!kIsWeb && Platform.isAndroid && !AppConfig.isTvMode) {
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  }
 
   if (AppConfig.isEmbedded) {
     // 嵌入模式：Flutter Web 嵌入 Go 后端，直接使用当前页面的 origin 作为后端 API 地址
@@ -499,7 +504,20 @@ class SongloftApp extends ConsumerWidget {
                   textScaleFactor: textScaleFactor,
                   reduceMotion: reduceMotion,
                 );
-        return Theme(data: responsiveTheme, child: child!);
+        final iconBrightness =
+            isDark ? Brightness.light : Brightness.dark;
+        final overlayStyle = SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: iconBrightness,
+          systemNavigationBarColor: Colors.transparent,
+          systemNavigationBarDividerColor: Colors.transparent,
+          systemNavigationBarIconBrightness: iconBrightness,
+          systemNavigationBarContrastEnforced: false,
+        );
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: overlayStyle,
+          child: Theme(data: responsiveTheme, child: child!),
+        );
       },
     );
   }

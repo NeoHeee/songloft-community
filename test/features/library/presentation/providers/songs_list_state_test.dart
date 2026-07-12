@@ -9,6 +9,12 @@ void main() {
       expect(state.isAllSelected, isTrue);
     });
 
+    test('明确设置选择状态不会重复翻转', () {
+      expect(updatedSongSelection({1}, 2, true), {1, 2});
+      expect(updatedSongSelection({1, 2}, 2, true), {1, 2});
+      expect(updatedSongSelection({1, 2}, 1, false), {2});
+    });
+
     test('正在全选或仅部分选中时返回 false', () {
       const selecting = SongsListState(
         total: 2,

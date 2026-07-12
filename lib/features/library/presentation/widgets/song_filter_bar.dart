@@ -13,12 +13,14 @@ class SongFilterBar extends ConsumerWidget {
   final String? currentType;
   final ValueChanged<String?> onTypeChanged;
   final int songCount;
+  final Future<void> Function(bool deleteFiles)? onBatchDelete;
 
   const SongFilterBar({
     super.key,
     this.currentType,
     required this.onTypeChanged,
     this.songCount = 0,
+    this.onBatchDelete,
   });
 
   @override
@@ -263,6 +265,11 @@ class SongFilterBar extends ConsumerWidget {
       content: '确定要删除选中的 $count 首歌曲吗？',
     );
     if (result == null) return;
+
+    if (onBatchDelete != null) {
+      await onBatchDelete!(result.deleteFiles);
+      return;
+    }
 
     final deleted = await ref
         .read(songsListProvider.notifier)
