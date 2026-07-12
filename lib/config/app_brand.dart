@@ -5,7 +5,7 @@ abstract final class AppBrand {
   static const String name = 'Songloft Community';
   static const String subtitle = '社区增强版音乐播放器';
   static const String edition = 'Community Edition';
-  static const String version = '1.0.0-community.1';
+  static const String version = '1.0.0-community.2';
   static const String androidPackage = 'com.neo.songloft.community';
 
   static const String declaration =
@@ -14,5 +14,5 @@ abstract final class AppBrand {
   static const String upstreamRepository =
       'https://github.com/songloft-org/songloft';
   static const String communityRepository =
-      'https://github.com/NeoHeee/songloft-player';
+      'https://github.com/NeoHeee/songloft-community';
 }
