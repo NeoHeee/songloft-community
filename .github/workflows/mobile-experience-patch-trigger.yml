@@ -102,7 +102,7 @@ jobs:
           branch='${{ github.event.pull_request.head.ref }}'
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add lib test android .github/workflows/ui-redesign-check.yml
+          git add lib test android
           git commit -m 'feat(mobile): complete second-stage experience polish'
           git fetch origin "$branch"
           git rebase "origin/$branch"
