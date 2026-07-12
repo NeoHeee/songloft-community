@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'base_url_provider.dart';
@@ -140,7 +141,8 @@ class ServerConnectionNotifier extends Notifier<ServerConnectionState> {
       }
     } on DioException catch (error) {
       if (generation != _probeGeneration) return;
-      if (error.response != null && !isUnavailableStatus(error.response?.statusCode)) {
+      if (error.response != null &&
+          !isUnavailableStatus(error.response?.statusCode)) {
         reportReachable();
       } else {
         reportUnavailable(error);
@@ -180,8 +182,7 @@ bool isConnectionFailure(DioException error) {
     DioExceptionType.connectionError ||
     DioExceptionType.badCertificate => true,
     DioExceptionType.unknown => true,
-    DioExceptionType.badResponse ||
-    DioExceptionType.cancel => false,
+    DioExceptionType.badResponse || DioExceptionType.cancel => false,
   };
 }
 
