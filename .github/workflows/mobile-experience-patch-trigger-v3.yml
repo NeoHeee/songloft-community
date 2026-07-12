@@ -1,0 +1,97 @@
+name: Finalize Mobile Experience Completion
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/mobile-experience-patch-trigger-v3.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-validate:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Apply corrected implementation
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          workflow = Path('.github/workflows/mobile-experience-patch-trigger-v2.yml').read_text(encoding='utf-8')
+          embedded = workflow.split("          python3 <<'PY'\n", 1)[1].split("\n          PY\n", 1)[0]
+          script = '\n'.join(
+              line[10:] if line.startswith('          ') else line
+              for line in embedded.splitlines()
+          )
+          exec(compile(script, 'mobile-experience-corrected-patch', 'exec'))
+
+          test_path = Path('test/shared/utils/responsive_snackbar_test.dart')
+          test = test_path.read_text(encoding='utf-8')
+          test = test.replace(
+              """              await tester.tap(find.text('删除'));
+              await tester.pumpAndSettle();
+              await tester.tap(find.byType(SnackBarAction));
+              await tester.pumpAndSettle();
+              await tester.pump();
+""",
+              """              await tester.tap(find.text('删除'));
+              await tester.pump(const Duration(milliseconds: 300));
+              await tester.tap(find.text('撤销'));
+              await tester.pumpAndSettle();
+              await tester.pump();
+""",
+              1,
+          )
+          test = test.replace(
+              """              await tester.tap(find.text('删除'));
+              await tester.pumpAndSettle();
+              await tester.pump(const Duration(seconds: 2));
+              await tester.pumpAndSettle();
+              await tester.pump();
+""",
+              """              await tester.tap(find.text('删除'));
+              await tester.pump(const Duration(milliseconds: 300));
+              await tester.pump(const Duration(seconds: 2));
+              await tester.pumpAndSettle();
+              await tester.pump();
+""",
+              1,
+          )
+          test_path.write_text(test, encoding='utf-8')
+          PY
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Format changed Dart files
+        shell: bash
+        run: |
+          mapfile -t files < <(git diff --name-only --diff-filter=ACM -- 'lib/**/*.dart' 'test/**/*.dart')
+          dart format "${files[@]}"
+      - name: Run library tests
+        run: flutter test test/features/library
+      - name: Run player widget tests
+        run: flutter test test/features/player/presentation/widgets
+      - name: Run shared utility tests
+        run: flutter test test/shared/utils
+      - name: Analyze
+        run: flutter analyze
+      - name: Commit implementation
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib test android .github/workflows/ui-redesign-check.yml
+          git commit -m 'feat(mobile): complete second-stage experience polish'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
