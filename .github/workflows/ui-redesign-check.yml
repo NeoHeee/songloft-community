@@ -1,63 +1,214 @@
-name: Apply Songloft Community Branding
+name: UI Redesign Check
 
 on:
+  push:
+    branches:
+      - main
+      - ui-redesign
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'assets/theme_catalog/**'
+      - 'web/**'
+      - 'android/**'
+      - 'windows/**'
+      - 'examples/themes/**'
+      - 'docs/theme-packs.md'
+      - 'pubspec.yaml'
+      - '.github/workflows/ui-redesign-check.yml'
   pull_request:
     branches:
       - main
+      - mobile-third-round
+      - mobile-fourth-round
+      - mobile-fifth-round
+      - mobile-sixth-round
+      - mobile-seventh-round
     paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'assets/theme_catalog/**'
+      - 'web/**'
+      - 'android/**'
+      - 'windows/**'
+      - 'examples/themes/**'
+      - 'docs/theme-packs.md'
+      - 'pubspec.yaml'
       - '.github/workflows/ui-redesign-check.yml'
-      - 'scripts/apply_community_branding.py'
-      - 'scripts/generate_community_icons.py'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: community-branding-${{ github.ref }}
+  group: ui-check-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  apply-community-branding:
-    if: github.head_ref == 'mobile-experience-completion'
+  analyze:
+    name: Flutter analyze and focused tests
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: mobile-experience-completion
           fetch-depth: 0
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.41.5'
           channel: stable
           cache: true
-      - name: Apply branding source changes
-        run: python3 scripts/apply_community_branding.py
-      - name: Generate icon assets
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Verify changed Dart formatting
+        shell: bash
         run: |
-          python3 -m pip install --disable-pip-version-check --quiet pillow
-          python3 scripts/generate_community_icons.py
-      - name: Regenerate platform launcher icons
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            base_sha="${{ github.event.pull_request.base.sha }}"
+            head_sha="${{ github.event.pull_request.head.sha }}"
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            base_sha="${{ github.event.before }}"
+            head_sha="${{ github.sha }}"
+          else
+            base_sha="$(git rev-parse HEAD^ 2>/dev/null || git rev-parse HEAD)"
+            head_sha="$(git rev-parse HEAD)"
+          fi
+
+          mapfile -t dart_files < <(
+            git diff --name-only --diff-filter=ACMRT "$base_sha" "$head_sha" -- \
+              | grep -E '^(lib|test)/.*\.dart$' \
+              || true
+          )
+
+          if [[ ${#dart_files[@]} -eq 0 ]]; then
+            echo "No changed Dart files to format-check."
+            exit 0
+          fi
+
+          printf 'Checking %s\n' "${dart_files[@]}"
+          dart format --output=none --set-exit-if-changed "${dart_files[@]}"
+      - name: Run theme system tests
+        run: flutter test test/core/theme
+      - name: Run network recovery tests
+        run: flutter test test/core/network
+      - name: Run mobile navigation tests
+        run: flutter test test/core/navigation
+      - name: Run cover cache utility tests
+        run: flutter test test/core/utils/cover_cache_test.dart
+      - name: Run cover image widget tests
+        run: flutter test test/shared/widgets/cover_image_test.dart
+      - name: Run library selection tests
+        run: flutter test test/features/library
+      - name: Run second-stage player tests
+        run: flutter test test/features/player/presentation/widgets
+      - name: Analyze
+        run: flutter analyze
+
+  build-web:
+    name: Build Flutter Web
+    needs: analyze
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build release web app
+        run: flutter build web --release --base-href /
+      - name: Upload web preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-web-preview
+          path: build/web
+          if-no-files-found: error
+          retention-days: 14
+
+  build-android:
+    name: Build Android preview APKs
+    needs: analyze
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
+      contains(github.event.head_commit.message, '[platform-build]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build release APKs
+        run: flutter build apk --release --split-per-abi
+      - name: Upload Android clients
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-android-preview
+          path: build/app/outputs/flutter-apk/*-release.apk
+          retention-days: 14
+          if-no-files-found: error
+
+  build-windows:
+    name: Build complete Windows x64 bundle
+    needs: analyze
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
+      contains(github.event.head_commit.message, '[platform-build]')
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout redesigned player
+        uses: actions/checkout@v4
+      - name: Checkout Songloft backend
+        uses: actions/checkout@v4
+        with:
+          repository: NeoHeee/songloft
+          ref: main
+          path: _server
+          submodules: recursive
+          fetch-depth: 1
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+          cache: true
+          cache-dependency-path: _server/go.sum
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build bundled Go backend
+        working-directory: _server
+        shell: pwsh
         run: |
-          flutter pub get
-          dart run flutter_launcher_icons
-      - name: Format branding sources
-        run: |
-          dart format \
-            lib/config/app_brand.dart \
-            lib/config/app_config.dart \
-            lib/main.dart \
-            lib/features/auth/presentation/login_page.dart \
-            lib/features/home/presentation/home_page.dart \
-            lib/features/settings/presentation/settings_page.dart
-          git diff --check
-      - name: Commit branding source and icon changes
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git restore --staged .github/workflows scripts || true
-          git status --short
-          git diff --cached --quiet && { echo 'No branding changes staged'; exit 1; }
-          git commit -m 'feat(brand): introduce Songloft Community identity'
-          git push origin HEAD:mobile-experience-completion
+          $env:CGO_ENABLED = '0'
+          $env:GOAMD64 = 'v1'
+          go build -tags lite -o "$env:GITHUB_WORKSPACE\windows\runner\songloft-server.exe" .
+      - name: Build Windows release
+        run: >-
+          flutter build windows --release
+          --dart-define=HAS_BACKEND=true
+      - name: Package portable client
+        shell: pwsh
+        run: Compress-Archive -Path 'build\windows\x64\runner\Release\*' -DestinationPath 'songloft-windows-x64.zip'
+      - name: Upload Windows client
+        uses: actions/upload-artifact@v4
+        with:
+          name: songloft-windows-x64
+          path: songloft-windows-x64.zip
+          retention-days: 14
+          if-no-files-found: error
+
+# verifies theme packs, trusted catalog, sharing and formatted release sources
+# second-stage release candidate validates player retry, drag selection, undo, skeletons and edge-to-edge integration
