@@ -183,7 +183,9 @@ bool isConnectionFailure(DioException error) {
     DioExceptionType.connectionError ||
     DioExceptionType.badCertificate => true,
     DioExceptionType.unknown => true,
-    DioExceptionType.badResponse || DioExceptionType.cancel => false,
+    DioExceptionType.badResponse ||
+    DioExceptionType.cancel ||
+    DioExceptionType.transformTimeout => false,
   };
 }
 
