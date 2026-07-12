@@ -15,6 +15,9 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+val requireReleaseSigning =
+    System.getenv("ANDROID_REQUIRE_RELEASE_SIGNING")?.equals("true", ignoreCase = true) == true
+
 android {
     namespace = "com.neo.songloft.community"
     compileSdk = flutter.compileSdkVersion
@@ -39,16 +42,32 @@ android {
                 ?: keystoreProperties.getProperty("storeFile")
             val storePass = System.getenv("ANDROID_KEYSTORE_PASSWORD")
                 ?: keystoreProperties.getProperty("storePassword")
-            val keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+            val releaseKeyAlias = System.getenv("ANDROID_KEY_ALIAS")
                 ?: keystoreProperties.getProperty("keyAlias")
-            val keyPass = System.getenv("ANDROID_KEY_PASSWORD")
+            val releaseKeyPass = System.getenv("ANDROID_KEY_PASSWORD")
                 ?: keystoreProperties.getProperty("keyPassword")
 
-            if (storeFilePath != null) {
-                storeFile = file(storeFilePath)
+            val configuredValues = listOf(
+                storeFilePath,
+                storePass,
+                releaseKeyAlias,
+                releaseKeyPass,
+            )
+            val hasAnySigningValue = configuredValues.any { !it.isNullOrBlank() }
+            val hasCompleteSigning = configuredValues.all { !it.isNullOrBlank() }
+
+            if (hasAnySigningValue && !hasCompleteSigning) {
+                throw GradleException(
+                    "Android release signing is only partially configured. " +
+                        "Provide the keystore path, store password, key alias and key password.",
+                )
+            }
+
+            if (hasCompleteSigning) {
+                storeFile = file(storeFilePath!!)
                 storePassword = storePass
-                this.keyAlias = keyAlias
-                keyPassword = keyPass
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPass
             }
         }
     }
@@ -68,10 +87,14 @@ android {
 
     buildTypes {
         release {
-            // 使用 release 签名配置；若未配置则回退到 debug（仅本地调试）
-            val releaseConfig = signingConfigs.findByName("release")
-            signingConfig = if (releaseConfig?.storeFile != null) releaseConfig
-                            else signingConfigs.getByName("debug")
+            val releaseConfig = signingConfigs.getByName("release")
+            signingConfig = when {
+                releaseConfig.storeFile != null -> releaseConfig
+                requireReleaseSigning -> throw GradleException(
+                    "A fixed Android release signing key is required for this build.",
+                )
+                else -> signingConfigs.getByName("debug")
+            }
         }
     }
 }
