@@ -105,6 +105,8 @@ jobs:
         run: flutter test test/shared/widgets/cover_image_test.dart
       - name: Run library selection tests
         run: flutter test test/features/library
+      - name: Run second-stage player tests
+        run: flutter test test/features/player/presentation/widgets
       - name: Analyze
         run: flutter analyze
 
@@ -215,4 +217,4 @@ jobs:
           if-no-files-found: error
 
 # verifies theme packs, trusted catalog, sharing and formatted release sources
-# eighth round validates unified mobile back behavior across shell and pages
+# second stage validates player retry, drag selection, undo, skeletons and edge-to-edge integration
