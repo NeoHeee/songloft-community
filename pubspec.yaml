@@ -1,7 +1,7 @@
 name: songloft_flutter
-description: Songloft - 跨平台音乐播放器
+description: Songloft Community - 社区增强版音乐播放器
 publish_to: 'none'
-version: 2.9.7+1
+version: 1.0.0-community.1+1
 license: Apache-2.0
 
 environment:
@@ -94,10 +94,10 @@ flutter_launcher_icons:
   image_path: "assets/icons/app_icon.png"
   min_sdk_android: 21
   # Adaptive icon (Android 8.0+)：白底 + 与主图相同的前景，自带 16% inset
-  adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/icons/app_icon.png"
+  adaptive_icon_background: "#6D3DE7"
+  adaptive_icon_foreground: "assets/icons/app_icon_foreground.png"
   # Themed icon (Android 13+)：单色版本，跟随系统壁纸主题
-  adaptive_icon_monochrome: "assets/icons/app_icon.png"
+  adaptive_icon_monochrome: "assets/icons/app_icon_monochrome.png"
 
 flutter:
   uses-material-design: true

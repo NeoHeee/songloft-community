@@ -1,4 +1,4 @@
-package com.songloft.songloft_flutter
+package com.neo.songloft.community
 
 import android.app.UiModeManager
 import android.content.Context

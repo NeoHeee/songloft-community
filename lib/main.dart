@@ -17,6 +17,7 @@ import 'dart:math';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'config/app_brand.dart';
 import 'config/app_config.dart';
 import 'core/audio/audio_service.dart';
 import 'core/audio/smtc_service.dart';
@@ -103,7 +104,7 @@ void main(List<String> args) async {
     try {
       await WindowsSingleInstance.ensureSingleInstance(
         args,
-        'songloft_player_instance',
+        'songloft_community_player_instance',
         onSecondWindow: (List<String> args) {
           windowManager.show();
           windowManager.focus();
@@ -156,9 +157,10 @@ void main(List<String> args) async {
     // 检测 <base href> 中的 sub-path（由 Go 服务端运行时注入）
     final uriBasePath = Uri.base.path;
     if (uriBasePath.length > 1) {
-      final trimmed = uriBasePath.endsWith('/')
-          ? uriBasePath.substring(0, uriBasePath.length - 1)
-          : uriBasePath;
+      final trimmed =
+          uriBasePath.endsWith('/')
+              ? uriBasePath.substring(0, uriBasePath.length - 1)
+              : uriBasePath;
       AppConfig.basePath = trimmed;
       AppConfig.apiPrefix = '$trimmed/api/v1';
     }
@@ -284,8 +286,8 @@ void main(List<String> args) async {
       // HyperOS3 等系统在前台服务停止后会激进回收资源，
       // 导致歌曲播放完成后 playNext() 命令失效无法自动切歌
       config: const AudioServiceConfig(
-        androidNotificationChannelId: 'com.songloft.playback',
-        androidNotificationChannelName: 'Songloft 播放控制',
+        androidNotificationChannelId: 'com.neo.songloft.community.playback',
+        androidNotificationChannelName: 'Songloft Community 播放控制',
         androidNotificationOngoing: false,
         androidStopForegroundOnPause: false,
         androidBrowsableRootExtras: {
@@ -377,7 +379,7 @@ class _NativeBootstrapApp extends StatelessWidget {
   Widget build(BuildContext context) {
     const seed = Color(0xFF6750A4);
     return MaterialApp(
-      title: 'Songloft',
+      title: AppBrand.name,
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.system,
       theme: ThemeData(
@@ -404,9 +406,9 @@ class _NativeBootstrapApp extends StatelessWidget {
                 child: CircularProgressIndicator(strokeWidth: 2.6),
               ),
               SizedBox(height: 18),
-              Text('正在启动 Songloft…'),
+              Text('正在启动 ${AppBrand.name}…'),
               SizedBox(height: 6),
-              Text('正在初始化音频与桌面服务'),
+              Text(AppBrand.subtitle),
             ],
           ),
         ),
@@ -420,19 +422,47 @@ class _StartupMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Container(
-      width: 76,
-      height: 76,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [colors.primaryContainer, colors.tertiaryContainer],
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(25),
+          child: Image.asset(
+            'assets/icons/app_icon.png',
+            width: 96,
+            height: 96,
+            semanticLabel: AppBrand.name,
+          ),
         ),
-        borderRadius: BorderRadius.circular(25),
-      ),
-      child: Icon(Icons.graphic_eq_rounded, size: 40, color: colors.primary),
+        const SizedBox(height: 22),
+        Text(
+          AppBrand.name,
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 7),
+        Text(
+          AppBrand.subtitle,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: const Text(
+            AppBrand.edition,
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(AppBrand.version, style: TextStyle(fontSize: 12)),
+      ],
     );
   }
 }
@@ -475,7 +505,7 @@ class SongloftApp extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
     final themePack = ref.watch(themePackProvider).selectedPack;
     return MaterialApp.router(
-      title: 'Songloft',
+      title: AppBrand.name,
       debugShowCheckedModeBanner: false,
       scrollBehavior: _AppScrollBehavior(),
       theme: AppTheme.lightTheme(themePack: themePack),
@@ -489,19 +519,20 @@ class SongloftApp extends ConsumerWidget {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final textScaleFactor = AppAccessibility.textScaleOf(context);
         final reduceMotion = AppAccessibility.reduceMotionOf(context);
-        final responsiveTheme = isDark
-            ? AppTheme.darkTheme(
-                screenType: screenType,
-                themePack: themePack,
-                textScaleFactor: textScaleFactor,
-                reduceMotion: reduceMotion,
-              )
-            : AppTheme.lightTheme(
-                screenType: screenType,
-                themePack: themePack,
-                textScaleFactor: textScaleFactor,
-                reduceMotion: reduceMotion,
-              );
+        final responsiveTheme =
+            isDark
+                ? AppTheme.darkTheme(
+                  screenType: screenType,
+                  themePack: themePack,
+                  textScaleFactor: textScaleFactor,
+                  reduceMotion: reduceMotion,
+                )
+                : AppTheme.lightTheme(
+                  screenType: screenType,
+                  themePack: themePack,
+                  textScaleFactor: textScaleFactor,
+                  reduceMotion: reduceMotion,
+                );
         final iconBrightness = isDark ? Brightness.light : Brightness.dark;
         final overlayStyle = SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,

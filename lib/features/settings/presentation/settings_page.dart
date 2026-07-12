@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../config/app_brand.dart';
 import '../../../config/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/base_url_provider.dart';
@@ -196,7 +197,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               children: [
                 Text(
                   AppConfig.isEmbedded
-                      ? 'Songloft'
+                      ? AppBrand.name
                       : ref.watch(runModeProvider) == RunMode.local
                       ? '本地模式'
                       : currentUrl,
@@ -1051,80 +1052,106 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Future<void> _showAboutDialog() async {
-    String version = '1.0.0';
-    String? gitCommit;
-
-    try {
-      final dio = ref.read(dioProvider);
-      final response = await dio
-          .get('${AppConfig.apiPrefix}/version')
-          .timeout(const Duration(seconds: 3));
-      final data = response.data as Map<String, dynamic>;
-      final ver = data['version'] as String?;
-      if (ver != null && ver.isNotEmpty) {
-        version = ver;
-      }
-      final commit = data['git_commit'] as String?;
-      if (commit != null && commit != 'unknown' && commit.isNotEmpty) {
-        gitCommit = commit;
-      }
-    } catch (_) {}
-
-    if (!mounted) return;
-
     showAboutDialog(
       context: context,
-      applicationName: 'Songloft',
-      applicationVersion: '$version · 社区魔改版',
+      applicationName: AppBrand.name,
+      applicationVersion: AppBrand.version,
       applicationIcon: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Image.asset(
           'assets/icons/app_icon.png',
-          width: 48,
-          height: 48,
-          semanticLabel: 'Songloft',
+          width: 52,
+          height: 52,
+          semanticLabel: AppBrand.name,
         ),
       ),
-      applicationLegalese: '© 2024-2026 Songloft. All rights reserved.',
+      applicationLegalese: '© 2026 Songloft Community',
       children: [
         const SizedBox(height: 16),
-        const Text('Songloft 是一个开源的个人音乐服务器应用。'),
-        const SizedBox(height: 8),
-        const Text('支持本地音乐库管理、在线播放和插件扩展。'),
-        if (gitCommit != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            'Git: $gitCommit',
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
+        Text(
+          AppBrand.subtitle,
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(999),
           ),
-        ],
-        const SizedBox(height: 16),
-        Semantics(
-          link: true,
-          label: '打开 GitHub 页面',
-          child: InkWell(
-            onTap: () => _launchUrl('https://github.com/songloft-org/songloft'),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.open_in_new,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'GitHub: songloft-org/songloft',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-              ],
+          child: Text(
+            AppBrand.edition,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onPrimaryContainer,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),
+        const SizedBox(height: 16),
+        const Text(AppBrand.declaration),
+        const SizedBox(height: 12),
+        const SelectableText(
+          '包名：${AppBrand.androidPackage}',
+          style: TextStyle(fontSize: 12),
+        ),
+        const SizedBox(height: 18),
+        _aboutRepositoryLink(
+          label: '上游开源项目',
+          value: 'songloft-org/songloft',
+          url: AppBrand.upstreamRepository,
+        ),
+        const SizedBox(height: 12),
+        _aboutRepositoryLink(
+          label: '社区版仓库',
+          value: 'NeoHeee/songloft-player',
+          url: AppBrand.communityRepository,
+        ),
       ],
+    );
+  }
+
+  Widget _aboutRepositoryLink({
+    required String label,
+    required String value,
+    required String url,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Semantics(
+      link: true,
+      label: '打开 $label',
+      child: InkWell(
+        onTap: () => _launchUrl(url),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(
+            children: [
+              Icon(Icons.open_in_new, size: 18, color: colorScheme.primary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    Text(
+                      value,
+                      style: TextStyle(
+                        color: colorScheme.primary,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
