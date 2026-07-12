@@ -18,16 +18,20 @@ class ApiException implements Exception {
           message:
               '无法连接到 ${_targetOf(e)}（连接超时）。'
               '请检查：①后端服务是否运行 ②URL 与端口是否正确 '
-              '③若通过 ZeroTier/VPN 访问，请确认 VPN 已连接并启用「全局路由」',
+              '③若通过 ZeroTier/VPN 访问，请确认 VPN 已连接并启用「全局路由」 '
+              '④Android 16 访问局域网时，请允许“附近的设备”权限',
         );
       case DioExceptionType.connectionError:
         return NetworkException(
           message:
               '无法连接到 ${_targetOf(e)}。'
-              '请检查 URL 是否正确；若通过 ZeroTier/VPN 访问，请确认 VPN 已启用',
+              '请检查 URL 是否正确；若通过 ZeroTier/VPN 访问，请确认 VPN 已启用；'
+              'Android 16 访问局域网时，请允许“附近的设备”权限',
         );
       case DioExceptionType.badCertificate:
-        return NetworkException(message: '证书验证失败');
+        return NetworkException(
+          message: '证书验证失败；若使用 NAS 私有 CA，请先在系统中安装并信任该证书',
+        );
       case DioExceptionType.badResponse:
         return ApiException.fromResponse(e.response);
       case DioExceptionType.cancel:
@@ -42,7 +46,8 @@ class ApiException implements Exception {
             message:
                 '无法连接到 ${_targetOf(e)}（连接超时）。'
                 '请检查：①后端服务是否运行 ②URL 与端口是否正确 '
-                '③若通过 ZeroTier/VPN 访问，请确认 VPN 已连接并启用「全局路由」',
+                '③若通过 ZeroTier/VPN 访问，请确认 VPN 已连接并启用「全局路由」 '
+                '④Android 16 访问局域网时，请允许“附近的设备”权限',
           );
         }
         return NetworkException(message: e.message ?? '未知网络错误');
