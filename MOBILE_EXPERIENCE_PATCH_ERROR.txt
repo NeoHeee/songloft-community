@@ -1,5 +1,112 @@
-Traceback (most recent call last):
-  File "<stdin>", line 11, in <module>
-  File "mobile-experience-patch", line 869, in <module>
-  File "mobile-experience-patch", line 15, in replace_once
-RuntimeError: lib/features/player/presentation/widgets/mini_player.dart: expected one match, found 0: "                                           song.artist ?? '未知艺术家',\n"
+===== LIBRARY TESTS =====
+
+✅ /home/runner/work/songloft-player/songloft-player/test/features/library/presentation/providers/songs_list_state_test.dart: SongsListState selection helpers 全部歌曲被选中时返回 true
+✅ /home/runner/work/songloft-player/songloft-player/test/features/library/presentation/providers/songs_list_state_test.dart: SongsListState selection helpers 明确设置选择状态不会重复翻转
+✅ /home/runner/work/songloft-player/songloft-player/test/features/library/presentation/providers/songs_list_state_test.dart: SongsListState selection helpers 正在全选或仅部分选中时返回 false
+✅ /home/runner/work/songloft-player/songloft-player/test/features/library/presentation/widgets/library_actions_sheet_test.dart: 手机歌曲库操作面板提供排序和维护入口
+✅ /home/runner/work/songloft-player/songloft-player/test/features/library/presentation/widgets/song_list_tile_test.dart: 手机多选模式保留封面并显示选中标记
+✅ /home/runner/work/songloft-player/songloft-player/test/features/library/presentation/widgets/song_list_tile_test.dart: 点击多选歌曲会切换选择状态
+✅ /home/runner/work/songloft-player/songloft-player/test/features/library/presentation/widgets/song_list_tile_test.dart: 普通模式长按会进入多选流程
+
+🎉 7 tests passed.
+===== PLAYER TESTS =====
+
+test/features/player/presentation/widgets/mini_player_test.dart:15:12: Error: Cannot invoke a non-'const' constructor where a const expression is expected.
+Try using a constructor or factory that is 'const'.
+  addedAt: DateTime(2026),
+           ^^^^^^^^
+test/features/player/presentation/widgets/mini_player_test.dart:16:14: Error: Cannot invoke a non-'const' constructor where a const expression is expected.
+Try using a constructor or factory that is 'const'.
+  updatedAt: DateTime(2026),
+             ^^^^^^^^
+::group::❌ loading /home/runner/work/songloft-player/songloft-player/test/features/player/presentation/widgets/mini_player_test.dart (failed)
+Failed to load "/home/runner/work/songloft-player/songloft-player/test/features/player/presentation/widgets/mini_player_test.dart":
+Compilation failed for testPath=/home/runner/work/songloft-player/songloft-player/test/features/player/presentation/widgets/mini_player_test.dart: test/features/player/presentation/widgets/mini_player_test.dart:15:12: Error: Cannot invoke a non-'const' constructor where a const expression is expected.
+Try using a constructor or factory that is 'const'.
+  addedAt: DateTime(2026),
+           ^^^^^^^^
+test/features/player/presentation/widgets/mini_player_test.dart:16:14: Error: Cannot invoke a non-'const' constructor where a const expression is expected.
+Try using a constructor or factory that is 'const'.
+  updatedAt: DateTime(2026),
+             ^^^^^^^^
+.
+
+::endgroup::
+
+::error::0 tests passed, 1 failed.
+===== SHARED TESTS =====
+
+::group::❌ 点击撤销时回调 true (failed)
+
+Warning: A call to tap() with finder "Found 1 widget with text "撤销": [
+  Text("撤销", dependencies: [DefaultSelectionStyle, DefaultTextStyle, MediaQuery]),
+]" derived an Offset (Offset(745.0, 566.0)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderParagraph#5253f relayoutBoundary=up31 NEEDS-PAINT
+The hit test result at that offset is: HitTestResult(_RenderInkFeatures#f8b65@Offset(745.0, 566.0), RenderPhysicalModel#8e922@Offset(745.0, 566.0), RenderSemanticsAnnotations#ede4a@Offset(745.0, 566.0), RenderRepaintBoundary#18d4a@Offset(745.0, 566.0), RenderIgnorePointer#41978@Offset(745.0, 566.0), RenderAnimatedOpacity#7457b@Offset(745.0, 566.0), RenderAnimatedOpacity#2c379@Offset(745.0, 566.0), _RenderColoredBox#c723c@Offset(745.0, 566.0), RenderAnimatedOpacity#95770@Offset(745.0, 566.0), RenderIgnorePointer#3f718@Offset(745.0, 566.0), RenderAnimatedOpacity#a3b7b@Offset(745.0, 566.0), RenderRepaintBoundary#378dd@Offset(745.0, 566.0), RenderSemanticsAnnotations#0d65b@Offset(745.0, 566.0), RenderOffstage#31afc@Offset(745.0, 566.0), RenderSemanticsAnnotations#0cd99@Offset(745.0, 566.0), _RenderTheater#706a2@Offset(745.0, 566.0), RenderAbsorbPointer#bfe2a@Offset(745.0, 566.0), RenderPointerListener#85592@Offset(745.0, 566.0), RenderSemanticsAnnotations#e257e@Offset(745.0, 566.0), RenderCustomPaint#2a4e0@Offset(745.0, 566.0), RenderSemanticsAnnotations#4db29@Offset(745.0, 566.0), RenderSemanticsAnnotations#d6500@Offset(745.0, 566.0), RenderSemanticsAnnotations#4c756@Offset(745.0, 566.0), RenderTapRegionSurface#2ea52@Offset(745.0, 566.0), RenderSemanticsAnnotations#13f89@Offset(745.0, 566.0), RenderSemanticsAnnotations#53ee1@Offset(745.0, 566.0), HitTestEntry<HitTestTarget>#cbe18(_ReusableRenderView#27419), HitTestEntry<HitTestTarget>#94bd7(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2165:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1947:12)
+#2      WidgetController.tap (package:flutter_test/src/controller.dart:1080:7)
+#3      main.<anonymous closure> (file:///home/runner/work/songloft-player/songloft-player/test/shared/utils/responsive_snackbar_test.dart:29:18)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1952:5)
+<asynchronous suspension>
+#6      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "tap()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: true
+  Actual: <null>
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///home/runner/work/songloft-player/songloft-player/test/shared/utils/responsive_snackbar_test.dart:32:5)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1952:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///home/runner/work/songloft-player/songloft-player/test/shared/utils/responsive_snackbar_test.dart line 32
+The test description was:
+  点击撤销时回调 true
+════════════════════════════════════════════════════════════════════════════════════════════════════
+Test failed. See exception logs above.
+The test description was: 点击撤销时回调 true
+
+::endgroup::
+::group::❌ 提示自然关闭时回调 false (failed)
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: false
+  Actual: <null>
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///home/runner/work/songloft-player/songloft-player/test/shared/utils/responsive_snackbar_test.dart:62:5)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1952:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///home/runner/work/songloft-player/songloft-player/test/shared/utils/responsive_snackbar_test.dart line 62
+The test description was:
+  提示自然关闭时回调 false
+════════════════════════════════════════════════════════════════════════════════════════════════════
+Test failed. See exception logs above.
+The test description was: 提示自然关闭时回调 false
+
+::endgroup::
+
+::error::0 tests passed, 2 failed.
+===== ANALYZE =====
