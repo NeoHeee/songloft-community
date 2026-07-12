@@ -1,0 +1,57 @@
+name: Fifth Round Format Check Diagnostic
+
+on:
+  pull_request:
+    branches:
+      - mobile-fourth-round
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - '.github/workflows/fifth-round-format-check-diagnostic.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  format-check-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Capture exact formatter results
+        shell: bash
+        run: |
+          base_sha="${{ github.event.pull_request.base.sha }}"
+          head_sha="${{ github.event.pull_request.head.sha }}"
+          report=/tmp/fifth-round-format-report.txt
+          echo "base=$base_sha" > "$report"
+          echo "head=$head_sha" >> "$report"
+          mapfile -t dart_files < <(
+            git diff --name-only --diff-filter=ACMRT "$base_sha" "$head_sha" -- \
+              | grep -E '^(lib|test)/.*\.dart$' \
+              || true
+          )
+          printf 'files=%s\n' "${#dart_files[@]}" >> "$report"
+          for file in "${dart_files[@]}"; do
+            echo "FILE $file" >> "$report"
+            set +e
+            dart format --output=none --set-exit-if-changed "$file" >> "$report" 2>&1
+            rc=$?
+            set -e
+            echo "RC $rc" >> "$report"
+          done
+          cat "$report"
+      - name: Upload formatter report
+        uses: actions/upload-artifact@v4
+        with:
+          name: fifth-round-format-report
+          path: /tmp/fifth-round-format-report.txt
+          if-no-files-found: error
+          retention-days: 3
