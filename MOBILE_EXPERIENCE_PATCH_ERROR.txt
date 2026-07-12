@@ -8,4 +8,4 @@ Analyzing songloft-player...
    info • 'onReorder' is deprecated and shouldn't be used. Use the onReorderItem callback instead. The onReorderItem callback adjusts the newIndex parameter for a removed item at the oldIndex. This feature was deprecated after v3.41.0-0.0.pre. Try replacing the use of the deprecated member with the replacement • lib/features/settings/presentation/tab_config_page.dart:229:7 • deprecated_member_use
    info • Use 'const' for final variables initialized to a constant value. Try replacing 'final' with 'const' • lib/shared/widgets/loading_indicator.dart:191:15 • prefer_const_declarations
 
-7 issues found. (ran in 11.9s)
+7 issues found. (ran in 14.7s)
