@@ -8,7 +8,7 @@ import '../../../../shared/widgets/cover_image.dart';
 import '../../../dlna/presentation/providers/dlna_provider.dart';
 import '../providers/player_provider.dart';
 import '../queue_page.dart';
-import 'mobile_player.dart';
+import 'mobile_player_gesture_host.dart';
 import 'play_controls.dart';
 import 'progress_bar.dart';
 
@@ -85,7 +85,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
     final openPlayer =
         widget.onTap ??
         () {
-          MobilePlayer.show(context);
+          MobilePlayerGestureHost.show(context);
         };
     final height = _isCompact ? 54.0 : 76.0;
     final coverSize = _isCompact ? 38.0 : 54.0;
