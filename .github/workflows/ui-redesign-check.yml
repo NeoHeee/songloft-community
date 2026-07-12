@@ -55,36 +55,6 @@ jobs:
           cache: true
       - name: Install dependencies
         run: flutter pub get
-      - name: Check color extraction format
-        continue-on-error: true
-        run: dart format --output=none --set-exit-if-changed lib/core/utils/color_extraction.dart
-      - name: Check cover cache format
-        continue-on-error: true
-        run: dart format --output=none --set-exit-if-changed lib/core/utils/cover_cache.dart
-      - name: Check queue page format
-        continue-on-error: true
-        run: dart format --output=none --set-exit-if-changed lib/features/player/presentation/queue_page.dart
-      - name: Check mini player format
-        continue-on-error: true
-        run: dart format --output=none --set-exit-if-changed lib/features/player/presentation/widgets/mini_player.dart
-      - name: Check mobile player format
-        continue-on-error: true
-        run: dart format --output=none --set-exit-if-changed lib/features/player/presentation/widgets/mobile_player.dart
-      - name: Check playlist card format
-        continue-on-error: true
-        run: dart format --output=none --set-exit-if-changed lib/features/playlist/presentation/widgets/playlist_card.dart
-      - name: Check playlist list item format
-        continue-on-error: true
-        run: dart format --output=none --set-exit-if-changed lib/features/playlist/presentation/widgets/playlist_list_item.dart
-      - name: Check cover image format
-        continue-on-error: true
-        run: dart format --output=none --set-exit-if-changed lib/shared/widgets/cover_image.dart
-      - name: Check cover cache test format
-        continue-on-error: true
-        run: dart format --output=none --set-exit-if-changed test/core/utils/cover_cache_test.dart
-      - name: Check cover image test format
-        continue-on-error: true
-        run: dart format --output=none --set-exit-if-changed test/shared/widgets/cover_image_test.dart
       - name: Verify changed Dart formatting
         shell: bash
         run: |
@@ -107,8 +77,14 @@ jobs:
             exit 0
           fi
 
-          printf 'Checking %s\n' "${dart_files[@]}"
-          dart format --output=none --set-exit-if-changed "${dart_files[@]}"
+          failed=0
+          for file in "${dart_files[@]}"; do
+            echo "Checking $file"
+            if ! dart format --output=none --set-exit-if-changed "$file"; then
+              failed=1
+            fi
+          done
+          exit "$failed"
       - name: Run theme system tests
         run: flutter test test/core/theme
       - name: Run cover cache utility tests
