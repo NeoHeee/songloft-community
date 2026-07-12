@@ -27,9 +27,7 @@ class ServerConnectionBanner extends ConsumerWidget {
                 state: state,
                 onRetry:
                     () =>
-                        ref
-                            .read(serverConnectionProvider.notifier)
-                            .retryNow(),
+                        ref.read(serverConnectionProvider.notifier).retryNow(),
               )
               : const SizedBox.shrink(),
     );
@@ -40,10 +38,7 @@ class _ConnectionBannerContent extends StatelessWidget {
   final ServerConnectionState state;
   final VoidCallback onRetry;
 
-  const _ConnectionBannerContent({
-    required this.state,
-    required this.onRetry,
-  });
+  const _ConnectionBannerContent({required this.state, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +50,9 @@ class _ConnectionBannerContent extends StatelessWidget {
     final background =
         restored ? colorScheme.primaryContainer : colorScheme.errorContainer;
     final foreground =
-        restored ? colorScheme.onPrimaryContainer : colorScheme.onErrorContainer;
+        restored
+            ? colorScheme.onPrimaryContainer
+            : colorScheme.onErrorContainer;
     final title =
         restored
             ? '连接已恢复'
