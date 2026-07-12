@@ -1,0 +1,355 @@
+name: Publish Songloft Community v1.0.0-community.2
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/publish-community-v1.0.0-community.2.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: publish-community-v1.0.0-community.2
+  cancel-in-progress: false
+
+env:
+  TAG: v1.0.0-community.2
+  VERSION: 1.0.0-community.2
+  TARGET_COMMIT: 54c5119e02415633d59b2c057d3dde26c9d873a8
+  SOURCE_RUN_ID: '29198814363'
+  SOURCE_ARTIFACT_NAME: Songloft-Community-Android-fixed-signed
+  STATUS_PR_NUMBER: '24'
+  ARM64_APK: Songloft-Community-Android-arm64-v8a-1.0.0-community.2.apk
+  ARMV7_APK: Songloft-Community-Android-armeabi-v7a-1.0.0-community.2.apk
+  X64_APK: Songloft-Community-Android-x86_64-1.0.0-community.2.apk
+  ALL_ARCH_ZIP: Songloft-Community-Android-all-architectures-1.0.0-community.2.zip
+  EXPECTED_ARM64_SHA256: f30d665742438de30a22c2dfaf75ea9e67ef9a6f66310bf2450748614ddbfc94
+  EXPECTED_ARMV7_SHA256: 7b27eed50d9818a6b2adaa6e9681cbf5e9d90dcf2b72a34492c9e1e2c332d0da
+  EXPECTED_X64_SHA256: 85fb38316f9153be896c65610a9501cff4d67ed6c1d94224aa69212d6bed6bfd
+  EXPECTED_CERT_SHA256: CA:A0:0F:91:D7:3B:12:AD:E2:5E:8A:43:20:18:1E:B5:20:A6:65:49:FD:08:9A:56:E4:69:4A:19:13:E9:68:F1
+
+jobs:
+  publish:
+    name: Verify artifact and publish formal release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Record release start
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const marker = '<!-- community-release-status -->';
+            const issue_number = Number(process.env.STATUS_PR_NUMBER);
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = `${marker}
+            ## Songloft Community 正式 Release
+
+            - 状态：⏳ 正在发布
+            - 版本：\`${process.env.TAG}\`
+            - 目标提交：\`${process.env.TARGET_COMMIT}\`
+            - 来源构建：Run \`${process.env.SOURCE_RUN_ID}\`
+            - 运行详情：[打开 GitHub Actions](${runUrl})
+
+            启动时间：${new Date().toISOString()}`.replace(/^            /gm, '');
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner, repo: context.repo.repo, issue_number, per_page: 100,
+            });
+            const existing = comments.find(c => c.user?.type === 'Bot' && c.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: existing.id, body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo, issue_number, body,
+              });
+            }
+
+      - name: Download previously verified signed artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p source
+          gh run download "$SOURCE_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name "$SOURCE_ARTIFACT_NAME" \
+            --dir source
+          find source -maxdepth 2 -type f -print | sort
+
+      - name: Verify APK identity and fixed signing reports
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          verify_sha256() {
+            local expected="$1"
+            local file="$2"
+            test -f "$file" || { echo "::error::Missing file: $file"; exit 1; }
+            local actual
+            actual=$(sha256sum "$file" | awk '{print $1}')
+            if [[ "$actual" != "$expected" ]]; then
+              echo "::error::SHA-256 mismatch for $(basename "$file"). Expected $expected, got $actual"
+              exit 1
+            fi
+          }
+
+          verify_sha256 "$EXPECTED_ARM64_SHA256" "source/$ARM64_APK"
+          verify_sha256 "$EXPECTED_ARMV7_SHA256" "source/$ARMV7_APK"
+          verify_sha256 "$EXPECTED_X64_SHA256" "source/$X64_APK"
+
+          test -f source/SIGNING-CERTIFICATE.txt || {
+            echo '::error::Missing SIGNING-CERTIFICATE.txt'; exit 1;
+          }
+          compact_expected=$(printf '%s' "$EXPECTED_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')
+          if ! tr -d ':[:space:]' < source/SIGNING-CERTIFICATE.txt \
+              | tr '[:upper:]' '[:lower:]' \
+              | grep -q "$compact_expected"; then
+            echo '::error::Expected fixed signing certificate was not found in the verified artifact report.'
+            exit 1
+          fi
+
+      - name: Prepare release assets and documentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets bundle
+
+          cp "source/$ARM64_APK" "release-assets/$ARM64_APK"
+          cp "source/$ARM64_APK" "bundle/$ARM64_APK"
+          cp "source/$ARMV7_APK" "bundle/$ARMV7_APK"
+          cp "source/$X64_APK" "bundle/$X64_APK"
+
+          cat > release-assets/INSTALLATION.md <<'EOF'
+          # Songloft Community v1.0.0-community.2 安装说明
+
+          ## 推荐下载
+
+          绝大多数近年 Android 手机、平板和电视设备，请直接安装：
+
+          `Songloft-Community-Android-arm64-v8a-1.0.0-community.2.apk`
+
+          ## 三架构 ZIP
+
+          `Songloft-Community-Android-all-architectures-1.0.0-community.2.zip` 内含：
+
+          - `arm64-v8a`：绝大多数现代 Android 手机、平板和电视设备；
+          - `armeabi-v7a`：较老的 32 位 ARM Android 设备；
+          - `x86_64`：Android x86_64 设备或模拟器。
+
+          同一台设备只需安装其中一个 APK，不要同时安装多个架构版本。
+
+          ## 覆盖升级与程序包冲突
+
+          - 已安装固定正式签名版 Songloft Community 的设备，可直接覆盖安装升级。
+          - 若系统提示“应用未安装”“程序包冲突”或签名不一致，说明设备上可能仍是早期临时/调试签名版本。请先备份服务器地址及必要设置，卸载旧版后再安装本版本。
+          - 从本版本开始，只要继续使用同一固定签名，后续版本可直接覆盖升级。
+
+          ## 固定签名信息
+
+          - Android 包名：`com.neo.songloft.community`
+          - 签名证书 SHA-256：`CA:A0:0F:91:D7:3B:12:AD:E2:5E:8A:43:20:18:1E:B5:20:A6:65:49:FD:08:9A:56:E4:69:4A:19:13:E9:68:F1`
+
+          ## 校验下载文件
+
+          Windows PowerShell：
+
+          ```powershell
+          Get-FileHash .\文件名 -Algorithm SHA256
+          ```
+
+          macOS / Linux：
+
+          ```bash
+          shasum -a 256 文件名
+          ```
+
+          将结果与 Release 附件中的 `SHA256SUMS.txt` 对照；完全一致后再安装。
+          EOF
+          sed -i 's/^          //' release-assets/INSTALLATION.md
+
+          cp release-assets/INSTALLATION.md bundle/INSTALLATION.md
+          (
+            cd bundle
+            sha256sum "$ARM64_APK" "$ARMV7_APK" "$X64_APK" > APK-SHA256SUMS.txt
+            zip -9 -r "../release-assets/$ALL_ARCH_ZIP" \
+              "$ARM64_APK" "$ARMV7_APK" "$X64_APK" \
+              APK-SHA256SUMS.txt INSTALLATION.md
+          )
+
+          {
+            sha256sum "bundle/$ARM64_APK" "bundle/$ARMV7_APK" "bundle/$X64_APK" \
+              | sed 's#  bundle/#  #'
+            sha256sum "release-assets/$ALL_ARCH_ZIP" \
+              | sed 's#  release-assets/#  #'
+          } > release-assets/SHA256SUMS.txt
+
+          ZIP_SHA256=$(sha256sum "release-assets/$ALL_ARCH_ZIP" | awk '{print $1}')
+          cat > release-notes.md <<EOF
+          ## Songloft Community v1.0.0-community.2
+
+          这是 Songloft Community 的正式 Android 社区版发布，基于已完成固定签名验证的 CI 构建产物。
+
+          ### 本版说明
+
+          - 桌面图标名称：**Songloft+**
+          - 应用内部名称：**Songloft Community**
+          - Android 媒体来源名称：**Songloft**
+          - Android 包名：\`com.neo.songloft.community\`
+          - 固定签名证书 SHA-256：\`$EXPECTED_CERT_SHA256\`
+
+          ### 下载选择
+
+          - **普通 Android 手机、平板、电视：** 下载 \`$ARM64_APK\`
+          - **其他架构或需要完整包：** 下载 \`$ALL_ARCH_ZIP\`
+          - 安装及覆盖升级方法见 \`INSTALLATION.md\`
+          - 文件完整性校验见 \`SHA256SUMS.txt\`
+
+          ### SHA-256
+
+          - \`$ARM64_APK\`：\`$EXPECTED_ARM64_SHA256\`
+          - \`$ARMV7_APK\`：\`$EXPECTED_ARMV7_SHA256\`
+          - \`$X64_APK\`：\`$EXPECTED_X64_SHA256\`
+          - \`$ALL_ARCH_ZIP\`：\`$ZIP_SHA256\`
+
+          ### 升级提示
+
+          早期临时或调试签名 APK 可能无法直接覆盖安装。如遇“程序包冲突”，请备份必要设置并卸载旧版一次；安装本固定签名版本后，后续正式版本即可直接覆盖升级。
+          EOF
+          sed -i 's/^          //' release-notes.md
+
+          echo 'Prepared release assets:'
+          ls -lh release-assets
+          echo 'Release checksums:'
+          cat release-assets/SHA256SUMS.txt
+
+      - name: Create or resume formal GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "Songloft Community $TAG" \
+              --notes-file release-notes.md
+          else
+            gh release create "$TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$TARGET_COMMIT" \
+              --title "Songloft Community $TAG" \
+              --notes-file release-notes.md \
+              --draft
+          fi
+
+          gh release upload "$TAG" \
+            "release-assets/$ARM64_APK" \
+            "release-assets/$ALL_ARCH_ZIP" \
+            release-assets/SHA256SUMS.txt \
+            release-assets/INSTALLATION.md \
+            --repo "$GITHUB_REPOSITORY" \
+            --clobber
+
+          gh release edit "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Songloft Community $TAG" \
+            --notes-file release-notes.md \
+            --draft=false \
+            --prerelease=false \
+            --latest
+
+          release_url=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json url --jq .url)
+          echo "RELEASE_URL=$release_url" >> "$GITHUB_ENV"
+
+      - name: Record release success
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- community-release-status -->';
+            const issue_number = Number(process.env.STATUS_PR_NUMBER);
+            const sums = fs.readFileSync('release-assets/SHA256SUMS.txt', 'utf8').trim();
+            const body = `${marker}
+            ## Songloft Community 正式 Release
+
+            - 状态：✅ 已正式发布
+            - 版本：\`${process.env.TAG}\`
+            - 目标提交：\`${process.env.TARGET_COMMIT}\`
+            - Release：[打开发布页面](${process.env.RELEASE_URL})
+            - 正式版：是
+            - 预发布版：否
+
+            ### 已上传附件
+
+            - \`${process.env.ARM64_APK}\`
+            - \`${process.env.ALL_ARCH_ZIP}\`
+            - \`SHA256SUMS.txt\`
+            - \`INSTALLATION.md\`
+
+            ### SHA-256
+
+            \`\`\`text
+            ${sums}
+            \`\`\`
+
+            完成时间：${new Date().toISOString()}`.replace(/^            /gm, '');
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner, repo: context.repo.repo, issue_number, per_page: 100,
+            });
+            const existing = comments.find(c => c.user?.type === 'Bot' && c.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: existing.id, body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo, issue_number, body,
+              });
+            }
+
+      - name: Record release failure
+        if: ${{ failure() }}
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const marker = '<!-- community-release-status -->';
+            const issue_number = Number(process.env.STATUS_PR_NUMBER);
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = `${marker}
+            ## Songloft Community 正式 Release
+
+            - 状态：❌ 发布失败
+            - 版本：\`${process.env.TAG}\`
+            - 目标提交：\`${process.env.TARGET_COMMIT}\`
+            - 运行详情：[查看失败步骤和日志](${runUrl})
+
+            更新时间：${new Date().toISOString()}`.replace(/^            /gm, '');
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner, repo: context.repo.repo, issue_number, per_page: 100,
+            });
+            const existing = comments.find(c => c.user?.type === 'Bot' && c.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: existing.id, body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo, issue_number, body,
+              });
+            }
