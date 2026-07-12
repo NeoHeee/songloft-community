@@ -70,7 +70,7 @@ jobs:
           fi
 
           mapfile -t dart_files < <(
-            git diff --name-only --diff-filter=ACMRT "$base_sha"..."$head_sha" -- \
+            git diff --name-only --diff-filter=ACMRT "$base_sha" "$head_sha" -- \
               | grep -E '^(lib|test)/.*\.dart$' \
               || true
           )
