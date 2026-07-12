@@ -34,7 +34,9 @@ class ServerEntry {
         !uri.hasScheme ||
         uri.host.isEmpty ||
         (uri.scheme != 'http' && uri.scheme != 'https')) {
-      throw const FormatException('请输入以 http:// 或 https:// 开头的服务器根地址');
+      throw const FormatException(
+        '请输入以 http:// 或 https:// 开头的服务器根地址',
+      );
     }
     return normalized;
   }
