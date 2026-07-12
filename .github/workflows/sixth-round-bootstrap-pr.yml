@@ -1,0 +1,69 @@
+name: Sixth Round Accessibility Bootstrap PR
+
+on:
+  pull_request:
+    branches:
+      - mobile-fifth-round
+    paths:
+      - '.github/workflows/sixth-round-bootstrap-pr.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Extract and apply patch script
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+
+          lines = Path('.github/workflows/sixth-round-bootstrap.yml').read_text().splitlines()
+          start = next(i for i, line in enumerate(lines) if "python <<'PY'" in line)
+          end = next(
+              i
+              for i, line in enumerate(lines[start + 1 :], start + 1)
+              if line.strip() == 'PY'
+          )
+          script_lines = []
+          for line in lines[start + 1 : end]:
+              script_lines.append(line[10:] if line.startswith('          ') else line)
+          Path('/tmp/sixth_round_patch.py').write_text('\n'.join(script_lines) + '\n')
+          PY
+          python /tmp/sixth_round_patch.py
+      - name: Format changed Dart files
+        run: >-
+          dart format
+          lib/core/theme/accessibility.dart
+          lib/core/theme/app_theme.dart
+          lib/main.dart
+          lib/features/player/presentation/widgets/mini_player.dart
+          lib/features/player/presentation/widgets/mobile_player.dart
+          lib/features/player/presentation/widgets/mobile_player_gesture_host.dart
+          lib/features/player/presentation/widgets/vinyl_ring.dart
+          test/core/theme/app_theme_accessibility_test.dart
+      - name: Commit sixth-round implementation
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/sixth-round-bootstrap.yml
+          git rm .github/workflows/sixth-round-bootstrap-pr.yml
+          git add lib test .github/workflows/ui-redesign-check.yml
+          git commit -m 'feat(accessibility): start sixth-round system adaptation polish'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
