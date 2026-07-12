@@ -29,7 +29,7 @@
         android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
-            android:label="@string/app_name"
+            android:label="@string/launcher_name"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""
@@ -60,10 +60,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <!-- audio_service 服务：系统媒体通知和锁屏播放器使用社区版名称 -->
+        <!-- audio_service 服务：系统媒体通知和锁屏播放器使用精简名称 -->
         <service
             android:name="com.ryanheise.audioservice.AudioService"
-            android:label="@string/app_name"
+            android:label="@string/media_source_name"
             android:foregroundServiceType="mediaPlayback"
             android:exported="true">
             <intent-filter>
