@@ -139,8 +139,10 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
       );
     }
 
-    final bottomPlayer =
-        (isPluginTab || isSettings) ? null : _buildBottomPlayer(context);
+    final bottomPlayer = _buildBottomPlayer(
+      context,
+      compact: isPluginTab || isSettings,
+    );
     final playlistDrawer = showPlaylistDrawer ? const PlaylistDrawer() : null;
 
     void onDestinationSelected(int index) {
@@ -263,8 +265,16 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
     );
   }
 
-  Widget _buildBottomPlayer(BuildContext context) {
+  Widget _buildBottomPlayer(
+    BuildContext context, {
+    required bool compact,
+  }) {
     final screenType = context.screenType;
+
+    if (compact && screenType != ScreenType.tv) {
+      return const MiniPlayer(density: MiniPlayerDensity.compact);
+    }
+
     switch (screenType) {
       case ScreenType.mobile:
         return const MiniPlayer();
