@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:songloft_flutter/config/constants.dart';
 import 'package:songloft_flutter/features/library/presentation/widgets/song_list_tile.dart';
@@ -31,15 +32,17 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SongListTile(
-            song: song,
-            index: 0,
-            isSelectionMode: isSelectionMode,
-            isSelected: isSelected,
-            onSelect: onSelect,
-            onLongPress: onLongPress,
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: SongListTile(
+              song: song,
+              index: 0,
+              isSelectionMode: isSelectionMode,
+              isSelected: isSelected,
+              onSelect: onSelect,
+              onLongPress: onLongPress,
+            ),
           ),
         ),
       ),
@@ -47,11 +50,7 @@ void main() {
   }
 
   testWidgets('手机多选模式保留封面并显示选中标记', (tester) async {
-    await pumpMobileTile(
-      tester,
-      isSelectionMode: true,
-      isSelected: true,
-    );
+    await pumpMobileTile(tester, isSelectionMode: true, isSelected: true);
 
     expect(find.byType(CoverImage), findsOneWidget);
     expect(find.byIcon(Icons.check_rounded), findsOneWidget);
