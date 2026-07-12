@@ -1,0 +1,64 @@
+name: Apply Mobile Experience Completion
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/mobile-experience-patch-trigger.yml'
+      - '.github/workflows/mobile-experience-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Extract and apply embedded patch
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import textwrap
+
+          workflow = Path('.github/workflows/mobile-experience-patch.yml').read_text(encoding='utf-8')
+          start_marker = "          python3 <<'PY'\n"
+          end_marker = "\n          PY\n"
+          script = workflow.split(start_marker, 1)[1].split(end_marker, 1)[0]
+          exec(compile(textwrap.dedent(script), 'mobile-experience-patch', 'exec'))
+          PY
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Format changed Dart files
+        shell: bash
+        run: |
+          mapfile -t files < <(git diff --name-only --diff-filter=ACM -- 'lib/**/*.dart' 'test/**/*.dart')
+          if (( ${#files[@]} > 0 )); then
+            dart format "${files[@]}"
+          fi
+      - name: Run focused tests
+        run: |
+          flutter test test/features/library
+          flutter test test/features/player/presentation/widgets
+          flutter test test/shared/utils
+      - name: Analyze
+        run: flutter analyze
+      - name: Commit implementation
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib test android .github/workflows/ui-redesign-check.yml
+          git commit -m 'feat(mobile): complete second-stage experience polish'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
