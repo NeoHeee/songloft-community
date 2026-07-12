@@ -52,9 +52,10 @@ class PlaylistCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: highlighted
-                  ? colorScheme.primary
-                  : colorScheme.outlineVariant.withValues(alpha: 0.24),
+              color:
+                  highlighted
+                      ? colorScheme.primary
+                      : colorScheme.outlineVariant.withValues(alpha: 0.24),
               width: highlighted ? 2 : 1,
             ),
           ),
@@ -152,9 +153,10 @@ class PlaylistCard extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.titleSmall?.copyWith(
-                              color: isCurrentPlaylist
-                                  ? colorScheme.primary
-                                  : colorScheme.onSurface,
+                              color:
+                                  isCurrentPlaylist
+                                      ? colorScheme.primary
+                                      : colorScheme.onSurface,
                               fontWeight: FontWeight.w700,
                               letterSpacing: -0.1,
                             ),
@@ -198,10 +200,11 @@ class PlaylistCard extends StatelessWidget {
                             Wrap(
                               spacing: 5,
                               runSpacing: 4,
-                              children: playlist.labels
-                                  .take(2)
-                                  .map((label) => _LabelChip(label: label))
-                                  .toList(),
+                              children:
+                                  playlist.labels
+                                      .take(2)
+                                      .map((label) => _LabelChip(label: label))
+                                      .toList(),
                             ),
                           ],
                         ],
@@ -228,9 +231,10 @@ class PlaylistCard extends StatelessWidget {
           coverUrl: playlist.coverImageUrl,
           size: size,
           borderRadius: 0,
-          placeholderIcon: playlist.type == 'radio'
-              ? Icons.radio_rounded
-              : Icons.graphic_eq_rounded,
+          placeholderIcon:
+              playlist.type == 'radio'
+                  ? Icons.radio_rounded
+                  : Icons.graphic_eq_rounded,
         );
       },
     );
@@ -265,42 +269,46 @@ class PlaylistCard extends StatelessWidget {
               break;
           }
         },
-        itemBuilder: (context) => [
-          if (onEdit != null)
-            const PopupMenuItem(
-              value: 'edit',
-              child: ListTile(
-                leading: Icon(Icons.edit_rounded),
-                title: Text('编辑'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-          if (onToggleVisibility != null && !playlist.isBuiltIn)
-            PopupMenuItem(
-              value: 'toggle_visibility',
-              child: ListTile(
-                leading: Icon(
-                  playlist.isHidden
-                      ? Icons.visibility_rounded
-                      : Icons.visibility_off_rounded,
+        itemBuilder:
+            (context) => [
+              if (onEdit != null)
+                const PopupMenuItem(
+                  value: 'edit',
+                  child: ListTile(
+                    leading: Icon(Icons.edit_rounded),
+                    title: Text('编辑'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
                 ),
-                title: Text(playlist.isHidden ? '取消隐藏' : '隐藏歌单'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-          if (onDelete != null && !playlist.isBuiltIn)
-            PopupMenuItem(
-              value: 'delete',
-              child: ListTile(
-                leading: Icon(
-                  Icons.delete_outline_rounded,
-                  color: colorScheme.error,
+              if (onToggleVisibility != null && !playlist.isBuiltIn)
+                PopupMenuItem(
+                  value: 'toggle_visibility',
+                  child: ListTile(
+                    leading: Icon(
+                      playlist.isHidden
+                          ? Icons.visibility_rounded
+                          : Icons.visibility_off_rounded,
+                    ),
+                    title: Text(playlist.isHidden ? '取消隐藏' : '隐藏歌单'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
                 ),
-                title: Text('删除', style: TextStyle(color: colorScheme.error)),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-        ],
+              if (onDelete != null && !playlist.isBuiltIn)
+                PopupMenuItem(
+                  value: 'delete',
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.delete_outline_rounded,
+                      color: colorScheme.error,
+                    ),
+                    title: Text(
+                      '删除',
+                      style: TextStyle(color: colorScheme.error),
+                    ),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+            ],
       ),
     );
   }
@@ -365,9 +373,8 @@ class _SelectionBadge extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Material(
-      color: selected
-          ? colorScheme.primary
-          : Colors.black.withValues(alpha: 0.48),
+      color:
+          selected ? colorScheme.primary : Colors.black.withValues(alpha: 0.48),
       shape: const CircleBorder(),
       child: InkWell(
         onTap: onTap,

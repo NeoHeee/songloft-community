@@ -51,16 +51,18 @@ class AppTheme {
         screenType == ScreenType.desktop || screenType == ScreenType.tv;
     final normalizedTextScale = textScaleFactor.clamp(1.0, 2.0).toDouble();
     final textScaleDelta = normalizedTextScale - 1.0;
-    final buttonHeight = isTv
-        ? 56.0 + textScaleDelta * 8
-        : isDesktopOrTv
-        ? 44.0 + textScaleDelta * 6
-        : 48.0 + textScaleDelta * 8;
-    final iconButtonExtent = isTv
-        ? 56.0 + textScaleDelta * 8
-        : isDesktopOrTv
-        ? 44.0 + textScaleDelta * 6
-        : 48.0 + textScaleDelta * 8;
+    final buttonHeight =
+        isTv
+            ? 56.0 + textScaleDelta * 8
+            : isDesktopOrTv
+            ? 44.0 + textScaleDelta * 6
+            : 48.0 + textScaleDelta * 8;
+    final iconButtonExtent =
+        isTv
+            ? 56.0 + textScaleDelta * 8
+            : isDesktopOrTv
+            ? 44.0 + textScaleDelta * 6
+            : 48.0 + textScaleDelta * 8;
     final navigationBarHeight = 72.0 + textScaleDelta * 24;
     final toolbarHeight =
         (isTv ? 72.0 : 56.0) + textScaleDelta * (isTv ? 16 : 12);
@@ -88,18 +90,22 @@ class AppTheme {
       scaffoldBackgroundColor: background,
       canvasColor: background,
       materialTapTargetSize: MaterialTapTargetSize.padded,
-      pageTransitionsTheme: reduceMotion
-          ? const PageTransitionsTheme(
-              builders: {
-                TargetPlatform.android: _NoTransitionsPageTransitionsBuilder(),
-                TargetPlatform.fuchsia: _NoTransitionsPageTransitionsBuilder(),
-                TargetPlatform.iOS: _NoTransitionsPageTransitionsBuilder(),
-                TargetPlatform.linux: _NoTransitionsPageTransitionsBuilder(),
-                TargetPlatform.macOS: _NoTransitionsPageTransitionsBuilder(),
-                TargetPlatform.windows: _NoTransitionsPageTransitionsBuilder(),
-              },
-            )
-          : const PageTransitionsTheme(),
+      pageTransitionsTheme:
+          reduceMotion
+              ? const PageTransitionsTheme(
+                builders: {
+                  TargetPlatform.android:
+                      _NoTransitionsPageTransitionsBuilder(),
+                  TargetPlatform.fuchsia:
+                      _NoTransitionsPageTransitionsBuilder(),
+                  TargetPlatform.iOS: _NoTransitionsPageTransitionsBuilder(),
+                  TargetPlatform.linux: _NoTransitionsPageTransitionsBuilder(),
+                  TargetPlatform.macOS: _NoTransitionsPageTransitionsBuilder(),
+                  TargetPlatform.windows:
+                      _NoTransitionsPageTransitionsBuilder(),
+                },
+              )
+              : const PageTransitionsTheme(),
       splashFactory: InkSparkle.splashFactory,
       fontFamilyFallback: const ['NotoSansSC', 'sans-serif'],
       extensions: [
@@ -281,9 +287,8 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: isDark
-            ? const Color(0xFF262A37)
-            : const Color(0xFF252735),
+        backgroundColor:
+            isDark ? const Color(0xFF262A37) : const Color(0xFF252735),
         contentTextStyle: const TextStyle(color: Colors.white),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(
@@ -292,11 +297,12 @@ class AppTheme {
                 : controlRadius,
           ),
         ),
-        insetPadding: isDesktopOrTv
-            ? (isTv
-                  ? const EdgeInsets.symmetric(horizontal: 48, vertical: 24)
-                  : const EdgeInsets.symmetric(horizontal: 24, vertical: 12))
-            : null,
+        insetPadding:
+            isDesktopOrTv
+                ? (isTv
+                    ? const EdgeInsets.symmetric(horizontal: 48, vertical: 24)
+                    : const EdgeInsets.symmetric(horizontal: 24, vertical: 12))
+                : null,
         width: isDesktopOrTv ? (isTv ? 600 : 480) : null,
       ),
       sliderTheme: SliderThemeData(

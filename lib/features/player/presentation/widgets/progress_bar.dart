@@ -99,11 +99,13 @@ class _PlayerProgressBarState extends State<PlayerProgressBar> {
     final theme = Theme.of(context);
     final currentValue = (_isDragging || _isSeeking) ? _dragValue : _progress;
 
-    final displayPosition = (_isDragging || _isSeeking)
-        ? Duration(
-            milliseconds: (_dragValue * widget.duration.inMilliseconds).round(),
-          )
-        : widget.position;
+    final displayPosition =
+        (_isDragging || _isSeeking)
+            ? Duration(
+              milliseconds:
+                  (_dragValue * widget.duration.inMilliseconds).round(),
+            )
+            : widget.position;
 
     return Row(
       children: [
@@ -144,8 +146,8 @@ class _PlayerProgressBarState extends State<PlayerProgressBar> {
               onChangeEnd: (value) => _onDragEnd(),
               semanticFormatterCallback: (value) {
                 final pos = Duration(
-                  milliseconds: (value * widget.duration.inMilliseconds)
-                      .round(),
+                  milliseconds:
+                      (value * widget.duration.inMilliseconds).round(),
                 );
                 return '${_formatDuration(pos)} / ${_formatDuration(widget.duration)}';
               },

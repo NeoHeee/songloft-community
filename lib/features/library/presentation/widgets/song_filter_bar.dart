@@ -174,27 +174,29 @@ class SongFilterBar extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: state.isSelectingAll
-                            ? null
-                            : () {
-                                HapticFeedback.selectionClick();
-                                ref
-                                    .read(songsListProvider.notifier)
-                                    .toggleSelectAll();
-                              },
-                        icon: state.isSelectingAll
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
+                        onPressed:
+                            state.isSelectingAll
+                                ? null
+                                : () {
+                                  HapticFeedback.selectionClick();
+                                  ref
+                                      .read(songsListProvider.notifier)
+                                      .toggleSelectAll();
+                                },
+                        icon:
+                            state.isSelectingAll
+                                ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                                : Icon(
+                                  state.isAllSelected
+                                      ? Icons.deselect_rounded
+                                      : Icons.select_all_rounded,
                                 ),
-                              )
-                            : Icon(
-                                state.isAllSelected
-                                    ? Icons.deselect_rounded
-                                    : Icons.select_all_rounded,
-                              ),
                         label: Text(state.isAllSelected ? '取消全选' : '全选'),
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size(0, 48),
@@ -204,15 +206,16 @@ class SongFilterBar extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: FilledButton.tonalIcon(
-                        onPressed: hasSelection
-                            ? () {
-                                HapticFeedback.lightImpact();
-                                AddToPlaylistModal.show(
-                                  context,
-                                  songIds: state.selectedSongIds.toList(),
-                                );
-                              }
-                            : null,
+                        onPressed:
+                            hasSelection
+                                ? () {
+                                  HapticFeedback.lightImpact();
+                                  AddToPlaylistModal.show(
+                                    context,
+                                    songIds: state.selectedSongIds.toList(),
+                                  );
+                                }
+                                : null,
                         icon: const Icon(Icons.playlist_add_rounded),
                         label: const Text('加入歌单'),
                         style: FilledButton.styleFrom(
@@ -223,9 +226,10 @@ class SongFilterBar extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: FilledButton.icon(
-                        onPressed: hasSelection
-                            ? () => _showBatchDeleteDialog(context, ref)
-                            : null,
+                        onPressed:
+                            hasSelection
+                                ? () => _showBatchDeleteDialog(context, ref)
+                                : null,
                         icon: const Icon(Icons.delete_outline_rounded),
                         label: const Text('删除'),
                         style: FilledButton.styleFrom(
@@ -313,18 +317,20 @@ class _FilterChip extends StatelessWidget {
                 Icon(
                   icon,
                   size: 17,
-                  color: isSelected
-                      ? colorScheme.primary
-                      : colorScheme.onSurfaceVariant,
+                  color:
+                      isSelected
+                          ? colorScheme.primary
+                          : colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 7),
                 Text(
                   label,
                   style: TextStyle(
                     fontSize: 13,
-                    color: isSelected
-                        ? colorScheme.onPrimaryContainer
-                        : colorScheme.onSurfaceVariant,
+                    color:
+                        isSelected
+                            ? colorScheme.onPrimaryContainer
+                            : colorScheme.onSurfaceVariant,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                   ),
                 ),

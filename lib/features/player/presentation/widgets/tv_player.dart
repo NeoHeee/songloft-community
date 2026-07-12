@@ -48,9 +48,8 @@ class _TvPlayerState extends ConsumerState<TvPlayer> {
     CoverPalette? palette;
     if (state.hasSong) {
       coverUrl = state.currentSong!.coverUrl;
-      palette = ref
-          .watch(playerBackgroundPaletteProvider(state.currentSong!))
-          .value;
+      palette =
+          ref.watch(playerBackgroundPaletteProvider(state.currentSong!)).value;
     }
     return Scaffold(
       body: Container(
@@ -180,15 +179,16 @@ class _TvPlayerState extends ConsumerState<TvPlayer> {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: coverUrl != null
-          ? ExcludeSemantics(
-              child: Image.network(
-                UrlHelper.buildCoverUrl(coverUrl),
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => _buildPlaceholderIcon(context),
-              ),
-            )
-          : _buildPlaceholderIcon(context),
+      child:
+          coverUrl != null
+              ? ExcludeSemantics(
+                child: Image.network(
+                  UrlHelper.buildCoverUrl(coverUrl),
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => _buildPlaceholderIcon(context),
+                ),
+              )
+              : _buildPlaceholderIcon(context),
     );
   }
 
@@ -277,17 +277,24 @@ class _TvPlayerState extends ConsumerState<TvPlayer> {
         children: [
           // 播放模式
           Builder(
-            builder: (buttonContext) => _TvPlayerControlButton(
-              icon: _getPlayModeIcon(state.playMode),
-              label: '播放模式',
-              onPressed: () =>
-                  _showPlayModeOverlay(buttonContext, notifier, state, theme),
-              size: 64,
-              iconSize: 28,
-              iconColor: state.playMode != PlayMode.order
-                  ? theme.colorScheme.primary
-                  : null,
-            ),
+            builder:
+                (buttonContext) => _TvPlayerControlButton(
+                  icon: _getPlayModeIcon(state.playMode),
+                  label: '播放模式',
+                  onPressed:
+                      () => _showPlayModeOverlay(
+                        buttonContext,
+                        notifier,
+                        state,
+                        theme,
+                      ),
+                  size: 64,
+                  iconSize: 28,
+                  iconColor:
+                      state.playMode != PlayMode.order
+                          ? theme.colorScheme.primary
+                          : null,
+                ),
           ),
           const SizedBox(width: TvTheme.spacingMedium),
           // 音量减
@@ -362,9 +369,8 @@ class _TvPlayerState extends ConsumerState<TvPlayer> {
             },
             size: 64,
             iconSize: 28,
-            iconColor: state.showPlaylistDrawer
-                ? theme.colorScheme.primary
-                : null,
+            iconColor:
+                state.showPlaylistDrawer ? theme.colorScheme.primary : null,
           ),
         ],
       ),
@@ -461,18 +467,19 @@ class _TvPlayerState extends ConsumerState<TvPlayer> {
 
     late OverlayEntry overlayEntry;
     overlayEntry = OverlayEntry(
-      builder: (context) => _TvPlayModeOverlayPanel(
-        playMode: state.playMode,
-        onPlayModeChanged: (mode) {
-          notifier.setPlayMode(mode);
-          overlayEntry.remove();
-        },
-        onDismiss: () => overlayEntry.remove(),
-        anchorPosition: position,
-        anchorSize: size,
-        getIcon: _getPlayModeIcon,
-        getTooltip: _getPlayModeTooltip,
-      ),
+      builder:
+          (context) => _TvPlayModeOverlayPanel(
+            playMode: state.playMode,
+            onPlayModeChanged: (mode) {
+              notifier.setPlayMode(mode);
+              overlayEntry.remove();
+            },
+            onDismiss: () => overlayEntry.remove(),
+            anchorPosition: position,
+            anchorSize: size,
+            getIcon: _getPlayModeIcon,
+            getTooltip: _getPlayModeTooltip,
+          ),
     );
 
     Overlay.of(context).insert(overlayEntry);
@@ -521,15 +528,16 @@ class _TvPlayerControlButtonState extends State<_TvPlayerControlButton> {
           curve: TvTheme.focusAnimationCurve,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            boxShadow: _isFocused
-                ? [
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                      blurRadius: TvTheme.focusShadowBlurRadius,
-                      spreadRadius: TvTheme.focusGlowSpreadRadius,
-                    ),
-                  ]
-                : null,
+            boxShadow:
+                _isFocused
+                    ? [
+                      BoxShadow(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                        blurRadius: TvTheme.focusShadowBlurRadius,
+                        spreadRadius: TvTheme.focusGlowSpreadRadius,
+                      ),
+                    ]
+                    : null,
           ),
           child: TvIconButton(
             icon: widget.icon,
@@ -592,20 +600,21 @@ class _TvPlayPauseButtonState extends State<_TvPlayPauseButton> {
           curve: TvTheme.focusAnimationCurve,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            boxShadow: _isFocused
-                ? [
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.5),
-                      blurRadius: 30,
-                      spreadRadius: 8,
-                    ),
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      spreadRadius: 2,
-                    ),
-                  ]
-                : null,
+            boxShadow:
+                _isFocused
+                    ? [
+                      BoxShadow(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                        blurRadius: 30,
+                        spreadRadius: 8,
+                      ),
+                      BoxShadow(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                        blurRadius: 12,
+                        spreadRadius: 2,
+                      ),
+                    ]
+                    : null,
           ),
           child: TvFocusable(
             onSelect: widget.onPressed,
@@ -730,20 +739,22 @@ class _TvFocusableProgressBarState extends State<_TvFocusableProgressBar> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: _isFocused
-                    ? theme.colorScheme.primary
-                    : Colors.transparent,
+                color:
+                    _isFocused ? theme.colorScheme.primary : Colors.transparent,
                 width: 2,
               ),
-              boxShadow: _isFocused
-                  ? [
-                      BoxShadow(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                        blurRadius: 12,
-                        spreadRadius: 2,
-                      ),
-                    ]
-                  : null,
+              boxShadow:
+                  _isFocused
+                      ? [
+                        BoxShadow(
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.2,
+                          ),
+                          blurRadius: 12,
+                          spreadRadius: 2,
+                        ),
+                      ]
+                      : null,
             ),
             child: Column(
               children: [
@@ -785,15 +796,15 @@ class _TvFocusableProgressBarState extends State<_TvFocusableProgressBar> {
                     value: state.progress,
                     onChanged: (value) {
                       final newPosition = Duration(
-                        milliseconds: (value * state.duration.inMilliseconds)
-                            .round(),
+                        milliseconds:
+                            (value * state.duration.inMilliseconds).round(),
                       );
                       widget.notifier.seek(newPosition);
                     },
                     semanticFormatterCallback: (value) {
                       final pos = Duration(
-                        milliseconds: (value * state.duration.inMilliseconds)
-                            .round(),
+                        milliseconds:
+                            (value * state.duration.inMilliseconds).round(),
                       );
                       return '${Formatters.formatDuration(pos.inSeconds.toDouble())} / ${Formatters.formatDuration(state.duration.inSeconds.toDouble())}';
                     },
@@ -811,9 +822,8 @@ class _TvFocusableProgressBarState extends State<_TvFocusableProgressBar> {
                           state.currentTime.inSeconds.toDouble(),
                         ),
                         style: TvTheme.captionStyle(context).copyWith(
-                          fontWeight: _isFocused
-                              ? FontWeight.w600
-                              : FontWeight.normal,
+                          fontWeight:
+                              _isFocused ? FontWeight.w600 : FontWeight.normal,
                           color: _isFocused ? theme.colorScheme.primary : null,
                         ),
                       ),
@@ -822,9 +832,8 @@ class _TvFocusableProgressBarState extends State<_TvFocusableProgressBar> {
                           state.duration.inSeconds.toDouble(),
                         ),
                         style: TvTheme.captionStyle(context).copyWith(
-                          fontWeight: _isFocused
-                              ? FontWeight.w600
-                              : FontWeight.normal,
+                          fontWeight:
+                              _isFocused ? FontWeight.w600 : FontWeight.normal,
                           color: _isFocused ? theme.colorScheme.primary : null,
                         ),
                       ),
@@ -921,42 +930,46 @@ class _TvPlayModeOverlayPanel extends StatelessWidget {
                   children: [
                     for (final mode in PlayMode.values)
                       Builder(
-                        builder: (itemContext) => TvFocusable(
-                          onSelect: () => onPlayModeChanged(mode),
-                          borderRadius: 8,
-                          child: Container(
-                            width: double.infinity,
-                            height: itemHeight,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  getIcon(mode),
-                                  size: iconSize,
-                                  color: playMode == mode
-                                      ? theme.colorScheme.primary
-                                      : theme.colorScheme.onSurface,
+                        builder:
+                            (itemContext) => TvFocusable(
+                              onSelect: () => onPlayModeChanged(mode),
+                              borderRadius: 8,
+                              child: Container(
+                                width: double.infinity,
+                                height: itemHeight,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
                                 ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  getTooltip(mode),
-                                  style: TextStyle(
-                                    fontSize: fontSize,
-                                    color: playMode == mode
-                                        ? theme.colorScheme.primary
-                                        : theme.colorScheme.onSurface,
-                                    fontWeight: playMode == mode
-                                        ? FontWeight.w500
-                                        : FontWeight.normal,
-                                  ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      getIcon(mode),
+                                      size: iconSize,
+                                      color:
+                                          playMode == mode
+                                              ? theme.colorScheme.primary
+                                              : theme.colorScheme.onSurface,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      getTooltip(mode),
+                                      style: TextStyle(
+                                        fontSize: fontSize,
+                                        color:
+                                            playMode == mode
+                                                ? theme.colorScheme.primary
+                                                : theme.colorScheme.onSurface,
+                                        fontWeight:
+                                            playMode == mode
+                                                ? FontWeight.w500
+                                                : FontWeight.normal,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ),
                       ),
                   ],
                 ),
@@ -1013,17 +1026,18 @@ class TvMiniPlayer extends ConsumerWidget {
                   color: theme.colorScheme.surfaceContainerHighest,
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: coverUrl != null
-                    ? ExcludeSemantics(
-                        child: Image.network(
-                          UrlHelper.buildCoverUrl(coverUrl),
-                          fit: BoxFit.cover,
+                child:
+                    coverUrl != null
+                        ? ExcludeSemantics(
+                          child: Image.network(
+                            UrlHelper.buildCoverUrl(coverUrl),
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                        : Icon(
+                          Icons.music_note_rounded,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
-                      )
-                    : Icon(
-                        Icons.music_note_rounded,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
               ),
               const SizedBox(width: TvTheme.spacingMedium),
               // 歌曲信息
@@ -1063,9 +1077,10 @@ class TvMiniPlayer extends ConsumerWidget {
                   ),
                   const SizedBox(width: TvTheme.spacingSmall),
                   TvIconButton(
-                    icon: state.isPlaying
-                        ? Icons.pause_rounded
-                        : Icons.play_arrow_rounded,
+                    icon:
+                        state.isPlaying
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
                     onPressed: notifier.togglePlay,
                     size: 56,
                     iconSize: 32,

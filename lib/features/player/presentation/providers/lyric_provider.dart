@@ -51,9 +51,8 @@ class LyricState {
       currentIndex: currentIndex ?? this.currentIndex,
       isLoading: isLoading ?? this.isLoading,
       loadFailed: loadFailed ?? this.loadFailed,
-      rawLyricText: clearRawLyricText
-          ? null
-          : (rawLyricText ?? this.rawLyricText),
+      rawLyricText:
+          clearRawLyricText ? null : (rawLyricText ?? this.rawLyricText),
     );
   }
 }

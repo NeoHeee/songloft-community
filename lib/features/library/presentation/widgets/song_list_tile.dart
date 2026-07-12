@@ -48,9 +48,8 @@ class SongListTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectionLabel = isSelected
-        ? '已选择歌曲《${song.title}》'
-        : '未选择歌曲《${song.title}》';
+    final selectionLabel =
+        isSelected ? '已选择歌曲《${song.title}》' : '未选择歌曲《${song.title}》';
 
     return Semantics(
       container: true,
@@ -87,11 +86,12 @@ class SongListTile extends ConsumerWidget {
   Widget _buildMobileLayout(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final backgroundColor = isSelected
-        ? colorScheme.primaryContainer.withValues(alpha: 0.78)
-        : isCurrentSong
-        ? colorScheme.primaryContainer.withValues(alpha: 0.62)
-        : colorScheme.surfaceContainerLow.withValues(alpha: 0.7);
+    final backgroundColor =
+        isSelected
+            ? colorScheme.primaryContainer.withValues(alpha: 0.78)
+            : isCurrentSong
+            ? colorScheme.primaryContainer.withValues(alpha: 0.62)
+            : colorScheme.surfaceContainerLow.withValues(alpha: 0.7);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
@@ -101,12 +101,13 @@ class SongListTile extends ConsumerWidget {
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(18),
-          border: isSelected
-              ? Border.all(
-                  color: colorScheme.primary.withValues(alpha: 0.42),
-                  width: 1.4,
-                )
-              : null,
+          border:
+              isSelected
+                  ? Border.all(
+                    color: colorScheme.primary.withValues(alpha: 0.42),
+                    width: 1.4,
+                  )
+                  : null,
         ),
         clipBehavior: Clip.antiAlias,
         child: Material(
@@ -140,9 +141,10 @@ class SongListTile extends ConsumerWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: isCurrentSong
-                                      ? colorScheme.primary
-                                      : colorScheme.onSurface,
+                                  color:
+                                      isCurrentSong
+                                          ? colorScheme.primary
+                                          : colorScheme.onSurface,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -191,10 +193,10 @@ class SongListTile extends ConsumerWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: _handleTap,
-      onPanStart: (details) =>
-          onSelectionDragStart?.call(details.globalPosition),
-      onPanUpdate: (details) =>
-          onSelectionDragUpdate?.call(details.globalPosition),
+      onPanStart:
+          (details) => onSelectionDragStart?.call(details.globalPosition),
+      onPanUpdate:
+          (details) => onSelectionDragUpdate?.call(details.globalPosition),
       onPanEnd: (_) => onSelectionDragEnd?.call(),
       onPanCancel: () => onSelectionDragEnd?.call(),
       child: leading,
@@ -219,13 +221,15 @@ class SongListTile extends ConsumerWidget {
             height: 26,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isSelected
-                  ? colorScheme.primary
-                  : colorScheme.surfaceContainerHighest,
+              color:
+                  isSelected
+                      ? colorScheme.primary
+                      : colorScheme.surfaceContainerHighest,
               border: Border.all(
-                color: isSelected
-                    ? colorScheme.onPrimary.withValues(alpha: 0.3)
-                    : colorScheme.outline,
+                color:
+                    isSelected
+                        ? colorScheme.onPrimary.withValues(alpha: 0.3)
+                        : colorScheme.outline,
                 width: 1.5,
               ),
               boxShadow: [
@@ -239,9 +243,10 @@ class SongListTile extends ConsumerWidget {
             child: Icon(
               isSelected ? Icons.check_rounded : Icons.circle_outlined,
               size: 17,
-              color: isSelected
-                  ? colorScheme.onPrimary
-                  : colorScheme.onSurfaceVariant,
+              color:
+                  isSelected
+                      ? colorScheme.onPrimary
+                      : colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -260,17 +265,23 @@ class SongListTile extends ConsumerWidget {
         duration: const Duration(milliseconds: 160),
         curve: Curves.easeOutCubic,
         decoration: BoxDecoration(
-          color: isSelected
-              ? colorScheme.primaryContainer.withValues(alpha: 0.65)
-              : isCurrentSong
-              ? colorScheme.primaryContainer.withValues(alpha: 0.5)
-              : Colors.transparent,
+          color:
+              isSelected
+                  ? colorScheme.primaryContainer.withValues(alpha: 0.65)
+                  : isCurrentSong
+                  ? colorScheme.primaryContainer.withValues(alpha: 0.5)
+                  : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
-          border: isSelected
-              ? Border.all(color: colorScheme.primary.withValues(alpha: 0.32))
-              : isCurrentSong
-              ? Border.all(color: colorScheme.primary.withValues(alpha: 0.18))
-              : null,
+          border:
+              isSelected
+                  ? Border.all(
+                    color: colorScheme.primary.withValues(alpha: 0.32),
+                  )
+                  : isCurrentSong
+                  ? Border.all(
+                    color: colorScheme.primary.withValues(alpha: 0.18),
+                  )
+                  : null,
         ),
         clipBehavior: Clip.antiAlias,
         child: Material(
@@ -292,9 +303,10 @@ class SongListTile extends ConsumerWidget {
                       child: Center(
                         child: Checkbox(
                           value: isSelected,
-                          semanticLabel: isSelected
-                              ? '取消选择${song.title}'
-                              : '选择${song.title}',
+                          semanticLabel:
+                              isSelected
+                                  ? '取消选择${song.title}'
+                                  : '选择${song.title}',
                           onChanged: (_) => _handleTap(),
                         ),
                       ),
@@ -302,19 +314,20 @@ class SongListTile extends ConsumerWidget {
                   else
                     SizedBox(
                       width: 40,
-                      child: isCurrentSong
-                          ? Icon(
-                              Icons.equalizer_rounded,
-                              size: 20,
-                              color: colorScheme.primary,
-                            )
-                          : Text(
-                              '${index + 1}',
-                              style: textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
+                      child:
+                          isCurrentSong
+                              ? Icon(
+                                Icons.equalizer_rounded,
+                                size: 20,
+                                color: colorScheme.primary,
+                              )
+                              : Text(
+                                '${index + 1}',
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                                textAlign: TextAlign.center,
                               ),
-                              textAlign: TextAlign.center,
-                            ),
                     ),
                   const SizedBox(width: 10),
                   _buildCoverImage(song.coverUrl, 44),
@@ -327,9 +340,8 @@ class SongListTile extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                       style: textTheme.bodyMedium?.copyWith(
                         color: isCurrentSong ? colorScheme.primary : null,
-                        fontWeight: isCurrentSong
-                            ? FontWeight.w700
-                            : FontWeight.w600,
+                        fontWeight:
+                            isCurrentSong ? FontWeight.w700 : FontWeight.w600,
                       ),
                     ),
                   ),
@@ -472,41 +484,42 @@ class SongListTile extends ConsumerWidget {
                 break;
             }
           },
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'play',
-              child: ListTile(
-                leading: Icon(Icons.play_arrow_rounded),
-                title: Text('播放'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-            if (song.type != AppConstants.songTypeLocal)
-              const PopupMenuItem(
-                value: 'edit',
-                child: ListTile(
-                  leading: Icon(Icons.edit_rounded),
-                  title: Text('编辑'),
-                  contentPadding: EdgeInsets.zero,
+          itemBuilder:
+              (context) => [
+                const PopupMenuItem(
+                  value: 'play',
+                  child: ListTile(
+                    leading: Icon(Icons.play_arrow_rounded),
+                    title: Text('播放'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
                 ),
-              ),
-            const PopupMenuItem(
-              value: 'add_to_playlist',
-              child: ListTile(
-                leading: Icon(Icons.playlist_add_rounded),
-                title: Text('添加到歌单'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'delete',
-              child: ListTile(
-                leading: Icon(Icons.delete_outline_rounded),
-                title: Text('删除'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-          ],
+                if (song.type != AppConstants.songTypeLocal)
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: ListTile(
+                      leading: Icon(Icons.edit_rounded),
+                      title: Text('编辑'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                const PopupMenuItem(
+                  value: 'add_to_playlist',
+                  child: ListTile(
+                    leading: Icon(Icons.playlist_add_rounded),
+                    title: Text('添加到歌单'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: ListTile(
+                    leading: Icon(Icons.delete_outline_rounded),
+                    title: Text('删除'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
         ),
       ],
     );

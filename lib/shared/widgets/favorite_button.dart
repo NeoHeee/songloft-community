@@ -68,15 +68,17 @@ class _FavoriteButtonState extends ConsumerState<FavoriteButton>
     setState(() => _isLoading = true);
     _animationController.forward(from: 0);
 
-    final isFavorited = _isRadio
-        ? ref.read(isRadioFavoritedProvider(widget.songId))
-        : ref.read(isSongFavoritedProvider(widget.songId));
+    final isFavorited =
+        _isRadio
+            ? ref.read(isRadioFavoritedProvider(widget.songId))
+            : ref.read(isSongFavoritedProvider(widget.songId));
 
     try {
       final notifier = ref.read(favoriteProvider.notifier);
-      final newState = _isRadio
-          ? await notifier.toggleRadioFavorite(widget.songId)
-          : await notifier.toggleFavorite(widget.songId);
+      final newState =
+          _isRadio
+              ? await notifier.toggleRadioFavorite(widget.songId)
+              : await notifier.toggleFavorite(widget.songId);
 
       widget.onToggle?.call(newState);
 
@@ -103,9 +105,10 @@ class _FavoriteButtonState extends ConsumerState<FavoriteButton>
 
   @override
   Widget build(BuildContext context) {
-    final isFavorited = _isRadio
-        ? ref.watch(isRadioFavoritedProvider(widget.songId))
-        : ref.watch(isSongFavoritedProvider(widget.songId));
+    final isFavorited =
+        _isRadio
+            ? ref.watch(isRadioFavoritedProvider(widget.songId))
+            : ref.watch(isSongFavoritedProvider(widget.songId));
 
     return ScaleTransition(
       scale: _scaleAnimation,
@@ -119,9 +122,10 @@ class _FavoriteButtonState extends ConsumerState<FavoriteButton>
         ),
         icon: Icon(
           isFavorited ? Icons.favorite : Icons.favorite_border,
-          color: isFavorited
-              ? Colors.red
-              : Theme.of(context).colorScheme.onSurfaceVariant,
+          color:
+              isFavorited
+                  ? Colors.red
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
         ),
         tooltip: isFavorited ? '取消收藏' : '收藏',
       ),

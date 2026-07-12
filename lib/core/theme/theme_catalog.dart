@@ -168,11 +168,8 @@ class ThemeCatalogEntry {
     }
     validateTrustedDownloadUri(downloadUri);
 
-    final rawDigest = _requiredString(
-      json['sha256'],
-      'sha256',
-      maxLength: 64,
-    ).toLowerCase();
+    final rawDigest =
+        _requiredString(json['sha256'], 'sha256', maxLength: 64).toLowerCase();
     if (!RegExp(r'^[a-f0-9]{64}$').hasMatch(rawDigest)) {
       throw const ThemeCatalogFormatException('sha256 必须是 64 位十六进制字符串');
     }

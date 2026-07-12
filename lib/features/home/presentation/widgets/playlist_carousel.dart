@@ -96,9 +96,10 @@ class _PlaylistCarouselItem extends StatelessWidget {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                     color: colorScheme.surfaceContainerHighest,
-                    border: isCurrentPlaylist
-                        ? Border.all(color: colorScheme.primary, width: 2)
-                        : null,
+                    border:
+                        isCurrentPlaylist
+                            ? Border.all(color: colorScheme.primary, width: 2)
+                            : null,
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: Stack(
@@ -106,17 +107,19 @@ class _PlaylistCarouselItem extends StatelessWidget {
                     children: [
                       playlist.coverImageUrl != null
                           ? ExcludeSemantics(
-                              child: CachedNetworkImage(
-                                imageUrl: UrlHelper.buildCoverUrl(
-                                  playlist.coverImageUrl!,
-                                ),
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) =>
-                                    _buildPlaceholder(colorScheme),
-                                errorWidget: (context, url, error) =>
-                                    _buildPlaceholder(colorScheme),
+                            child: CachedNetworkImage(
+                              imageUrl: UrlHelper.buildCoverUrl(
+                                playlist.coverImageUrl!,
                               ),
-                            )
+                              fit: BoxFit.cover,
+                              placeholder:
+                                  (context, url) =>
+                                      _buildPlaceholder(colorScheme),
+                              errorWidget:
+                                  (context, url, error) =>
+                                      _buildPlaceholder(colorScheme),
+                            ),
+                          )
                           : _buildPlaceholder(colorScheme),
                       if (isCurrentPlaylist && isPlaying)
                         Container(

@@ -53,9 +53,10 @@ void main() {
       ),
     );
 
-    final images = tester
-        .widgetList<CachedNetworkImage>(find.byType(CachedNetworkImage))
-        .toList();
+    final images =
+        tester
+            .widgetList<CachedNetworkImage>(find.byType(CachedNetworkImage))
+            .toList();
 
     expect(
       images.map((image) => image.cacheKey),

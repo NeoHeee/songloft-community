@@ -147,14 +147,15 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
                 pinned: true,
                 delegate: _LibraryControlsDelegate(
                   extent: state.isSelectionMode ? 160 : 142,
-                  child: state.isSelectionMode
-                      ? SongFilterBar(
-                          currentType: state.type,
-                          onTypeChanged: (_) {},
-                          songCount: state.total,
-                          onBatchDelete: _stageBatchDelete,
-                        )
-                      : _buildPinnedControls(state),
+                  child:
+                      state.isSelectionMode
+                          ? SongFilterBar(
+                            currentType: state.type,
+                            onTypeChanged: (_) {},
+                            songCount: state.total,
+                            onBatchDelete: _stageBatchDelete,
+                          )
+                          : _buildPinnedControls(state),
                 ),
               ),
               if (state.error != null)
@@ -176,21 +177,25 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
       title: Text(
         state.isSelectionMode ? '已选择 ${state.selectedSongIds.length} 首' : '歌曲库',
       ),
-      leading: state.isSelectionMode
-          ? IconButton(
-              icon: const Icon(Icons.close_rounded),
-              tooltip: '退出多选',
-              onPressed: () =>
-                  ref.read(songsListProvider.notifier).exitSelectionMode(),
-            )
-          : null,
+      leading:
+          state.isSelectionMode
+              ? IconButton(
+                icon: const Icon(Icons.close_rounded),
+                tooltip: '退出多选',
+                onPressed:
+                    () =>
+                        ref
+                            .read(songsListProvider.notifier)
+                            .exitSelectionMode(),
+              )
+              : null,
       actions: [
         if (!state.isSelectionMode)
           IconButton(
             icon: const Icon(Icons.checklist_rounded),
             tooltip: '多选歌曲',
-            onPressed: () =>
-                ref.read(songsListProvider.notifier).enterSelectionMode(),
+            onPressed:
+                () => ref.read(songsListProvider.notifier).enterSelectionMode(),
           ),
       ],
     );
@@ -313,13 +318,14 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
       decoration: InputDecoration(
         hintText: '搜索歌曲、艺术家或专辑',
         prefixIcon: const Icon(Icons.search_rounded),
-        suffixIcon: _searchController.text.isEmpty
-            ? null
-            : IconButton(
-                icon: const Icon(Icons.close_rounded),
-                tooltip: '清除搜索',
-                onPressed: _clearSearch,
-              ),
+        suffixIcon:
+            _searchController.text.isEmpty
+                ? null
+                : IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  tooltip: '清除搜索',
+                  onPressed: _clearSearch,
+                ),
         filled: true,
         fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.7),
         border: OutlineInputBorder(
@@ -370,11 +376,13 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
       currentSort: state.sort,
       showHidden: state.showHidden,
       onSortChanged: _setSort,
-      onAddRemote: () =>
-          _navigateToAddSong(context, AppConstants.songTypeRemote),
+      onAddRemote:
+          () => _navigateToAddSong(context, AppConstants.songTypeRemote),
       onAddRadio: () => _navigateToAddSong(context, AppConstants.songTypeRadio),
-      onToggleHidden: () =>
-          ref.read(songsListProvider.notifier).setShowHidden(!state.showHidden),
+      onToggleHidden:
+          () => ref
+              .read(songsListProvider.notifier)
+              .setShowHidden(!state.showHidden),
       onClean: () => _showCleanConfirmDialog(context),
     );
   }
@@ -417,8 +425,8 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
                 child: const Text('重试'),
               ),
               IconButton(
-                onPressed: () =>
-                    ref.read(songsListProvider.notifier).clearError(),
+                onPressed:
+                    () => ref.read(songsListProvider.notifier).clearError(),
                 icon: const Icon(Icons.close_rounded),
                 tooltip: '关闭提示',
               ),
@@ -439,9 +447,10 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
       ];
     }
 
-    final visibleSongs = state.songs
-        .where((song) => !_pendingDeletedSongIds.contains(song.id))
-        .toList();
+    final visibleSongs =
+        state.songs
+            .where((song) => !_pendingDeletedSongIds.contains(song.id))
+            .toList();
 
     if (visibleSongs.isEmpty) {
       return [
@@ -468,21 +477,24 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
               isCurrentSong:
                   currentSong?.id == song.id && currentSong?.type == song.type,
               onTap: () => _onSongTap(song, index),
-              onLongPress: () => ref
-                  .read(songsListProvider.notifier)
-                  .enterSelectionMode(initialSongId: song.id),
-              onSelect: () => ref
-                  .read(songsListProvider.notifier)
-                  .toggleSongSelection(song.id),
+              onLongPress:
+                  () => ref
+                      .read(songsListProvider.notifier)
+                      .enterSelectionMode(initialSongId: song.id),
+              onSelect:
+                  () => ref
+                      .read(songsListProvider.notifier)
+                      .toggleSongSelection(song.id),
               onSelectionDragStart: (_) => _startSelectionDrag(song.id),
               onSelectionDragUpdate: _updateSelectionDrag,
               onSelectionDragEnd: _endSelectionDrag,
               onDelete: () => _showDeleteConfirmDialog(context, song),
-              onEdit: song.type == AppConstants.songTypeLocal
-                  ? null
-                  : () => _navigateToEditSong(context, song),
-              onAddToPlaylist: () =>
-                  AddToPlaylistModal.show(context, songIds: [song.id]),
+              onEdit:
+                  song.type == AppConstants.songTypeLocal
+                      ? null
+                      : () => _navigateToEditSong(context, song),
+              onAddToPlaylist:
+                  () => AddToPlaylistModal.show(context, songIds: [song.id]),
             ),
           );
         },
@@ -678,27 +690,30 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
   void _showCleanConfirmDialog(BuildContext context) {
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('清理歌曲'),
-        content: const Text('将清理无效的歌曲记录，例如文件已删除的本地歌曲。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('取消'),
+      builder:
+          (dialogContext) => AlertDialog(
+            title: const Text('清理歌曲'),
+            content: const Text('将清理无效的歌曲记录，例如文件已删除的本地歌曲。'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('取消'),
+              ),
+              FilledButton(
+                onPressed: () async {
+                  Navigator.pop(dialogContext);
+                  final cleaned =
+                      await ref.read(songsListProvider.notifier).cleanSongs();
+                  if (!context.mounted) return;
+                  ResponsiveSnackBar.show(
+                    context,
+                    message: '已清理 $cleaned 首无效歌曲',
+                  );
+                },
+                child: const Text('清理'),
+              ),
+            ],
           ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(dialogContext);
-              final cleaned = await ref
-                  .read(songsListProvider.notifier)
-                  .cleanSongs();
-              if (!context.mounted) return;
-              ResponsiveSnackBar.show(context, message: '已清理 $cleaned 首无效歌曲');
-            },
-            child: const Text('清理'),
-          ),
-        ],
-      ),
     );
   }
 }

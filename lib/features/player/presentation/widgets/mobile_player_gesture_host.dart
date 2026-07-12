@@ -22,24 +22,22 @@ class MobilePlayerGestureHost extends ConsumerStatefulWidget {
     return Navigator.of(context).push(
       PageRouteBuilder<void>(
         opaque: true,
-        transitionDuration: reduceMotion
-            ? Duration.zero
-            : const Duration(milliseconds: 280),
-        reverseTransitionDuration: reduceMotion
-            ? Duration.zero
-            : const Duration(milliseconds: 220),
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const MobilePlayerGestureHost(),
+        transitionDuration:
+            reduceMotion ? Duration.zero : const Duration(milliseconds: 280),
+        reverseTransitionDuration:
+            reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
+        pageBuilder:
+            (context, animation, secondaryAnimation) =>
+                const MobilePlayerGestureHost(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           if (reduceMotion) return child;
           return SlideTransition(
-            position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
-                .animate(
-                  CurvedAnimation(
-                    parent: animation,
-                    curve: Curves.easeOutCubic,
-                  ),
-                ),
+            position: Tween<Offset>(
+              begin: const Offset(0, 1),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            ),
             child: child,
           );
         },

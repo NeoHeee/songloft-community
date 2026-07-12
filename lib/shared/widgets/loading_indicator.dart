@@ -182,11 +182,12 @@ class CollectionPageSkeleton extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           LayoutBuilder(
             builder: (context, constraints) {
-              final columns = constraints.maxWidth >= 900
-                  ? 5
-                  : constraints.maxWidth >= 600
-                  ? 4
-                  : 2;
+              final columns =
+                  constraints.maxWidth >= 900
+                      ? 5
+                      : constraints.maxWidth >= 600
+                      ? 4
+                      : 2;
               const spacing = AppSpacing.md;
               final width =
                   (constraints.maxWidth - spacing * (columns - 1)) / columns;

@@ -31,11 +31,12 @@ class DeleteSongDialog extends StatefulWidget {
   }) async {
     return showDialog<DeleteSongResult>(
       context: context,
-      builder: (context) => DeleteSongDialog(
-        title: title,
-        content: content,
-        showDeleteFilesOption: showDeleteFilesOption,
-      ),
+      builder:
+          (context) => DeleteSongDialog(
+            title: title,
+            content: content,
+            showDeleteFilesOption: showDeleteFilesOption,
+          ),
     );
   }
 }
@@ -86,9 +87,10 @@ class _DeleteSongDialogState extends State<DeleteSongDialog> {
           child: const Text('取消'),
         ),
         TextButton(
-          onPressed: () => Navigator.of(
-            context,
-          ).pop(DeleteSongResult(deleteFiles: _deleteFiles)),
+          onPressed:
+              () => Navigator.of(
+                context,
+              ).pop(DeleteSongResult(deleteFiles: _deleteFiles)),
           style: TextButton.styleFrom(
             minimumSize: context.responsiveButtonMinSize,
             foregroundColor: theme.colorScheme.error,

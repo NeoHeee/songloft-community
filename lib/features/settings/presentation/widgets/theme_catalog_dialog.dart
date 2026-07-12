@@ -42,29 +42,33 @@ class _ThemeCatalogDialogState extends ConsumerState<ThemeCatalogDialog> {
     final compact = size.width < 720;
 
     return Dialog(
-      insetPadding: compact
-          ? EdgeInsets.zero
-          : const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+      insetPadding:
+          compact
+              ? EdgeInsets.zero
+              : const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
       shape: RoundedRectangleBorder(
         borderRadius: compact ? BorderRadius.zero : AppRadius.lgAll,
       ),
       clipBehavior: Clip.antiAlias,
       child: SizedBox(
         width: compact ? size.width : 960,
-        height: compact
-            ? size.height
-            : size.height.clamp(620.0, 820.0).toDouble(),
+        height:
+            compact ? size.height : size.height.clamp(620.0, 820.0).toDouble(),
         child: Column(
           children: [
             _buildHeader(context, catalogState, compact),
             Expanded(
               child: catalogState.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) => _CatalogError(
-                  message: '$error',
-                  onRetry: () =>
-                      ref.read(themeCatalogProvider.notifier).refreshCatalog(),
-                ),
+                error:
+                    (error, _) => _CatalogError(
+                      message: '$error',
+                      onRetry:
+                          () =>
+                              ref
+                                  .read(themeCatalogProvider.notifier)
+                                  .refreshCatalog(),
+                    ),
                 data: (catalog) => _buildCatalog(context, catalog),
               ),
             ),
@@ -128,10 +132,13 @@ class _ThemeCatalogDialogState extends ConsumerState<ThemeCatalogDialog> {
             ),
           ),
           IconButton(
-            onPressed: state.isLoading
-                ? null
-                : () =>
-                      ref.read(themeCatalogProvider.notifier).refreshCatalog(),
+            onPressed:
+                state.isLoading
+                    ? null
+                    : () =>
+                        ref
+                            .read(themeCatalogProvider.notifier)
+                            .refreshCatalog(),
             tooltip: '刷新目录',
             icon: const Icon(Icons.refresh_rounded),
           ),
@@ -147,9 +154,9 @@ class _ThemeCatalogDialogState extends ConsumerState<ThemeCatalogDialog> {
 
   Widget _buildCatalog(BuildContext context, ThemeCatalog catalog) {
     final entries = _filteredEntries(catalog.entries);
-    final tags = <String>{
-      for (final entry in catalog.entries) ...entry.tags,
-    }.toList()..sort();
+    final tags =
+        <String>{for (final entry in catalog.entries) ...entry.tags}.toList()
+          ..sort();
 
     return Column(
       children: [
@@ -167,16 +174,17 @@ class _ThemeCatalogDialogState extends ConsumerState<ThemeCatalogDialog> {
             decoration: InputDecoration(
               hintText: '搜索主题、作者、简介或标签',
               prefixIcon: const Icon(Icons.search_rounded),
-              suffixIcon: _searchController.text.isEmpty
-                  ? null
-                  : IconButton(
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() {});
-                      },
-                      tooltip: '清除搜索',
-                      icon: const Icon(Icons.close_rounded),
-                    ),
+              suffixIcon:
+                  _searchController.text.isEmpty
+                      ? null
+                      : IconButton(
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {});
+                        },
+                        tooltip: '清除搜索',
+                        icon: const Icon(Icons.close_rounded),
+                      ),
             ),
           ),
         ),
@@ -197,9 +205,10 @@ class _ThemeCatalogDialogState extends ConsumerState<ThemeCatalogDialog> {
                   ChoiceChip(
                     label: Text(tag),
                     selected: _selectedTag == tag,
-                    onSelected: (_) => setState(
-                      () => _selectedTag = _selectedTag == tag ? null : tag,
-                    ),
+                    onSelected:
+                        (_) => setState(
+                          () => _selectedTag = _selectedTag == tag ? null : tag,
+                        ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
                 ],
@@ -208,41 +217,43 @@ class _ThemeCatalogDialogState extends ConsumerState<ThemeCatalogDialog> {
           ),
         const SizedBox(height: AppSpacing.sm),
         Expanded(
-          child: entries.isEmpty
-              ? const _CatalogEmpty()
-              : LayoutBuilder(
-                  builder: (context, constraints) {
-                    final columns = constraints.maxWidth >= 900
-                        ? 3
-                        : constraints.maxWidth >= 580
-                        ? 2
-                        : 1;
-                    return GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.md,
-                        0,
-                        AppSpacing.md,
-                        AppSpacing.md,
-                      ),
-                      itemCount: entries.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: columns,
-                        crossAxisSpacing: AppSpacing.md,
-                        mainAxisSpacing: AppSpacing.md,
-                        mainAxisExtent: 310,
-                      ),
-                      itemBuilder: (context, index) {
-                        final entry = entries[index];
-                        return _CatalogThemeCard(
-                          entry: entry,
-                          installed: _installedPack(entry.id),
-                          downloading: _downloadingId == entry.id,
-                          onInstall: () => _installTheme(entry),
-                        );
-                      },
-                    );
-                  },
-                ),
+          child:
+              entries.isEmpty
+                  ? const _CatalogEmpty()
+                  : LayoutBuilder(
+                    builder: (context, constraints) {
+                      final columns =
+                          constraints.maxWidth >= 900
+                              ? 3
+                              : constraints.maxWidth >= 580
+                              ? 2
+                              : 1;
+                      return GridView.builder(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.md,
+                          0,
+                          AppSpacing.md,
+                          AppSpacing.md,
+                        ),
+                        itemCount: entries.length,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: columns,
+                          crossAxisSpacing: AppSpacing.md,
+                          mainAxisSpacing: AppSpacing.md,
+                          mainAxisExtent: 310,
+                        ),
+                        itemBuilder: (context, index) {
+                          final entry = entries[index];
+                          return _CatalogThemeCard(
+                            entry: entry,
+                            installed: _installedPack(entry.id),
+                            downloading: _downloadingId == entry.id,
+                            onInstall: () => _installTheme(entry),
+                          );
+                        },
+                      );
+                    },
+                  ),
         ),
       ],
     );
@@ -286,13 +297,14 @@ class _ThemeCatalogDialogState extends ConsumerState<ThemeCatalogDialog> {
             return false;
           }
           if (query.isEmpty) return true;
-          final haystack = [
-            entry.name,
-            entry.author,
-            entry.description,
-            entry.id,
-            ...entry.tags,
-          ].join(' ').toLowerCase();
+          final haystack =
+              [
+                entry.name,
+                entry.author,
+                entry.description,
+                entry.id,
+                ...entry.tags,
+              ].join(' ').toLowerCase();
           return haystack.contains(query);
         })
         .toList(growable: false);
@@ -316,10 +328,11 @@ class _ThemeCatalogDialogState extends ConsumerState<ThemeCatalogDialog> {
       final existing = _installedPack(entry.id);
       final confirmed = await showDialog<bool>(
         context: context,
-        builder: (dialogContext) => _CatalogInstallDialog(
-          download: download,
-          isUpdate: existing != null,
-        ),
+        builder:
+            (dialogContext) => _CatalogInstallDialog(
+              download: download,
+              isUpdate: existing != null,
+            ),
       );
       if (confirmed != true || !mounted) return;
 
@@ -329,9 +342,10 @@ class _ThemeCatalogDialogState extends ConsumerState<ThemeCatalogDialog> {
       if (!mounted) return;
       ResponsiveSnackBar.showSuccess(
         context,
-        message: existing == null
-            ? '主题“${installed.name}”已安装并启用'
-            : '主题“${installed.name}”已更新并启用',
+        message:
+            existing == null
+                ? '主题“${installed.name}”已安装并启用'
+                : '主题“${installed.name}”已更新并启用',
       );
     } catch (error) {
       if (!mounted) return;
@@ -361,18 +375,20 @@ class _CatalogOriginBanner extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: remote
-            ? colorScheme.primaryContainer.withValues(alpha: 0.45)
-            : colorScheme.tertiaryContainer.withValues(alpha: 0.55),
+        color:
+            remote
+                ? colorScheme.primaryContainer.withValues(alpha: 0.45)
+                : colorScheme.tertiaryContainer.withValues(alpha: 0.55),
         borderRadius: AppRadius.mdAll,
       ),
       child: Row(
         children: [
           Icon(
             remote ? Icons.cloud_done_rounded : Icons.offline_bolt_rounded,
-            color: remote
-                ? colorScheme.onPrimaryContainer
-                : colorScheme.onTertiaryContainer,
+            color:
+                remote
+                    ? colorScheme.onPrimaryContainer
+                    : colorScheme.onTertiaryContainer,
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
@@ -381,9 +397,10 @@ class _CatalogOriginBanner extends StatelessWidget {
                   ? '已连接 ${catalog.name}，共 ${catalog.entries.length} 个主题。'
                   : '远程目录暂不可用，当前显示内置安全快照；可稍后点击刷新。',
               style: TextStyle(
-                color: remote
-                    ? colorScheme.onPrimaryContainer
-                    : colorScheme.onTertiaryContainer,
+                color:
+                    remote
+                        ? colorScheme.onPrimaryContainer
+                        : colorScheme.onTertiaryContainer,
               ),
             ),
           ),
@@ -500,19 +517,20 @@ class _CatalogThemeCard extends StatelessWidget {
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: sameVersion || downloading ? null : onInstall,
-                icon: downloading
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Icon(
-                        sameVersion
-                            ? Icons.check_circle_rounded
-                            : isUpdate
-                            ? Icons.system_update_alt_rounded
-                            : Icons.download_rounded,
-                      ),
+                icon:
+                    downloading
+                        ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                        : Icon(
+                          sameVersion
+                              ? Icons.check_circle_rounded
+                              : isUpdate
+                              ? Icons.system_update_alt_rounded
+                              : Icons.download_rounded,
+                        ),
                 label: Text(
                   downloading
                       ? '校验中'
@@ -622,9 +640,8 @@ class _CatalogInstallDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final pack = download.pack;
-    final sourceLabel = download.origin == ThemeCatalogOrigin.remote
-        ? '受信任在线目录'
-        : '内置安全副本';
+    final sourceLabel =
+        download.origin == ThemeCatalogOrigin.remote ? '受信任在线目录' : '内置安全副本';
 
     return AlertDialog(
       title: Text(isUpdate ? '确认更新主题' : '确认安装主题'),

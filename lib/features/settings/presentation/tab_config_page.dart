@@ -22,11 +22,13 @@ class TabConfigPage extends ConsumerWidget {
     final pluginsAsync = ref.watch(jsPluginsProvider);
     final config = tabConfigAsync.value ?? TabConfig.defaultConfig();
     final plugins = pluginsAsync.value ?? [];
-    final activePlugins = plugins
-        .where(
-          (p) => p.isActive && p.entryPath != null && p.entryPath!.isNotEmpty,
-        )
-        .toList();
+    final activePlugins =
+        plugins
+            .where(
+              (p) =>
+                  p.isActive && p.entryPath != null && p.entryPath!.isNotEmpty,
+            )
+            .toList();
 
     final usedCount = _fixedTabs + config.optionalCount;
     final atLimit = usedCount >= _maxTabs;
@@ -44,28 +46,30 @@ class TabConfigPage extends ConsumerWidget {
                 secondary: const Icon(Icons.library_music_outlined),
                 title: const Text('歌曲库'),
                 value: config.showLibrary,
-                onChanged: atLimit && !config.showLibrary
-                    ? null
-                    : (value) => _updateConfig(
-                        context,
-                        ref,
-                        config.copyWith(showLibrary: value),
-                        atLimit && value,
-                      ),
+                onChanged:
+                    atLimit && !config.showLibrary
+                        ? null
+                        : (value) => _updateConfig(
+                          context,
+                          ref,
+                          config.copyWith(showLibrary: value),
+                          atLimit && value,
+                        ),
               ),
               const Divider(height: 1),
               SwitchListTile(
                 secondary: const Icon(Icons.queue_music_outlined),
                 title: const Text('歌单'),
                 value: config.showPlaylists,
-                onChanged: atLimit && !config.showPlaylists
-                    ? null
-                    : (value) => _updateConfig(
-                        context,
-                        ref,
-                        config.copyWith(showPlaylists: value),
-                        atLimit && value,
-                      ),
+                onChanged:
+                    atLimit && !config.showPlaylists
+                        ? null
+                        : (value) => _updateConfig(
+                          context,
+                          ref,
+                          config.copyWith(showPlaylists: value),
+                          atLimit && value,
+                        ),
               ),
             ],
           ),
@@ -73,21 +77,22 @@ class TabConfigPage extends ConsumerWidget {
           SectionCard(
             title: '插件入口',
             icon: Icons.extension_outlined,
-            children: activePlugins.isEmpty
-                ? [
-                    const ListTile(
-                      leading: Icon(Icons.info_outline),
-                      title: Text('暂无可用插件'),
-                      subtitle: Text('请先在设置中安装并启用插件'),
+            children:
+                activePlugins.isEmpty
+                    ? [
+                      const ListTile(
+                        leading: Icon(Icons.info_outline),
+                        title: Text('暂无可用插件'),
+                        subtitle: Text('请先在设置中安装并启用插件'),
+                      ),
+                    ]
+                    : _buildPluginTiles(
+                      context,
+                      ref,
+                      config,
+                      activePlugins,
+                      atLimit,
                     ),
-                  ]
-                : _buildPluginTiles(
-                    context,
-                    ref,
-                    config,
-                    activePlugins,
-                    atLimit,
-                  ),
           ),
           if (config.pluginTabs.length > 1) ...[
             const SizedBox(height: 16),
@@ -98,8 +103,9 @@ class TabConfigPage extends ConsumerWidget {
                 _PluginTabReorderList(
                   config: config,
                   plugins: plugins,
-                  onReorder: (newConfig) =>
-                      _updateConfig(context, ref, newConfig, false),
+                  onReorder:
+                      (newConfig) =>
+                          _updateConfig(context, ref, newConfig, false),
                 ),
               ],
             ),
@@ -146,32 +152,33 @@ class TabConfigPage extends ConsumerWidget {
           title: Text(plugin.displayName),
           subtitle: plugin.version != null ? Text('v${plugin.version}') : null,
           value: isEnabled,
-          onChanged: atLimit && !isEnabled
-              ? null
-              : (value) {
-                  final newPluginTabs = List<PluginTabEntry>.from(
-                    config.pluginTabs,
-                  );
-                  if (value) {
-                    newPluginTabs.add(
-                      PluginTabEntry(
-                        pluginId: plugin.id,
-                        entryPath: plugin.entryPath!,
-                        name: plugin.displayName,
-                      ),
+          onChanged:
+              atLimit && !isEnabled
+                  ? null
+                  : (value) {
+                    final newPluginTabs = List<PluginTabEntry>.from(
+                      config.pluginTabs,
                     );
-                  } else {
-                    newPluginTabs.removeWhere(
-                      (pt) => pt.entryPath == plugin.entryPath,
+                    if (value) {
+                      newPluginTabs.add(
+                        PluginTabEntry(
+                          pluginId: plugin.id,
+                          entryPath: plugin.entryPath!,
+                          name: plugin.displayName,
+                        ),
+                      );
+                    } else {
+                      newPluginTabs.removeWhere(
+                        (pt) => pt.entryPath == plugin.entryPath,
+                      );
+                    }
+                    _updateConfig(
+                      context,
+                      ref,
+                      config.copyWith(pluginTabs: newPluginTabs),
+                      atLimit && value,
                     );
-                  }
-                  _updateConfig(
-                    context,
-                    ref,
-                    config.copyWith(pluginTabs: newPluginTabs),
-                    atLimit && value,
-                  );
-                },
+                  },
         ),
       );
     }
@@ -228,19 +235,19 @@ class _PluginTabReorderList extends StatelessWidget {
       proxyDecorator: (child, index, animation) {
         return AnimatedBuilder(
           animation: animation,
-          builder: (context, child) => Material(
-            elevation: 4,
-            borderRadius: BorderRadius.circular(12),
-            child: child,
-          ),
+          builder:
+              (context, child) => Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(12),
+                child: child,
+              ),
           child: child,
         );
       },
       itemBuilder: (context, index) {
         final pt = pluginTabs[index];
-        final plugin = plugins
-            .where((p) => p.entryPath == pt.entryPath)
-            .firstOrNull;
+        final plugin =
+            plugins.where((p) => p.entryPath == pt.entryPath).firstOrNull;
 
         return ListTile(
           key: ValueKey(pt.entryPath),

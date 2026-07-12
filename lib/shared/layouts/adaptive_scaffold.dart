@@ -97,13 +97,14 @@ class AdaptiveScaffold extends StatelessWidget {
             NavigationBar(
               selectedIndex: currentIndex,
               onDestinationSelected: onDestinationSelected,
-              destinations: destinations.map((dest) {
-                return NavigationDestination(
-                  icon: dest.icon,
-                  selectedIcon: dest.selectedIcon,
-                  label: dest.label,
-                );
-              }).toList(),
+              destinations:
+                  destinations.map((dest) {
+                    return NavigationDestination(
+                      icon: dest.icon,
+                      selectedIcon: dest.selectedIcon,
+                      label: dest.label,
+                    );
+                  }).toList(),
             ),
           ],
         ),
@@ -112,9 +113,8 @@ class AdaptiveScaffold extends StatelessWidget {
 
     final visibleSelectedIndex = visibleIndices.indexOf(currentIndex);
     final moreIndex = visibleIndices.length;
-    final barSelectedIndex = visibleSelectedIndex >= 0
-        ? visibleSelectedIndex
-        : moreIndex;
+    final barSelectedIndex =
+        visibleSelectedIndex >= 0 ? visibleSelectedIndex : moreIndex;
 
     return Scaffold(
       body: body,
@@ -194,9 +194,8 @@ class AdaptiveScaffold extends StatelessWidget {
     return ListTile(
       leading: IconTheme(
         data: IconThemeData(
-          color: isSelected
-              ? colorScheme.primary
-              : colorScheme.onSurfaceVariant,
+          color:
+              isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
         ),
         child: isSelected ? dest.selectedIcon : dest.icon,
       ),
@@ -226,13 +225,14 @@ class AdaptiveScaffold extends StatelessWidget {
             selectedIndex: currentIndex,
             onDestinationSelected: onDestinationSelected,
             labelType: NavigationRailLabelType.all,
-            destinations: destinations.map((dest) {
-              return NavigationRailDestination(
-                icon: dest.icon,
-                selectedIcon: dest.selectedIcon,
-                label: Text(dest.label),
-              );
-            }).toList(),
+            destinations:
+                destinations.map((dest) {
+                  return NavigationRailDestination(
+                    icon: dest.icon,
+                    selectedIcon: dest.selectedIcon,
+                    label: Text(dest.label),
+                  );
+                }).toList(),
           ),
           const VerticalDivider(thickness: 1, width: 1),
           Expanded(
@@ -310,21 +310,24 @@ class AdaptiveScaffold extends StatelessWidget {
                         child: ListTile(
                           leading: IconTheme(
                             data: IconThemeData(
-                              color: isSelected
-                                  ? colorScheme.primary
-                                  : colorScheme.onSurfaceVariant,
+                              color:
+                                  isSelected
+                                      ? colorScheme.primary
+                                      : colorScheme.onSurfaceVariant,
                             ),
                             child: isSelected ? dest.selectedIcon : dest.icon,
                           ),
                           title: Text(
                             dest.label,
                             style: TextStyle(
-                              color: isSelected
-                                  ? colorScheme.primary
-                                  : colorScheme.onSurface,
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
+                              color:
+                                  isSelected
+                                      ? colorScheme.primary
+                                      : colorScheme.onSurface,
+                              fontWeight:
+                                  isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
                             ),
                           ),
                           selected: isSelected,
@@ -439,23 +442,27 @@ class AdaptiveScaffold extends StatelessWidget {
                     child: FocusTraversalGroup(
                       policy: OrderedTraversalPolicy(),
                       child: Row(
-                        children: destinations.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          final dest = entry.value;
-                          final isSelected = index == currentIndex;
-                          return Padding(
-                            padding: const EdgeInsets.only(
-                              right: TvTheme.spacingMedium,
-                            ),
-                            child: _TvNavButton(
-                              icon: isSelected ? dest.selectedIcon : dest.icon,
-                              label: dest.label,
-                              isSelected: isSelected,
-                              onPressed: () => onDestinationSelected(index),
-                              autofocus: index == 0,
-                            ),
-                          );
-                        }).toList(),
+                        children:
+                            destinations.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final dest = entry.value;
+                              final isSelected = index == currentIndex;
+                              return Padding(
+                                padding: const EdgeInsets.only(
+                                  right: TvTheme.spacingMedium,
+                                ),
+                                child: _TvNavButton(
+                                  icon:
+                                      isSelected
+                                          ? dest.selectedIcon
+                                          : dest.icon,
+                                  label: dest.label,
+                                  isSelected: isSelected,
+                                  onPressed: () => onDestinationSelected(index),
+                                  autofocus: index == 0,
+                                ),
+                              );
+                            }).toList(),
                       ),
                     ),
                   ),
@@ -553,32 +560,37 @@ class _TvNavButtonState extends State<_TvNavButton> {
               vertical: TvTheme.spacingMedium,
             ),
             decoration: BoxDecoration(
-              color: widget.isSelected
-                  ? colorScheme.primaryContainer.withValues(alpha: 0.3)
-                  : (_hasFocus ? colorScheme.surfaceContainerHighest : null),
+              color:
+                  widget.isSelected
+                      ? colorScheme.primaryContainer.withValues(alpha: 0.3)
+                      : (_hasFocus
+                          ? colorScheme.surfaceContainerHighest
+                          : null),
               borderRadius: BorderRadius.circular(12),
-              border: _hasFocus
-                  ? Border.all(
-                      color: colorScheme.primary,
-                      width: TvTheme.focusBorderWidth,
-                    )
-                  : null,
-              boxShadow: _hasFocus
-                  ? [
-                      BoxShadow(
-                        color: colorScheme.primary.withValues(
-                          alpha: TvTheme.focusGlowOpacity,
+              border:
+                  _hasFocus
+                      ? Border.all(
+                        color: colorScheme.primary,
+                        width: TvTheme.focusBorderWidth,
+                      )
+                      : null,
+              boxShadow:
+                  _hasFocus
+                      ? [
+                        BoxShadow(
+                          color: colorScheme.primary.withValues(
+                            alpha: TvTheme.focusGlowOpacity,
+                          ),
+                          blurRadius: TvTheme.focusShadowBlurRadius,
+                          spreadRadius: TvTheme.focusGlowSpreadRadius,
                         ),
-                        blurRadius: TvTheme.focusShadowBlurRadius,
-                        spreadRadius: TvTheme.focusGlowSpreadRadius,
-                      ),
-                      BoxShadow(
-                        color: colorScheme.primary.withValues(alpha: 0.2),
-                        blurRadius: TvTheme.focusShadowBlurRadius * 2,
-                        spreadRadius: 0,
-                      ),
-                    ]
-                  : null,
+                        BoxShadow(
+                          color: colorScheme.primary.withValues(alpha: 0.2),
+                          blurRadius: TvTheme.focusShadowBlurRadius * 2,
+                          spreadRadius: 0,
+                        ),
+                      ]
+                      : null,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -589,9 +601,10 @@ class _TvNavButtonState extends State<_TvNavButton> {
                     IconTheme(
                       data: IconThemeData(
                         size: 28,
-                        color: widget.isSelected || _hasFocus
-                            ? colorScheme.primary
-                            : colorScheme.onSurfaceVariant,
+                        color:
+                            widget.isSelected || _hasFocus
+                                ? colorScheme.primary
+                                : colorScheme.onSurfaceVariant,
                       ),
                       child: SizedBox(
                         width: 28,
@@ -604,12 +617,14 @@ class _TvNavButtonState extends State<_TvNavButton> {
                       widget.label,
                       style: TextStyle(
                         fontSize: TvTheme.fontSizeButton,
-                        color: widget.isSelected || _hasFocus
-                            ? colorScheme.primary
-                            : colorScheme.onSurfaceVariant,
-                        fontWeight: widget.isSelected
-                            ? FontWeight.w600
-                            : FontWeight.normal,
+                        color:
+                            widget.isSelected || _hasFocus
+                                ? colorScheme.primary
+                                : colorScheme.onSurfaceVariant,
+                        fontWeight:
+                            widget.isSelected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
                       ),
                     ),
                   ],
@@ -684,9 +699,10 @@ class _AutoDock extends StatelessWidget {
                 final dest = destinations[index];
                 final isSelected = index == currentIndex;
                 return Material(
-                  color: isSelected
-                      ? colorScheme.secondaryContainer
-                      : Colors.transparent,
+                  color:
+                      isSelected
+                          ? colorScheme.secondaryContainer
+                          : Colors.transparent,
                   borderRadius: BorderRadius.circular(16),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(16),
@@ -699,9 +715,10 @@ class _AutoDock extends StatelessWidget {
                           IconTheme(
                             data: IconThemeData(
                               size: 26,
-                              color: isSelected
-                                  ? colorScheme.onSecondaryContainer
-                                  : colorScheme.onSurfaceVariant,
+                              color:
+                                  isSelected
+                                      ? colorScheme.onSecondaryContainer
+                                      : colorScheme.onSurfaceVariant,
                             ),
                             child: isSelected ? dest.selectedIcon : dest.icon,
                           ),
@@ -709,12 +726,14 @@ class _AutoDock extends StatelessWidget {
                           Text(
                             dest.label,
                             style: theme.textTheme.labelSmall?.copyWith(
-                              color: isSelected
-                                  ? colorScheme.onSecondaryContainer
-                                  : colorScheme.onSurfaceVariant,
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
+                              color:
+                                  isSelected
+                                      ? colorScheme.onSecondaryContainer
+                                      : colorScheme.onSurfaceVariant,
+                              fontWeight:
+                                  isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

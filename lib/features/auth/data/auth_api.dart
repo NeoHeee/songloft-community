@@ -51,9 +51,10 @@ class AuthApi {
     try {
       await dio.post(
         '${AppConfig.apiPrefix}/auth/logout',
-        options: (accessToken != null && accessToken.isNotEmpty)
-            ? Options(headers: {'Authorization': 'Bearer $accessToken'})
-            : null,
+        options:
+            (accessToken != null && accessToken.isNotEmpty)
+                ? Options(headers: {'Authorization': 'Bearer $accessToken'})
+                : null,
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);

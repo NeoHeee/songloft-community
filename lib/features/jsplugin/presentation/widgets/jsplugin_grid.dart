@@ -57,23 +57,25 @@ class JSPluginGrid extends ConsumerWidget {
 
     return pluginsAsync.when(
       data: (plugins) {
-        final activePlugins = plugins
-            .where(
-              (plugin) =>
-                  plugin.isActive &&
-                  plugin.entryPath != null &&
-                  plugin.entryPath!.isNotEmpty,
-            )
-            .toList();
+        final activePlugins =
+            plugins
+                .where(
+                  (plugin) =>
+                      plugin.isActive &&
+                      plugin.entryPath != null &&
+                      plugin.entryPath!.isNotEmpty,
+                )
+                .toList();
 
         if (activePlugins.isEmpty) {
           return const SizedBox.shrink();
         }
 
         final hiddenEntries = hiddenEntriesAsync.value ?? const <String>{};
-        final visiblePlugins = activePlugins
-            .where((plugin) => !hiddenEntries.contains(plugin.entryPath))
-            .toList();
+        final visiblePlugins =
+            activePlugins
+                .where((plugin) => !hiddenEntries.contains(plugin.entryPath))
+                .toList();
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
 
@@ -127,8 +129,8 @@ class JSPluginGrid extends ConsumerWidget {
                   ),
                   IconButton.filledTonal(
                     tooltip: '选择快捷入口',
-                    onPressed: () =>
-                        _showVisibilitySheet(context, activePlugins),
+                    onPressed:
+                        () => _showVisibilitySheet(context, activePlugins),
                     icon: const Icon(Icons.tune_rounded),
                   ),
                 ],
@@ -261,11 +263,15 @@ class _PluginVisibilitySheet extends ConsumerWidget {
                     ),
                   ),
                   TextButton(
-                    onPressed: hiddenEntries.isEmpty
-                        ? null
-                        : () => ref
-                              .read(homePluginHiddenEntriesProvider.notifier)
-                              .showAll(),
+                    onPressed:
+                        hiddenEntries.isEmpty
+                            ? null
+                            : () =>
+                                ref
+                                    .read(
+                                      homePluginHiddenEntriesProvider.notifier,
+                                    )
+                                    .showAll(),
                     child: const Text('全部显示'),
                   ),
                 ],
@@ -276,19 +282,20 @@ class _PluginVisibilitySheet extends ConsumerWidget {
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 itemCount: plugins.length,
-                separatorBuilder: (_, _) =>
-                    const Divider(height: 1, indent: 76),
+                separatorBuilder:
+                    (_, _) => const Divider(height: 1, indent: 76),
                 itemBuilder: (context, index) {
                   final plugin = plugins[index];
                   final entryPath = plugin.entryPath!;
                   final visible = !hiddenEntries.contains(entryPath);
                   return SwitchListTile(
                     value: visible,
-                    onChanged: hiddenEntriesAsync.isLoading
-                        ? null
-                        : (value) => ref
-                              .read(homePluginHiddenEntriesProvider.notifier)
-                              .setVisible(entryPath, visible: value),
+                    onChanged:
+                        hiddenEntriesAsync.isLoading
+                            ? null
+                            : (value) => ref
+                                .read(homePluginHiddenEntriesProvider.notifier)
+                                .setVisible(entryPath, visible: value),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 2,
@@ -312,9 +319,10 @@ class _PluginVisibilitySheet extends ConsumerWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    subtitle: plugin.version == null || plugin.version!.isEmpty
-                        ? const Text('已启用')
-                        : Text('版本 ${plugin.version}'),
+                    subtitle:
+                        plugin.version == null || plugin.version!.isEmpty
+                            ? const Text('已启用')
+                            : Text('版本 ${plugin.version}'),
                   );
                 },
               ),
@@ -401,9 +409,8 @@ class _JSPluginCard extends StatelessWidget {
 
     final url =
         '${AppConfig.baseUrl}${AppConfig.basePath}/api/v1/jsplugin/${plugin.entryPath}';
-    final theme = Theme.of(context).brightness == Brightness.dark
-        ? 'dark'
-        : 'light';
+    final theme =
+        Theme.of(context).brightness == Brightness.dark ? 'dark' : 'light';
 
     if (kIsWeb) {
       final token = SecureStorageService.cachedAccessToken ?? '';

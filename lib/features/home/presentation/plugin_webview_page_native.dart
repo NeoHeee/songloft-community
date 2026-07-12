@@ -213,14 +213,15 @@ class _PluginWebViewPageState extends ConsumerState<PluginWebViewPage>
       offstage: !_windowVisible,
       child: InAppWebView(
         initialUrlRequest: URLRequest(url: WebUri(_buildPluginUrl(theme))),
-        initialUserScripts: tokenScript.isNotEmpty
-            ? UnmodifiableListView([
-                UserScript(
-                  source: tokenScript,
-                  injectionTime: UserScriptInjectionTime.AT_DOCUMENT_START,
-                ),
-              ])
-            : null,
+        initialUserScripts:
+            tokenScript.isNotEmpty
+                ? UnmodifiableListView([
+                  UserScript(
+                    source: tokenScript,
+                    injectionTime: UserScriptInjectionTime.AT_DOCUMENT_START,
+                  ),
+                ])
+                : null,
         initialSettings: InAppWebViewSettings(
           javaScriptEnabled: true,
           allowFileAccessFromFileURLs: true,

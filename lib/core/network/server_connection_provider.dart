@@ -66,9 +66,8 @@ class ServerConnectionNotifier extends Notifier<ServerConnectionState> {
   void reportReachable() {
     _retryTimer?.cancel();
     final recovered = state.phase != ServerConnectionPhase.connected;
-    final nextGeneration = recovered
-        ? state.recoveryGeneration + 1
-        : state.recoveryGeneration;
+    final nextGeneration =
+        recovered ? state.recoveryGeneration + 1 : state.recoveryGeneration;
 
     state = state.copyWith(
       phase: ServerConnectionPhase.connected,

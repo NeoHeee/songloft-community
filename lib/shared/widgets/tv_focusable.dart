@@ -148,31 +148,33 @@ class _TvFocusableState extends State<TvFocusable> {
               curve: TvTheme.focusAnimationCurve,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(widget.borderRadius),
-                border: _hasFocus
-                    ? Border.all(
-                        color: focusBorderColor,
-                        width: widget.focusBorderWidth,
-                      )
-                    : Border.all(
-                        color: Colors.transparent,
-                        width: widget.focusBorderWidth,
-                      ),
-                boxShadow: _hasFocus && widget.showShadow
-                    ? [
-                        // 外层柔和光晕
-                        BoxShadow(
-                          color: focusBorderColor.withValues(alpha: 0.3),
-                          blurRadius: TvTheme.focusShadowBlurRadius,
-                          spreadRadius: TvTheme.focusGlowSpreadRadius,
+                border:
+                    _hasFocus
+                        ? Border.all(
+                          color: focusBorderColor,
+                          width: widget.focusBorderWidth,
+                        )
+                        : Border.all(
+                          color: Colors.transparent,
+                          width: widget.focusBorderWidth,
                         ),
-                        // 内层锐利边框光
-                        BoxShadow(
-                          color: focusBorderColor.withValues(alpha: 0.6),
-                          blurRadius: 4,
-                          spreadRadius: 1,
-                        ),
-                      ]
-                    : null,
+                boxShadow:
+                    _hasFocus && widget.showShadow
+                        ? [
+                          // 外层柔和光晕
+                          BoxShadow(
+                            color: focusBorderColor.withValues(alpha: 0.3),
+                            blurRadius: TvTheme.focusShadowBlurRadius,
+                            spreadRadius: TvTheme.focusGlowSpreadRadius,
+                          ),
+                          // 内层锐利边框光
+                          BoxShadow(
+                            color: focusBorderColor.withValues(alpha: 0.6),
+                            blurRadius: 4,
+                            spreadRadius: 1,
+                          ),
+                        ]
+                        : null,
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(
@@ -365,9 +367,10 @@ class _TvIconButtonState extends State<TvIconButton> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveIconColor = _hasFocus
-        ? theme.colorScheme.primary
-        : (widget.iconColor ?? theme.colorScheme.onSurface);
+    final effectiveIconColor =
+        _hasFocus
+            ? theme.colorScheme.primary
+            : (widget.iconColor ?? theme.colorScheme.onSurface);
 
     Widget result = TvFocusable(
       onSelect: widget.enabled ? widget.onPressed : null,
@@ -507,29 +510,31 @@ class _TvFocusableContainerState extends State<TvFocusableContainer> {
           padding: widget.padding,
           decoration: BoxDecoration(
             borderRadius: borderRadius,
-            color: _hasFocus
-                ? theme.colorScheme.primaryContainer.withValues(alpha: 0.15)
-                : null,
+            color:
+                _hasFocus
+                    ? theme.colorScheme.primaryContainer.withValues(alpha: 0.15)
+                    : null,
             border: Border.all(
               color: _hasFocus ? theme.colorScheme.primary : Colors.transparent,
               width: TvTheme.focusBorderWidth,
             ),
-            boxShadow: _hasFocus
-                ? [
-                    // 外层柔和光晕
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                      blurRadius: TvTheme.focusShadowBlurRadius,
-                      spreadRadius: TvTheme.focusGlowSpreadRadius,
-                    ),
-                    // 内层锐利边框光
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.6),
-                      blurRadius: 4,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : null,
+            boxShadow:
+                _hasFocus
+                    ? [
+                      // 外层柔和光晕
+                      BoxShadow(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                        blurRadius: TvTheme.focusShadowBlurRadius,
+                        spreadRadius: TvTheme.focusGlowSpreadRadius,
+                      ),
+                      // 内层锐利边框光
+                      BoxShadow(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.6),
+                        blurRadius: 4,
+                        spreadRadius: 1,
+                      ),
+                    ]
+                    : null,
           ),
           child: widget.child,
         ),

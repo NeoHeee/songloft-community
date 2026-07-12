@@ -108,9 +108,10 @@ class SongsListState {
       isSelectingAll: isSelectingAll ?? this.isSelectingAll,
       sort: sort ?? this.sort,
       order: order ?? this.order,
-      excludePlaylistLabels: clearExcludePlaylistLabels
-          ? null
-          : (excludePlaylistLabels ?? this.excludePlaylistLabels),
+      excludePlaylistLabels:
+          clearExcludePlaylistLabels
+              ? null
+              : (excludePlaylistLabels ?? this.excludePlaylistLabels),
     );
   }
 }
@@ -395,9 +396,10 @@ class SongsListNotifier extends Notifier<SongsListState> {
 
       // 正常路径：全部删除成功，按选中集合更新本地状态
       state = state.copyWith(
-        songs: state.songs
-            .where((s) => !state.selectedSongIds.contains(s.id))
-            .toList(),
+        songs:
+            state.songs
+                .where((s) => !state.selectedSongIds.contains(s.id))
+                .toList(),
         total: state.total - deleted,
         isSelectionMode: false,
         selectedSongIds: {},

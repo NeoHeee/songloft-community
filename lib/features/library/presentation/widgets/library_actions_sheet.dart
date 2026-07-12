@@ -35,15 +35,16 @@ class LibraryActionsSheet extends StatelessWidget {
       useSafeArea: true,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (context) => LibraryActionsSheet(
-        currentSort: currentSort,
-        showHidden: showHidden,
-        onSortChanged: onSortChanged,
-        onAddRemote: onAddRemote,
-        onAddRadio: onAddRadio,
-        onToggleHidden: onToggleHidden,
-        onClean: onClean,
-      ),
+      builder:
+          (context) => LibraryActionsSheet(
+            currentSort: currentSort,
+            showHidden: showHidden,
+            onSortChanged: onSortChanged,
+            onAddRemote: onAddRemote,
+            onAddRadio: onAddRadio,
+            onToggleHidden: onToggleHidden,
+            onClean: onClean,
+          ),
     );
   }
 
@@ -133,9 +134,10 @@ class LibraryActionsSheet extends StatelessWidget {
             onTap: onAddRadio,
           ),
           _ActionTile(
-            icon: showHidden
-                ? Icons.visibility_off_rounded
-                : Icons.visibility_rounded,
+            icon:
+                showHidden
+                    ? Icons.visibility_off_rounded
+                    : Icons.visibility_rounded,
             title: showHidden ? '隐藏已隐藏歌曲' : '显示隐藏歌曲',
             subtitle: showHidden ? '恢复默认歌曲库视图' : '临时显示被隐藏歌单中的歌曲',
             onTap: onToggleHidden,
@@ -203,16 +205,16 @@ class _ActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final foreground = isDestructive
-        ? colorScheme.error
-        : colorScheme.onSurface;
+    final foreground =
+        isDestructive ? colorScheme.error : colorScheme.onSurface;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
-        color: isDestructive
-            ? colorScheme.errorContainer.withValues(alpha: 0.42)
-            : colorScheme.surfaceContainerLow,
+        color:
+            isDestructive
+                ? colorScheme.errorContainer.withValues(alpha: 0.42)
+                : colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(18),
         child: InkWell(
           onTap: () {
@@ -230,16 +232,18 @@ class _ActionTile extends StatelessWidget {
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
-                      color: isDestructive
-                          ? colorScheme.errorContainer
-                          : colorScheme.primaryContainer,
+                      color:
+                          isDestructive
+                              ? colorScheme.errorContainer
+                              : colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(
                       icon,
-                      color: isDestructive
-                          ? colorScheme.error
-                          : colorScheme.primary,
+                      color:
+                          isDestructive
+                              ? colorScheme.error
+                              : colorScheme.primary,
                     ),
                   ),
                   const SizedBox(width: 12),

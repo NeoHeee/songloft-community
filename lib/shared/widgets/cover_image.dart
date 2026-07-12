@@ -51,10 +51,8 @@ class CoverImage extends StatelessWidget {
     // 磁盘只缓存一份 1024px 封面，足以覆盖手机全屏和大部分桌面展示；
     // 内存位图再按逻辑尺寸 × DPR 解码，避免列表里驻留大量原尺寸图片。
     final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
-    final targetPixels = (size * devicePixelRatio)
-        .round()
-        .clamp(1, 2048)
-        .toInt();
+    final targetPixels =
+        (size * devicePixelRatio).round().clamp(1, 2048).toInt();
 
     final imageWidget = RepaintBoundary(
       child: ClipRRect(
@@ -62,23 +60,24 @@ class CoverImage extends StatelessWidget {
         child: SizedBox(
           width: size,
           height: size,
-          child: displayUrl != null && cacheKey != null
-              ? CachedNetworkImage(
-                  imageUrl: displayUrl,
-                  cacheKey: cacheKey,
-                  fit: fit,
-                  memCacheWidth: targetPixels,
-                  memCacheHeight: targetPixels,
-                  maxWidthDiskCache: CoverCache.diskExtent,
-                  maxHeightDiskCache: CoverCache.diskExtent,
-                  useOldImageOnUrlChange: true,
-                  fadeInDuration: Duration.zero,
-                  fadeOutDuration: Duration.zero,
-                  placeholder: (context, url) => _buildPlaceholder(context),
-                  errorWidget: (context, url, error) =>
-                      _buildPlaceholder(context),
-                )
-              : _buildPlaceholder(context),
+          child:
+              displayUrl != null && cacheKey != null
+                  ? CachedNetworkImage(
+                    imageUrl: displayUrl,
+                    cacheKey: cacheKey,
+                    fit: fit,
+                    memCacheWidth: targetPixels,
+                    memCacheHeight: targetPixels,
+                    maxWidthDiskCache: CoverCache.diskExtent,
+                    maxHeightDiskCache: CoverCache.diskExtent,
+                    useOldImageOnUrlChange: true,
+                    fadeInDuration: Duration.zero,
+                    fadeOutDuration: Duration.zero,
+                    placeholder: (context, url) => _buildPlaceholder(context),
+                    errorWidget:
+                        (context, url, error) => _buildPlaceholder(context),
+                  )
+                  : _buildPlaceholder(context),
         ),
       ),
     );
@@ -97,15 +96,16 @@ class CoverImage extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     return ColoredBox(
       color: colorScheme.surfaceContainerHighest,
-      child: showPlaceholderIcon
-          ? Center(
-              child: Icon(
-                placeholderIcon,
-                size: size * 0.5,
-                color: colorScheme.onSurfaceVariant,
-              ),
-            )
-          : null,
+      child:
+          showPlaceholderIcon
+              ? Center(
+                child: Icon(
+                  placeholderIcon,
+                  size: size * 0.5,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              )
+              : null,
     );
   }
 }

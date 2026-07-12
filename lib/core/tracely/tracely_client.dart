@@ -23,8 +23,8 @@ class TracelyClient {
        );
 
   Map<String, String> _buildHeaders() {
-    final timestamp = (DateTime.now().millisecondsSinceEpoch ~/ 1000)
-        .toString();
+    final timestamp =
+        (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString();
     final nonce = _generateNonce();
     final message = utf8.encode('$appId$timestamp$nonce');
     final key = utf8.encode(appSecret);

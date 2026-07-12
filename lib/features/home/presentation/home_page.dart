@@ -90,16 +90,18 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
             SliverToBoxAdapter(
               child: playlistsAsync.when(
-                data: (state) => _DashboardContent(
-                  playlists: state.items,
-                  normalCount: normalCount,
-                  radioCount: radioCount,
-                ),
+                data:
+                    (state) => _DashboardContent(
+                      playlists: state.items,
+                      normalCount: normalCount,
+                      radioCount: radioCount,
+                    ),
                 loading: () => const _LoadingContent(),
-                error: (error, stack) => _ErrorContent(
-                  error: error.toString(),
-                  onRetry: () => ref.invalidate(playlistListProvider(null)),
-                ),
+                error:
+                    (error, stack) => _ErrorContent(
+                      error: error.toString(),
+                      onRetry: () => ref.invalidate(playlistListProvider(null)),
+                    ),
               ),
             ),
           ],
@@ -630,9 +632,8 @@ class _PlaylistGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final columns = context.responsive<int>(mobile: 2, tablet: 3, desktop: 4);
-    final itemCount = playlists.length > columns * 2
-        ? columns * 2
-        : playlists.length;
+    final itemCount =
+        playlists.length > columns * 2 ? columns * 2 : playlists.length;
 
     return GridView.builder(
       shrinkWrap: true,
@@ -691,9 +692,10 @@ class _PlaylistCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18),
                       color: colorScheme.surfaceContainerHighest,
-                      border: isCurrent
-                          ? Border.all(color: colorScheme.primary, width: 2)
-                          : null,
+                      border:
+                          isCurrent
+                              ? Border.all(color: colorScheme.primary, width: 2)
+                              : null,
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: Stack(
@@ -705,10 +707,12 @@ class _PlaylistCard extends StatelessWidget {
                               playlist.coverImageUrl!,
                             ),
                             fit: BoxFit.cover,
-                            placeholder: (_, _) =>
-                                _CoverPlaceholder(colorScheme: colorScheme),
-                            errorWidget: (_, _, _) =>
-                                _CoverPlaceholder(colorScheme: colorScheme),
+                            placeholder:
+                                (_, _) =>
+                                    _CoverPlaceholder(colorScheme: colorScheme),
+                            errorWidget:
+                                (_, _, _) =>
+                                    _CoverPlaceholder(colorScheme: colorScheme),
                           )
                         else
                           _CoverPlaceholder(colorScheme: colorScheme),
@@ -719,9 +723,10 @@ class _PlaylistCard extends StatelessWidget {
                             width: 42,
                             height: 42,
                             decoration: BoxDecoration(
-                              color: isCurrent
-                                  ? colorScheme.primary
-                                  : Colors.black.withValues(alpha: 0.62),
+                              color:
+                                  isCurrent
+                                      ? colorScheme.primary
+                                      : Colors.black.withValues(alpha: 0.62),
                               shape: BoxShape.circle,
                               boxShadow: const [
                                 BoxShadow(
