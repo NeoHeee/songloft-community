@@ -217,4 +217,4 @@ jobs:
           if-no-files-found: error
 
 # verifies theme packs, trusted catalog, sharing and formatted release sources
-# second stage validates player retry, drag selection, undo, skeletons and edge-to-edge integration
+# second-stage release candidate validates player retry, drag selection, undo, skeletons and edge-to-edge integration
