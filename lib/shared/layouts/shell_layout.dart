@@ -18,6 +18,7 @@ import '../utils/responsive_snackbar.dart';
 import 'active_destinations.dart';
 import 'adaptive_scaffold.dart';
 import 'redesigned_desktop_shell.dart';
+import 'server_connection_host.dart';
 
 /// StatefulShellRoute 的布局组件。
 /// 整合响应式导航、播放器、独立标签导航栈和插件页面保活逻辑。
@@ -139,6 +140,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
       );
     }
 
+    final shellBody = ServerConnectionHost(child: body);
     final bottomPlayer = _buildBottomPlayer(
       context,
       compact: isPluginTab || isSettings,
@@ -168,7 +170,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
     final screenType = context.screenType;
     if (screenType == ScreenType.desktop || screenType == ScreenType.tablet) {
       return RedesignedDesktopShell(
-        body: body,
+        body: shellBody,
         currentIndex: currentIndex,
         destinations: activeDest.destinations,
         onDestinationSelected: onDestinationSelected,
@@ -179,7 +181,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
 
     if (screenType != ScreenType.mobile) {
       return AdaptiveScaffold(
-        body: body,
+        body: shellBody,
         currentIndex: currentIndex,
         destinations: activeDest.destinations,
         onDestinationSelected: onDestinationSelected,
@@ -221,7 +223,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
         _handleMobileRootBack(context, location);
       },
       child: AdaptiveScaffold(
-        body: body,
+        body: shellBody,
         currentIndex: currentIndex,
         destinations: activeDest.destinations,
         onDestinationSelected: onDestinationSelected,
