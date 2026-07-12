@@ -23,6 +23,7 @@ on:
       - mobile-fourth-round
       - mobile-fifth-round
       - mobile-sixth-round
+      - mobile-seventh-round
     paths:
       - 'lib/**'
       - 'test/**'
@@ -96,6 +97,8 @@ jobs:
         run: flutter test test/core/theme
       - name: Run network recovery tests
         run: flutter test test/core/network
+      - name: Run mobile navigation tests
+        run: flutter test test/core/navigation
       - name: Run cover cache utility tests
         run: flutter test test/core/utils/cover_cache_test.dart
       - name: Run cover image widget tests
