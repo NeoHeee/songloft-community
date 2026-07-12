@@ -1,0 +1,162 @@
+name: Android Signing Secret Diagnostic
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/android-signing-diagnostic.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  STATUS_PR_NUMBER: '24'
+  EXPECTED_JKS_SHA256: '1691c228cc7cb5f49ca6357805e529edfd37da21c107f4138d6534011c39f2a7'
+  EXPECTED_ALIAS: 'songloft-community'
+
+jobs:
+  diagnose:
+    name: Diagnose Android signing secrets safely
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Diagnose secret values
+        id: diagnose
+        shell: bash
+        env:
+          RAW_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          RAW_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          RAW_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          RAW_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -u
+
+          extract_value() {
+            local raw="$1"
+            local key="$2"
+            raw="${raw//$'\r'/}"
+            if [[ "$raw" == *"${key}="* ]]; then
+              raw="${raw#*${key}=}"
+              raw="${raw%%$'\n'*}"
+            fi
+            raw="${raw#\"}"
+            raw="${raw%\"}"
+            raw="${raw#\'}"
+            raw="${raw%\'}"
+            printf '%s' "$raw"
+          }
+
+          b64="$(extract_value "$RAW_KEYSTORE_BASE64" 'ANDROID_KEYSTORE_BASE64')"
+          store_pass="$(extract_value "$RAW_STORE_PASSWORD" 'ANDROID_KEYSTORE_PASSWORD')"
+          alias_value="$(extract_value "$RAW_KEY_ALIAS" 'ANDROID_KEY_ALIAS')"
+          key_pass="$(extract_value "$RAW_KEY_PASSWORD" 'ANDROID_KEY_PASSWORD')"
+          b64="$(printf '%s' "$b64" | tr -d '[:space:]')"
+
+          b64_present=false
+          store_present=false
+          alias_present=false
+          key_present=false
+          base64_valid=false
+          jks_hash_match=false
+          keytool_valid=false
+
+          [[ -n "$b64" ]] && b64_present=true
+          [[ -n "$store_pass" ]] && store_present=true
+          [[ -n "$alias_value" ]] && alias_present=true
+          [[ -n "$key_pass" ]] && key_present=true
+
+          keystore_path="$RUNNER_TEMP/songloft-community-release.jks"
+          if [[ "$b64_present" == true ]] && printf '%s' "$b64" | base64 --decode > "$keystore_path" 2>/dev/null; then
+            base64_valid=true
+            actual_jks_sha=$(sha256sum "$keystore_path" | awk '{print $1}')
+            [[ "$actual_jks_sha" == "$EXPECTED_JKS_SHA256" ]] && jks_hash_match=true
+            if [[ "$store_present" == true && "$alias_present" == true ]] && keytool -list \
+              -keystore "$keystore_path" \
+              -storepass "$store_pass" \
+              -alias "$alias_value" \
+              >/dev/null 2>&1; then
+              keytool_valid=true
+            fi
+          fi
+
+          {
+            echo "b64_present=$b64_present"
+            echo "store_present=$store_present"
+            echo "alias_present=$alias_present"
+            echo "key_present=$key_present"
+            echo "b64_length=${#b64}"
+            echo "store_length=${#store_pass}"
+            echo "alias_length=${#alias_value}"
+            echo "key_length=${#key_pass}"
+            echo "base64_valid=$base64_valid"
+            echo "jks_hash_match=$jks_hash_match"
+            echo "keytool_valid=$keytool_valid"
+            echo "alias_matches_expected=$([[ "$alias_value" == "$EXPECTED_ALIAS" ]] && echo true || echo false)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Publish diagnostic result
+        uses: actions/github-script@v7
+        env:
+          B64_PRESENT: ${{ steps.diagnose.outputs.b64_present }}
+          STORE_PRESENT: ${{ steps.diagnose.outputs.store_present }}
+          ALIAS_PRESENT: ${{ steps.diagnose.outputs.alias_present }}
+          KEY_PRESENT: ${{ steps.diagnose.outputs.key_present }}
+          B64_LENGTH: ${{ steps.diagnose.outputs.b64_length }}
+          STORE_LENGTH: ${{ steps.diagnose.outputs.store_length }}
+          ALIAS_LENGTH: ${{ steps.diagnose.outputs.alias_length }}
+          KEY_LENGTH: ${{ steps.diagnose.outputs.key_length }}
+          BASE64_VALID: ${{ steps.diagnose.outputs.base64_valid }}
+          JKS_HASH_MATCH: ${{ steps.diagnose.outputs.jks_hash_match }}
+          KEYTOOL_VALID: ${{ steps.diagnose.outputs.keytool_valid }}
+          ALIAS_MATCHES_EXPECTED: ${{ steps.diagnose.outputs.alias_matches_expected }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const marker = '<!-- android-signing-secret-diagnostic -->';
+            const yes = (v) => v === 'true' ? '✅' : '❌';
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = `${marker}
+            ## Android 签名 Secret 安全诊断
+
+            - Keystore Base64 已填写：${yes(process.env.B64_PRESENT)}（规范长度应为 5276，当前 ${process.env.B64_LENGTH}）
+            - Store Password 已填写：${yes(process.env.STORE_PRESENT)}（规范长度应为 36，当前 ${process.env.STORE_LENGTH}）
+            - Key Alias 已填写：${yes(process.env.ALIAS_PRESENT)}（规范长度应为 18，当前 ${process.env.ALIAS_LENGTH}）
+            - Key Password 已填写：${yes(process.env.KEY_PRESENT)}（规范长度应为 36，当前 ${process.env.KEY_LENGTH}）
+            - Base64 可解码：${yes(process.env.BASE64_VALID)}
+            - 解码后的 JKS 与固定备份一致：${yes(process.env.JKS_HASH_MATCH)}
+            - Alias 为 \`songloft-community\`：${yes(process.env.ALIAS_MATCHES_EXPECTED)}
+            - Store Password 与 Alias 可打开 JKS：${yes(process.env.KEYTOOL_VALID)}
+            - Run ID：\`${context.runId}\`（[查看运行详情](${runUrl})）
+
+            此诊断只输出长度和布尔结果，不输出任何 Secret 内容。
+
+            更新时间：${new Date().toISOString()}`.replace(/^            /gm, '');
+            const issue_number = Number(process.env.STATUS_PR_NUMBER);
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+              per_page: 100,
+            });
+            const existing = comments.find(
+              (comment) => comment.user?.type === 'Bot' && comment.body?.includes(marker),
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                body,
+              });
+            }
