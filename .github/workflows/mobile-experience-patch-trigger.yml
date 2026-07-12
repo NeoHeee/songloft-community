@@ -26,9 +26,12 @@ jobs:
           channel: stable
           cache: true
       - name: Extract and apply embedded patch
+        id: patch
+        continue-on-error: true
         shell: bash
         run: |
-          python3 <<'PY'
+          set -o pipefail
+          python3 <<'PY' 2>&1 | tee /tmp/mobile-experience-patch.log
           from pathlib import Path
           import textwrap
 
@@ -38,9 +41,23 @@ jobs:
           script = workflow.split(start_marker, 1)[1].split(end_marker, 1)[0]
           exec(compile(textwrap.dedent(script), 'mobile-experience-patch', 'exec'))
           PY
+      - name: Publish patch diagnostic
+        if: steps.patch.outcome == 'failure'
+        shell: bash
+        run: |
+          git reset --hard HEAD
+          cp /tmp/mobile-experience-patch.log MOBILE_EXPERIENCE_PATCH_ERROR.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add MOBILE_EXPERIENCE_PATCH_ERROR.txt
+          git commit -m 'chore: capture mobile experience patch error'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          exit 1
       - name: Install dependencies
+        if: steps.patch.outcome == 'success'
         run: flutter pub get
       - name: Format changed Dart files
+        if: steps.patch.outcome == 'success'
         shell: bash
         run: |
           mapfile -t files < <(git diff --name-only --diff-filter=ACM -- 'lib/**/*.dart' 'test/**/*.dart')
@@ -48,13 +65,16 @@ jobs:
             dart format "${files[@]}"
           fi
       - name: Run focused tests
+        if: steps.patch.outcome == 'success'
         run: |
           flutter test test/features/library
           flutter test test/features/player/presentation/widgets
           flutter test test/shared/utils
       - name: Analyze
+        if: steps.patch.outcome == 'success'
         run: flutter analyze
       - name: Commit implementation
+        if: steps.patch.outcome == 'success'
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
