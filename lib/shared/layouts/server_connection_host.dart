@@ -16,7 +16,10 @@ class ServerConnectionHost extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen<ServerConnectionState>(serverConnectionProvider, (previous, next) {
+    ref.listen<ServerConnectionState>(serverConnectionProvider, (
+      previous,
+      next,
+    ) {
       final recovered =
           next.isConnected &&
           next.recoveryGeneration != (previous?.recoveryGeneration ?? 0);
@@ -29,10 +32,7 @@ class ServerConnectionHost extends ConsumerWidget {
     });
 
     return Column(
-      children: [
-        const ServerConnectionBanner(),
-        Expanded(child: child),
-      ],
+      children: [const ServerConnectionBanner(), Expanded(child: child)],
     );
   }
 }
