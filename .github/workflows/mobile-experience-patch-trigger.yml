@@ -33,13 +33,16 @@ jobs:
           set -o pipefail
           python3 <<'PY' 2>&1 | tee /tmp/mobile-experience-patch.log
           from pathlib import Path
-          import textwrap
 
           workflow = Path('.github/workflows/mobile-experience-patch.yml').read_text(encoding='utf-8')
           start_marker = "          python3 <<'PY'\n"
           end_marker = "\n          PY\n"
-          script = workflow.split(start_marker, 1)[1].split(end_marker, 1)[0]
-          exec(compile(textwrap.dedent(script), 'mobile-experience-patch', 'exec'))
+          embedded = workflow.split(start_marker, 1)[1].split(end_marker, 1)[0]
+          script = '\n'.join(
+              line[10:] if line.startswith('          ') else line
+              for line in embedded.splitlines()
+          )
+          exec(compile(script, 'mobile-experience-patch', 'exec'))
           PY
       - name: Publish patch diagnostic
         if: steps.patch.outcome == 'failure'
