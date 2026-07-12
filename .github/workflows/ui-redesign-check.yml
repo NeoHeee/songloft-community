@@ -55,6 +55,31 @@ jobs:
           cache: true
       - name: Install dependencies
         run: flutter pub get
+      - name: Check songs provider format
+        continue-on-error: true
+        run: >-
+          dart format --output=none --set-exit-if-changed
+          lib/features/library/presentation/providers/songs_provider.dart
+      - name: Check song tile format
+        continue-on-error: true
+        run: >-
+          dart format --output=none --set-exit-if-changed
+          lib/features/library/presentation/widgets/song_list_tile.dart
+      - name: Check selection bar format
+        continue-on-error: true
+        run: >-
+          dart format --output=none --set-exit-if-changed
+          lib/features/library/presentation/widgets/song_filter_bar.dart
+      - name: Check selection state test format
+        continue-on-error: true
+        run: >-
+          dart format --output=none --set-exit-if-changed
+          test/features/library/presentation/providers/songs_list_state_test.dart
+      - name: Check song tile test format
+        continue-on-error: true
+        run: >-
+          dart format --output=none --set-exit-if-changed
+          test/features/library/presentation/widgets/song_list_tile_test.dart
       - name: Verify changed Dart file hashes v3
         shell: bash
         run: |
