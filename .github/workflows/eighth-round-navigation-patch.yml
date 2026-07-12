@@ -45,4 +45,4 @@ jobs:
 
 # Synchronize the stacked PR so the bootstrap workflow on its base can run.
 # Diagnostic rerun requested after the first exact-match failure.
-# Shell reset is fixed after block replacements; plugin close is handled separately.
+# Source and tests will now be committed separately from CI workflow changes.
