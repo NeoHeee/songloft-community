@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../config/app_config.dart';
 import 'base_url_provider.dart';
 
 enum ServerConnectionPhase { connected, reconnecting, disconnected }
@@ -132,7 +133,7 @@ class ServerConnectionNotifier extends Notifier<ServerConnectionState> {
     );
 
     try {
-      final response = await dio.get<void>('');
+      final response = await dio.get<void>(AppConfig.apiPrefix);
       if (generation != _probeGeneration) return;
       if (isUnavailableStatus(response.statusCode)) {
         reportUnavailable('服务器返回 ${response.statusCode}');
