@@ -1,0 +1,105 @@
+name: Android Signed Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'android/**'
+      - 'lib/**'
+      - 'assets/**'
+      - 'pubspec.yaml'
+      - '.github/workflows/android-signed-release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-signed-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.41.5'
+  EXPECTED_CERT_SHA256: 'CA:A0:0F:91:D7:3B:12:AD:E2:5E:8A:43:20:18:1E:B5:20:A6:65:49:FD:08:9A:56:E4:69:4A:19:13:E9:68:F1'
+
+jobs:
+  build-signed-android:
+    name: Build fixed-signed Android APKs
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Prepare release keystore
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$KEYSTORE_BASE64" || { echo '::error::Missing ANDROID_KEYSTORE_BASE64'; exit 1; }
+          test -n "$STORE_PASSWORD" || { echo '::error::Missing ANDROID_KEYSTORE_PASSWORD'; exit 1; }
+          test -n "$RELEASE_KEY_ALIAS" || { echo '::error::Missing ANDROID_KEY_ALIAS'; exit 1; }
+          test -n "$RELEASE_KEY_PASSWORD" || { echo '::error::Missing ANDROID_KEY_PASSWORD'; exit 1; }
+
+          keystore_path="$RUNNER_TEMP/songloft-community-release.jks"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
+          chmod 600 "$keystore_path"
+
+          echo "ANDROID_KEYSTORE_PATH=$keystore_path" >> "$GITHUB_ENV"
+          echo "ANDROID_KEYSTORE_PASSWORD=$STORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_ALIAS=$RELEASE_KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_PASSWORD=$RELEASE_KEY_PASSWORD" >> "$GITHUB_ENV"
+          echo "ANDROID_REQUIRE_RELEASE_SIGNING=true" >> "$GITHUB_ENV"
+      - name: Build split release APKs
+        run: flutter build apk --release --split-per-abi
+      - name: Collect and verify signed APKs
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
+          mkdir -p signed-output
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
+            "signed-output/Songloft-Community-Android-arm64-v8a-${VERSION}.apk"
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk \
+            "signed-output/Songloft-Community-Android-armeabi-v7a-${VERSION}.apk"
+          cp build/app/outputs/flutter-apk/app-x86_64-release.apk \
+            "signed-output/Songloft-Community-Android-x86_64-${VERSION}.apk"
+
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+          apksigner=$(find "$sdk_root/build-tools" -type f -name apksigner | sort -V | tail -n 1)
+          test -n "$apksigner" || { echo '::error::apksigner not found'; exit 1; }
+
+          expected=$(printf '%s' "$EXPECTED_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')
+          : > signed-output/SIGNING-CERTIFICATE.txt
+          for apk in signed-output/*.apk; do
+            cert_output=$("$apksigner" verify --verbose --print-certs "$apk")
+            printf '== %s ==\n%s\n\n' "$(basename "$apk")" "$cert_output" \
+              >> signed-output/SIGNING-CERTIFICATE.txt
+            actual=$(printf '%s\n' "$cert_output" \
+              | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' \
+              | head -n 1 \
+              | tr -d ':' \
+              | tr '[:upper:]' '[:lower:]')
+            test "$actual" = "$expected" || {
+              echo "::error::Unexpected signing certificate for $(basename "$apk")"
+              exit 1
+            }
+          done
+          sha256sum signed-output/*.apk > signed-output/SHA256SUMS.txt
+      - name: Upload fixed-signed Android APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: Songloft-Community-Android-fixed-signed
+          path: signed-output/*
+          retention-days: 30
+          if-no-files-found: error
