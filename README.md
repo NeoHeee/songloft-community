@@ -5,9 +5,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/NeoHeee/songloft-player/actions"><img src="https://img.shields.io/github/actions/workflow/status/NeoHeee/songloft-player/ui-redesign-check.yml?branch=main&label=build" alt="Build"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/NeoHeee/songloft-player" alt="License"></a>
-  <a href="https://github.com/NeoHeee/songloft-player"><img src="https://img.shields.io/github/stars/NeoHeee/songloft-player" alt="Stars"></a>
+  <a href="https://github.com/NeoHeee/songloft-community/actions"><img src="https://img.shields.io/github/actions/workflow/status/NeoHeee/songloft-community/ui-redesign-check.yml?branch=main&label=build" alt="Build"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/NeoHeee/songloft-community" alt="License"></a>
+  <a href="https://github.com/NeoHeee/songloft-community"><img src="https://img.shields.io/github/stars/NeoHeee/songloft-community" alt="Stars"></a>
   <img src="https://img.shields.io/badge/Flutter-3.41.5-02569B?logo=flutter" alt="Flutter">
 </p>
 
@@ -153,8 +153,8 @@ Web 不支持 Bundle 模式。
 
 ```bash
 # 克隆仓库
-git clone https://github.com/NeoHeee/songloft-player.git
-cd songloft-player
+git clone https://github.com/NeoHeee/songloft-community.git
+cd songloft-community
 
 # 安装依赖
 flutter pub get
