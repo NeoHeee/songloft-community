@@ -1,0 +1,39 @@
+name: Sixth Round Theme Test Diagnostic
+
+on:
+  pull_request:
+    branches:
+      - mobile-fifth-round
+    paths:
+      - '.github/workflows/sixth-round-test-diagnostic.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Capture theme test output
+        shell: bash
+        run: |
+          set +e
+          flutter test test/core/theme > /tmp/sixth-round-theme-test.txt 2>&1
+          rc=$?
+          set -e
+          echo "EXIT_CODE=$rc" >> /tmp/sixth-round-theme-test.txt
+          cat /tmp/sixth-round-theme-test.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sixth-round-theme-test-output
+          path: /tmp/sixth-round-theme-test.txt
+          if-no-files-found: error
+          retention-days: 3
