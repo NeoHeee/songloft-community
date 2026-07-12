@@ -95,7 +95,7 @@ class ServersPage extends ConsumerWidget {
                   buildDefaultDragHandles: false,
                   padding: const EdgeInsets.only(bottom: 96),
                   itemCount: servers.length,
-                  onReorderItem: (oldIndex, newIndex) {
+                  onReorder: (oldIndex, newIndex) {
                     ref
                         .read(serversProvider.notifier)
                         .reorder(oldIndex, newIndex);

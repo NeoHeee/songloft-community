@@ -690,7 +690,7 @@ class _PlaylistsPageState extends ConsumerState<PlaylistsPage> {
     return ReorderableListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: _sortablePlaylists.length,
-      onReorderItem: _onReorder,
+      onReorder: _onReorder,
       itemBuilder: (context, index) {
         final playlist = _sortablePlaylists[index];
         return Card(

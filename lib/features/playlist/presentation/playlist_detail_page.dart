@@ -764,7 +764,7 @@ class _PlaylistDetailPageState extends ConsumerState<PlaylistDetailPage> {
           physics: const NeverScrollableScrollPhysics(),
           buildDefaultDragHandles: false,
           itemCount: _sortableSongs.length,
-          onReorderItem: _onReorder,
+          onReorder: _onReorder,
           itemBuilder: (context, index) {
             final song = _sortableSongs[index];
             return _PlaylistSongTile(
