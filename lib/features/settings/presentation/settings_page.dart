@@ -161,11 +161,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final currentUrl = ref.watch(baseUrlProvider);
     final serverVersionAsync = ref.watch(serverVersionProvider);
     final versionText = serverVersionAsync.value;
-    final versionLabel = versionText == null
-        ? null
-        : versionText == 'dev'
-        ? '开发版'
-        : 'v$versionText';
+    final versionLabel =
+        versionText == null
+            ? null
+            : versionText == 'dev'
+            ? '开发版'
+            : 'v$versionText';
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -276,11 +277,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final pluginsAsync = ref.watch(jsPluginsProvider);
     final config = tabConfigAsync.value ?? TabConfig.defaultConfig();
     final plugins = pluginsAsync.value ?? [];
-    final activePlugins = plugins
-        .where(
-          (p) => p.isActive && p.entryPath != null && p.entryPath!.isNotEmpty,
-        )
-        .toList();
+    final activePlugins =
+        plugins
+            .where(
+              (p) =>
+                  p.isActive && p.entryPath != null && p.entryPath!.isNotEmpty,
+            )
+            .toList();
     final usedCount = _fixedTabs + config.optionalCount;
     final atLimit = usedCount >= _maxTabs;
 
@@ -315,24 +318,26 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             secondary: const Icon(Icons.library_music_outlined),
             title: const Text('歌曲库'),
             value: config.showLibrary,
-            onChanged: atLimit && !config.showLibrary
-                ? null
-                : (value) => _updateTabConfig(
-                    config.copyWith(showLibrary: value),
-                    atLimit && value,
-                  ),
+            onChanged:
+                atLimit && !config.showLibrary
+                    ? null
+                    : (value) => _updateTabConfig(
+                      config.copyWith(showLibrary: value),
+                      atLimit && value,
+                    ),
           ),
           const Divider(height: 1),
           SwitchListTile(
             secondary: const Icon(Icons.queue_music_outlined),
             title: const Text('歌单'),
             value: config.showPlaylists,
-            onChanged: atLimit && !config.showPlaylists
-                ? null
-                : (value) => _updateTabConfig(
-                    config.copyWith(showPlaylists: value),
-                    atLimit && value,
-                  ),
+            onChanged:
+                atLimit && !config.showPlaylists
+                    ? null
+                    : (value) => _updateTabConfig(
+                      config.copyWith(showPlaylists: value),
+                      atLimit && value,
+                    ),
           ),
           if (activePlugins.isNotEmpty) ...[
             const Divider(height: 1),
@@ -380,30 +385,31 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           title: Text(plugin.displayName),
           subtitle: plugin.version != null ? Text('v${plugin.version}') : null,
           value: isEnabled,
-          onChanged: atLimit && !isEnabled
-              ? null
-              : (value) {
-                  final newPluginTabs = List<PluginTabEntry>.from(
-                    config.pluginTabs,
-                  );
-                  if (value) {
-                    newPluginTabs.add(
-                      PluginTabEntry(
-                        pluginId: plugin.id,
-                        entryPath: plugin.entryPath!,
-                        name: plugin.displayName,
-                      ),
+          onChanged:
+              atLimit && !isEnabled
+                  ? null
+                  : (value) {
+                    final newPluginTabs = List<PluginTabEntry>.from(
+                      config.pluginTabs,
                     );
-                  } else {
-                    newPluginTabs.removeWhere(
-                      (pt) => pt.entryPath == plugin.entryPath,
+                    if (value) {
+                      newPluginTabs.add(
+                        PluginTabEntry(
+                          pluginId: plugin.id,
+                          entryPath: plugin.entryPath!,
+                          name: plugin.displayName,
+                        ),
+                      );
+                    } else {
+                      newPluginTabs.removeWhere(
+                        (pt) => pt.entryPath == plugin.entryPath,
+                      );
+                    }
+                    _updateTabConfig(
+                      config.copyWith(pluginTabs: newPluginTabs),
+                      atLimit && value,
                     );
-                  }
-                  _updateTabConfig(
-                    config.copyWith(pluginTabs: newPluginTabs),
-                    atLimit && value,
-                  );
-                },
+                  },
         ),
       );
     }
@@ -446,29 +452,32 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             onTap: () async {
               final picked = await showDialog<String>(
                 context: context,
-                builder: (ctx) => SimpleDialog(
-                  title: const Text('选择音质'),
-                  children: [
-                    RadioGroup<String>(
-                      groupValue: quality,
-                      onChanged: (v) => Navigator.pop(ctx, v),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: labels.entries
-                            .map(
-                              (e) => RadioListTile<String>(
-                                title: Text(e.value),
-                                subtitle: e.key == 'original'
-                                    ? const Text('不转码，使用文件原始码率')
-                                    : const Text('转码为 MP3，适合弱网环境'),
-                                value: e.key,
-                              ),
-                            )
-                            .toList(),
-                      ),
+                builder:
+                    (ctx) => SimpleDialog(
+                      title: const Text('选择音质'),
+                      children: [
+                        RadioGroup<String>(
+                          groupValue: quality,
+                          onChanged: (v) => Navigator.pop(ctx, v),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children:
+                                labels.entries
+                                    .map(
+                                      (e) => RadioListTile<String>(
+                                        title: Text(e.value),
+                                        subtitle:
+                                            e.key == 'original'
+                                                ? const Text('不转码，使用文件原始码率')
+                                                : const Text('转码为 MP3，适合弱网环境'),
+                                        value: e.key,
+                                      ),
+                                    )
+                                    .toList(),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
               );
               if (picked == null || picked == quality) return;
               try {
@@ -635,13 +644,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               title: Text(
                 ref.watch(runModeProvider) == RunMode.local ? '本地模式' : '服务器',
               ),
-              subtitle: ref.watch(runModeProvider) == RunMode.local
-                  ? Text(
-                      ref.watch(localMusicDirProvider) ?? '未选择音乐目录',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    )
-                  : _buildApiUrlSubtitle(),
+              subtitle:
+                  ref.watch(runModeProvider) == RunMode.local
+                      ? Text(
+                        ref.watch(localMusicDirProvider) ?? '未选择音乐目录',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      )
+                      : _buildApiUrlSubtitle(),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push(AppRoutes.servers),
             ),
@@ -755,23 +765,24 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Future<void> _showLogoutDialog() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('确认退出'),
-        content: const Text('确定要退出当前账户吗？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('确认退出'),
+            content: const Text('确定要退出当前账户吗？'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('取消'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                ),
+                child: const Text('确认退出'),
+              ),
+            ],
           ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('确认退出'),
-          ),
-        ],
-      ),
     );
 
     if (confirmed == true) {
@@ -786,48 +797,53 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       data: (check) {
         final currentVersion = _formatServerUpgradeVersion(check);
         final hasUpdate = check.hasUpdate && check.availableUpdates.isNotEmpty;
-        final subtitle = hasUpdate
-            ? '发现新版本: ${check.availableUpdates.first.version}'
-            : '当前版本: $currentVersion (已是最新)';
+        final subtitle =
+            hasUpdate
+                ? '发现新版本: ${check.availableUpdates.first.version}'
+                : '当前版本: $currentVersion (已是最新)';
 
         return ListTile(
           leading: const Icon(Icons.dns),
           title: const Text('检查服务端更新'),
           subtitle: Text(
             subtitle,
-            style: hasUpdate
-                ? TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  )
-                : null,
+            style:
+                hasUpdate
+                    ? TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    )
+                    : null,
           ),
-          trailing: hasUpdate
-              ? Icon(
-                  Icons.chevron_right,
-                  color: Theme.of(context).colorScheme.primary,
-                )
-              : const Icon(Icons.chevron_right),
+          trailing:
+              hasUpdate
+                  ? Icon(
+                    Icons.chevron_right,
+                    color: Theme.of(context).colorScheme.primary,
+                  )
+                  : const Icon(Icons.chevron_right),
           onTap: () => UpgradeDialog.show(context),
         );
       },
-      loading: () => const ListTile(
-        leading: Icon(Icons.dns),
-        title: Text('检查服务端更新'),
-        subtitle: Text('正在检查更新...'),
-        trailing: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      ),
-      error: (_, _) => ListTile(
-        leading: const Icon(Icons.dns),
-        title: const Text('检查服务端更新'),
-        subtitle: const Text('检查更新失败'),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => UpgradeDialog.show(context),
-      ),
+      loading:
+          () => const ListTile(
+            leading: Icon(Icons.dns),
+            title: Text('检查服务端更新'),
+            subtitle: Text('正在检查更新...'),
+            trailing: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+      error:
+          (_, _) => ListTile(
+            leading: const Icon(Icons.dns),
+            title: const Text('检查服务端更新'),
+            subtitle: const Text('检查更新失败'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => UpgradeDialog.show(context),
+          ),
     );
   }
 
@@ -859,23 +875,24 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         '所有切片走本机带宽,注意流量成本',
       ),
       value: enabled,
-      onChanged: enabledAsync.isLoading
-          ? null
-          : (value) async {
-              try {
-                await ref
-                    .read(hlsProxyEnabledProvider.notifier)
-                    .setValue(value);
-                if (!mounted) return;
-                ResponsiveSnackBar.show(
-                  context,
-                  message: value ? '已开启 HLS 代理' : '已关闭 HLS 代理',
-                );
-              } catch (e) {
-                if (!mounted) return;
-                ResponsiveSnackBar.showError(context, message: '保存失败: $e');
-              }
-            },
+      onChanged:
+          enabledAsync.isLoading
+              ? null
+              : (value) async {
+                try {
+                  await ref
+                      .read(hlsProxyEnabledProvider.notifier)
+                      .setValue(value);
+                  if (!mounted) return;
+                  ResponsiveSnackBar.show(
+                    context,
+                    message: value ? '已开启 HLS 代理' : '已关闭 HLS 代理',
+                  );
+                } catch (e) {
+                  if (!mounted) return;
+                  ResponsiveSnackBar.showError(context, message: '保存失败: $e');
+                }
+              },
     );
   }
 
@@ -893,44 +910,47 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         final controller = TextEditingController(text: proxy);
         final result = await showDialog<String>(
           context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('HTTP 代理'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('设置全局 HTTP 代理，所有后端外发请求（插件下载、升级检查等）将通过此代理转发。留空则直连。'),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: controller,
-                  decoration: const InputDecoration(
-                    labelText: '代理地址',
-                    hintText: 'http://192.168.1.1:7890',
-                    helperText: '支持 HTTP/HTTPS/SOCKS5 代理',
-                    helperMaxLines: 2,
-                    border: OutlineInputBorder(),
+          builder:
+              (ctx) => AlertDialog(
+                title: const Text('HTTP 代理'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '设置全局 HTTP 代理，所有后端外发请求（插件下载、升级检查等）将通过此代理转发。留空则直连。',
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: controller,
+                      decoration: const InputDecoration(
+                        labelText: '代理地址',
+                        hintText: 'http://192.168.1.1:7890',
+                        helperText: '支持 HTTP/HTTPS/SOCKS5 代理',
+                        helperMaxLines: 2,
+                        border: OutlineInputBorder(),
+                      ),
+                      autofocus: true,
+                      onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('取消'),
                   ),
-                  autofocus: true,
-                  onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('取消'),
+                  if (proxy.isNotEmpty)
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, ''),
+                      child: const Text('清除'),
+                    ),
+                  FilledButton(
+                    onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+                    child: const Text('保存'),
+                  ),
+                ],
               ),
-              if (proxy.isNotEmpty)
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx, ''),
-                  child: const Text('清除'),
-                ),
-              FilledButton(
-                onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-                child: const Text('保存'),
-              ),
-            ],
-          ),
         );
         if (result == null || result == proxy) return;
         try {
@@ -966,26 +986,28 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       onTap: () async {
         final picked = await showDialog<String>(
           context: context,
-          builder: (ctx) => SimpleDialog(
-            title: const Text('选择日志等级'),
-            children: [
-              RadioGroup<String>(
-                groupValue: level,
-                onChanged: (v) => Navigator.pop(ctx, v),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: labels.entries
-                      .map(
-                        (e) => RadioListTile<String>(
-                          title: Text(e.value),
-                          value: e.key,
-                        ),
-                      )
-                      .toList(),
-                ),
+          builder:
+              (ctx) => SimpleDialog(
+                title: const Text('选择日志等级'),
+                children: [
+                  RadioGroup<String>(
+                    groupValue: level,
+                    onChanged: (v) => Navigator.pop(ctx, v),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children:
+                          labels.entries
+                              .map(
+                                (e) => RadioListTile<String>(
+                                  title: Text(e.value),
+                                  value: e.key,
+                                ),
+                              )
+                              .toList(),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
         );
         if (picked == null || picked == level) return;
         try {
