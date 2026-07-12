@@ -1,0 +1,25 @@
+BASE=34029e844d3e91715d66938abc2ca3dcadf9191e
+HEAD=67fe52657ecbeb5f6296aa66f435c1c01678b17e
+CHECKOUT=02ac4d7fcdcafe093fbd34f514256c12eed1d026
+COUNT=20
+OK lib/features/home/presentation/home_page.dart
+OK lib/features/library/presentation/mobile_library_page.dart
+OK lib/features/library/presentation/providers/songs_provider.dart
+OK lib/features/library/presentation/widgets/song_filter_bar.dart
+OK lib/features/library/presentation/widgets/song_list_tile.dart
+OK lib/features/player/presentation/providers/player_provider.dart
+OK lib/features/player/presentation/queue_page.dart
+OK lib/features/player/presentation/utils/player_song_actions.dart
+OK lib/features/player/presentation/widgets/mini_player.dart
+OK lib/features/player/presentation/widgets/mobile_player_gesture_host.dart
+OK lib/features/player/presentation/widgets/playlist_drawer.dart
+OK lib/features/playlist/presentation/playlist_detail_page.dart
+OK lib/features/playlist/presentation/playlists_page.dart
+OK lib/features/settings/presentation/servers_page.dart
+OK lib/features/settings/presentation/tab_config_page.dart
+OK lib/main.dart
+OK lib/shared/utils/responsive_snackbar.dart
+OK lib/shared/widgets/loading_indicator.dart
+OK test/features/library/presentation/providers/songs_list_state_test.dart
+OK test/features/player/presentation/widgets/mini_player_test.dart
+FAILED=0
