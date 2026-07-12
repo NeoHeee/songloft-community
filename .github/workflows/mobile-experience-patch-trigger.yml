@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 jobs:
-  validate-and-commit:
+  diagnose-reorder-migration:
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 35
@@ -24,7 +24,7 @@ jobs:
         with:
           channel: stable
           cache: true
-      - name: Apply corrected implementation
+      - name: Apply implementation and reorder migration
         shell: bash
         run: |
           python3 <<'PY'
@@ -59,8 +59,7 @@ jobs:
               path.write_text(text, encoding='utf-8')
 
           provider_path = Path('lib/features/player/presentation/providers/player_provider.dart')
-          provider = provider_path.read_text(encoding='utf-8')
-          provider = provider.replace(
+          provider = provider_path.read_text(encoding='utf-8').replace(
               'final insertIndex = newIndex > oldIndex ? newIndex - 1 : newIndex;',
               'final insertIndex = newIndex;',
               1,
@@ -68,8 +67,7 @@ jobs:
           provider_path.write_text(provider, encoding='utf-8')
 
           loading_path = Path('lib/shared/widgets/loading_indicator.dart')
-          loading = loading_path.read_text(encoding='utf-8')
-          loading = loading.replace(
+          loading = loading_path.read_text(encoding='utf-8').replace(
               'final spacing = AppSpacing.md;',
               'const spacing = AppSpacing.md;',
               1,
@@ -84,16 +82,27 @@ jobs:
           mapfile -t files < <(git diff --name-only --diff-filter=ACM -- 'lib/**/*.dart' 'test/**/*.dart')
           dart format "${files[@]}"
       - name: Run library tests
-        run: flutter test test/features/library
-      - name: Run player widget tests
-        run: flutter test test/features/player/presentation/widgets
-      - name: Analyze
-        run: flutter analyze
-      - name: Commit implementation
+        id: library
+        continue-on-error: true
         shell: bash
         run: |
+          set -o pipefail
+          flutter test test/features/library 2>&1 | tee /tmp/reorder-library.log
+      - name: Publish reorder diagnostic
+        if: steps.library.outcome == 'failure'
+        shell: bash
+        run: |
+          git reset --hard HEAD
+          {
+            echo "REORDER_DIAGNOSTIC_RUN=${{ github.run_id }}"
+            cat /tmp/reorder-library.log
+          } > MOBILE_EXPERIENCE_REORDER_ERROR.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add lib test android .github/workflows/ui-redesign-check.yml
-          git commit -m 'feat(mobile): complete second-stage experience polish'
+          git add MOBILE_EXPERIENCE_REORDER_ERROR.txt
+          git commit -m 'chore: capture reorder migration test error'
           git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          exit 1
+      - name: Analyze migration
+        if: steps.library.outcome == 'success'
+        run: flutter analyze
