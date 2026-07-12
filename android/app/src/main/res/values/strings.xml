@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Songloft Community</string>
+    <string name="launcher_name">Songloft+</string>
+    <string name="media_source_name">Songloft</string>
     <string name="app_subtitle">社区增强版音乐播放器</string>
-    <string name="media_notification_channel">Songloft Community 播放控制</string>
+    <string name="media_notification_channel">Songloft 播放控制</string>
 </resources>

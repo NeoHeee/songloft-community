@@ -1,7 +1,7 @@
 name: songloft_flutter
 description: Songloft Community - 社区增强版音乐播放器
 publish_to: 'none'
-version: 1.0.0-community.2+2
+version: 1.0.0-community.2+3
 license: Apache-2.0
 
 environment:
