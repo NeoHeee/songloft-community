@@ -23,54 +23,90 @@ dependencies:
   just_audio_platform_interface: any  # SongloftMediaKitPlayer 实现 AudioPlayerPlatform
   just_audio_media_kit: ^2.0.0  # Windows/Linux 平台的 just_audio 后端（libmpv）
   media_kit: any  # EQ 均衡器需要直接访问 NativePlayer 设置 mpv 音频滤镜
-  media_kit_libs_windows_audio: any
-  media_kit_libs_linux: any
-  audio_service: ^0.18.18
-  audio_service_mpris: ^0.2.0
-  audio_session: ^0.1.25
-  rxdart: ^0.28.0
-  # 本地存储
-  shared_preferences: ^2.5.3
-  flutter_secure_storage: ^9.2.4
-  # 文件选择
-  file_picker: ^10.3.10
-  # 图片缓存
-  cached_network_image: ^3.4.1
-  # URL 启动
-  url_launcher: ^6.3.2
+  media_kit_libs_windows_audio: any  # Windows 平台 media_kit 音频库
+  audio_service: ^0.18.17
+  audio_service_mpris: ^0.2.1  # Linux MPRIS 媒体键支持
+  audio_session: ^0.2.3
+  smtc_windows: ^1.1.0  # Windows 系统媒体传输控件
   # 权限管理
   permission_handler: ^12.0.1
-  # 桌面窗口
-  window_manager: ^0.5.1
-  tray_manager: ^0.5.2
-  windows_single_instance: ^1.0.1
-  # 其他
-  package_info_plus: ^8.3.1
-  path_provider: ^2.1.5
-  path: ^1.9.1
-  crypto: ^3.0.6
-  uuid: ^4.5.1
-  mime: ^2.0.0
-  flutter_localizations:
-    sdk: flutter
+  # 本地存储
+  shared_preferences: ^2.3.4
+  path_provider: ^2.1.0
+  # 图片缓存
+  cached_network_image: ^3.4.1
+  # 颜色提取
+  palette_generator: ^0.3.3+4
+  # UI
+  # 文件选择
+  file_picker: ^10.3.10
+  # 工具
   intl: ^0.20.2
+  url_launcher: ^6.3.1
+  flutter_markdown: ^0.7.6
+  # WebView（用于应用内加载插件页面）
+  flutter_inappwebview: ^6.1.5
+  web: ^1.1.1
+  json_annotation: ^4.9.0
+  # 系统音量控制
+  volume_controller: ^2.0.7
+  # 窗口和系统托盘
+  window_manager: ^0.4.3
+  tray_manager: ^0.2.4
+  windows_single_instance: any
+  flutter_svg: ^2.3.0
+  # HMAC-SHA256 签名（Tracely 监控 SDK）
+  crypto: ^3.0.6
+  # DLNA 投屏
+  dlna_dart: ^0.1.1
+
+dependency_overrides:
+  # smtc_windows 1.1.0 的 Rust codegen 使用 flutter_rust_bridge 2.11.1 编译，
+  # 但 ^2.11.1 约束允许解析到 2.12.0，导致 codegen/runtime 版本不匹配。
+  flutter_rust_bridge: 2.11.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  build_runner: ^2.4.15
-  riverpod_generator: ^4.0.0
-  custom_lint: ^0.8.0
-  riverpod_lint: ^3.0.0
+  riverpod_generator: ^4.0.0+1
+  build_runner: ^2.4.14
+  json_serializable: ^6.9.3
+  custom_lint: ^0.8.1
+  riverpod_lint: ^3.1.0
+  # Android launcher icon 生成器（其他平台仍由 scripts/generate-icons.sh 直接从 SVG 渲染）
+  flutter_launcher_icons: ^0.14.4
+
+# 接管 Android / iOS / macOS 原生图标。
+# Windows ICO（多分辨率 16-256）和 Web PWA 由 scripts/generate-icons.sh 直接从 SVG 渲染，
+# 这里 generate=false 避免被覆盖为单尺寸或丢失 maskable / 修改 manifest 颜色。
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  macos:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
+  windows:
+    generate: false
+  web:
+    generate: false
+  image_path: "assets/icons/app_icon.png"
+  min_sdk_android: 21
+  # Adaptive icon (Android 8.0+)：白底 + 与主图相同的前景，自带 16% inset
+  adaptive_icon_background: "#6D3DE7"
+  adaptive_icon_foreground: "assets/icons/app_icon_foreground.png"
+  # Themed icon (Android 13+)：单色版本，跟随系统壁纸主题
+  adaptive_icon_monochrome: "assets/icons/app_icon_monochrome.png"
 
 flutter:
   uses-material-design: true
   assets:
-    - assets/images/
-    - assets/images/icon/
-    - assets/images/branding/
-    - assets/images/themes/
-    - assets/images/tv/
-    - assets/audio/
-    - assets/licenses/
+    - assets/icons/app_icon.png
+    - assets/theme_catalog/catalog.json
+    - assets/theme_catalog/themes/
+    - windows/runner/resources/app_icon.ico
+  fonts:
+    - family: NotoSansSC
+      fonts:
+        - asset: fonts/NotoSansSC-Regular.otf
