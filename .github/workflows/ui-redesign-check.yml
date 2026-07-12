@@ -88,6 +88,8 @@ jobs:
         run: flutter test test/core/utils/cover_cache_test.dart
       - name: Run cover image widget tests
         run: flutter test test/shared/widgets/cover_image_test.dart
+      - name: Run library selection tests
+        run: flutter test test/features/library
       - name: Analyze
         run: flutter analyze
 
