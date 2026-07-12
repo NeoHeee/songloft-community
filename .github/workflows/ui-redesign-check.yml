@@ -140,6 +140,7 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       github.event_name == 'pull_request' ||
+      github.ref == 'refs/heads/main' ||
       contains(github.event.head_commit.message, '[platform-build]')
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -179,6 +180,7 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       github.event_name == 'pull_request' ||
+      github.ref == 'refs/heads/main' ||
       contains(github.event.head_commit.message, '[platform-build]')
     runs-on: windows-latest
     timeout-minutes: 60
@@ -234,4 +236,4 @@ jobs:
           if-no-files-found: error
 
 # verifies theme packs, trusted catalog, sharing and formatted release sources
-# second-stage release candidate validates player retry, drag selection, undo, skeletons, system branding and edge-to-edge integration
+# main pushes validate Android, Web and Windows release candidates before repository rename
