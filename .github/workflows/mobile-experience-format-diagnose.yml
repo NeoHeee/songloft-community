@@ -1,0 +1,69 @@
+name: Diagnose Second-Stage Formatting
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/mobile-experience-format-diagnose.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Check every changed Dart file
+        shell: bash
+        run: |
+          base_sha='${{ github.event.pull_request.base.sha }}'
+          head_sha='${{ github.event.pull_request.head.sha }}'
+          : > /tmp/format-diagnostic.txt
+          echo "BASE=$base_sha" >> /tmp/format-diagnostic.txt
+          echo "HEAD=$head_sha" >> /tmp/format-diagnostic.txt
+          echo "CHECKOUT=$(git rev-parse HEAD)" >> /tmp/format-diagnostic.txt
+          mapfile -t files < <(
+            git diff --name-only --diff-filter=ACMRT "$base_sha" "$head_sha" -- \
+              | grep -E '^(lib|test)/.*\.dart$' \
+              || true
+          )
+          echo "COUNT=${#files[@]}" >> /tmp/format-diagnostic.txt
+          failed=0
+          for file in "${files[@]}"; do
+            if [[ ! -f "$file" ]]; then
+              echo "MISSING $file" >> /tmp/format-diagnostic.txt
+              failed=1
+              continue
+            fi
+            if dart format --output=none --set-exit-if-changed "$file" >/tmp/format-one.log 2>&1; then
+              echo "OK $file" >> /tmp/format-diagnostic.txt
+            else
+              echo "FAIL $file" >> /tmp/format-diagnostic.txt
+              cat /tmp/format-one.log >> /tmp/format-diagnostic.txt
+              failed=1
+            fi
+          done
+          echo "FAILED=$failed" >> /tmp/format-diagnostic.txt
+      - name: Publish diagnostic to head branch
+        shell: bash
+        run: |
+          branch='${{ github.event.pull_request.head.ref }}'
+          git fetch origin "$branch"
+          git checkout -B "$branch" "origin/$branch"
+          cp /tmp/format-diagnostic.txt MOBILE_EXPERIENCE_FORMAT_DIAGNOSTIC.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add MOBILE_EXPERIENCE_FORMAT_DIAGNOSTIC.txt
+          git commit -m 'chore: capture strict format diagnostic'
+          git push origin HEAD:"$branch"
