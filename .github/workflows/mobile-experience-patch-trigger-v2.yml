@@ -170,8 +170,8 @@ jobs:
               );
 
               await tester.tap(find.text('删除'));
-              await tester.pumpAndSettle();
-              await tester.tap(find.byType(SnackBarAction));
+              await tester.pump(const Duration(milliseconds: 300));
+              await tester.tap(find.text('撤销'));
               await tester.pumpAndSettle();
               await tester.pump();
 
@@ -201,7 +201,7 @@ jobs:
               );
 
               await tester.tap(find.text('删除'));
-              await tester.pumpAndSettle();
+              await tester.pump(const Duration(milliseconds: 300));
               await tester.pump(const Duration(seconds: 2));
               await tester.pumpAndSettle();
               await tester.pump();
