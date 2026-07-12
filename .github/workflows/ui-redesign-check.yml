@@ -19,6 +19,7 @@ on:
   pull_request:
     branches:
       - main
+      - mobile-third-round
     paths:
       - 'lib/**'
       - 'test/**'
