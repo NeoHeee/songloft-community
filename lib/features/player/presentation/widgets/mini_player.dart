@@ -98,13 +98,15 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
       onHorizontalDragEnd: _handleHorizontalDragEnd,
       onLongPress: _openQueue,
       child: Padding(
-        padding: _isCompact
-            ? const EdgeInsets.fromLTRB(6, 3, 6, 4)
-            : const EdgeInsets.fromLTRB(8, 6, 8, 8),
+        padding:
+            _isCompact
+                ? const EdgeInsets.fromLTRB(6, 3, 6, 4)
+                : const EdgeInsets.fromLTRB(8, 6, 8, 8),
         child: Material(
-          color: _isCompact
-              ? colorScheme.surfaceContainer
-              : colorScheme.surfaceContainerHigh,
+          color:
+              _isCompact
+                  ? colorScheme.surfaceContainer
+                  : colorScheme.surfaceContainerHigh,
           elevation: _isCompact ? 3 : 10,
           shadowColor: Colors.black.withValues(alpha: _isCompact ? 0.12 : 0.22),
           borderRadius: BorderRadius.circular(
@@ -123,9 +125,10 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
                   children: [
                     Expanded(
                       child: Padding(
-                        padding: _isCompact
-                            ? const EdgeInsets.fromLTRB(7, 5, 6, 3)
-                            : const EdgeInsets.fromLTRB(10, 9, 8, 6),
+                        padding:
+                            _isCompact
+                                ? const EdgeInsets.fromLTRB(7, 5, 6, 3)
+                                : const EdgeInsets.fromLTRB(10, 9, 8, 6),
                         child: Row(
                           children: [
                             _buildCover(song.coverUrl, coverSize),
@@ -137,14 +140,13 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
                                 children: [
                                   Text(
                                     song.title,
-                                    style:
-                                        (_isCompact
-                                                ? theme.textTheme.bodySmall
-                                                : theme.textTheme.bodyMedium)
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w700,
-                                              letterSpacing: -0.1,
-                                            ),
+                                    style: (_isCompact
+                                            ? theme.textTheme.bodySmall
+                                            : theme.textTheme.bodyMedium)
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: -0.1,
+                                        ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -169,18 +171,14 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
                                       Expanded(
                                         child: Text(
                                           song.artist ?? '未知艺术家',
-                                          style:
-                                              (_isCompact
-                                                      ? theme
-                                                            .textTheme
-                                                            .labelSmall
-                                                      : theme
-                                                            .textTheme
-                                                            .bodySmall)
-                                                  ?.copyWith(
-                                                    color: colorScheme
+                                          style: (_isCompact
+                                                  ? theme.textTheme.labelSmall
+                                                  : theme.textTheme.bodySmall)
+                                              ?.copyWith(
+                                                color:
+                                                    colorScheme
                                                         .onSurfaceVariant,
-                                                  ),
+                                              ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -204,9 +202,8 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> {
                             ),
                             if (!_isCompact)
                               IconButton(
-                                onPressed: state.hasNext
-                                    ? notifier.playNext
-                                    : null,
+                                onPressed:
+                                    state.hasNext ? notifier.playNext : null,
                                 tooltip: '下一首',
                                 icon: const Icon(Icons.skip_next_rounded),
                                 visualDensity: VisualDensity.compact,
