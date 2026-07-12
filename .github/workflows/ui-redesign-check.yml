@@ -38,7 +38,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ui-check-${{ github.ref }}
@@ -60,7 +60,7 @@ jobs:
           cache: true
       - name: Install dependencies
         run: flutter pub get
-      - name: Format changed Dart sources for merge-ref synchronization
+      - name: Verify changed Dart formatting
         shell: bash
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
@@ -80,45 +80,19 @@ jobs:
               || true
           )
 
-          printf 'Files selected for formatting:\n' | tee format-diagnostic.txt
-          printf '%s\n' "${dart_files[@]}" | tee -a format-diagnostic.txt
-
-          if [[ ${#dart_files[@]} -gt 0 ]]; then
-            dart format "${dart_files[@]}"
-          fi
-
-          printf '\nFiles changed by dart format on the PR merge ref:\n' | tee -a format-diagnostic.txt
-          git diff --name-only -- lib test | tee -a format-diagnostic.txt
-      - name: Upload formatted merge-ref sources
-        uses: actions/upload-artifact@v4
-        with:
-          name: eighth-round-formatted-merge-sources
-          path: |
-            lib
-            test
-            format-diagnostic.txt
-          retention-days: 3
-          if-no-files-found: error
-      - name: Synchronize merge-ref formatting to PR branch
-        if: github.event_name == 'pull_request'
-        shell: bash
-        run: |
-          mapfile -t formatted_files < <(git diff --name-only -- lib test)
-          if [[ ${#formatted_files[@]} -eq 0 ]]; then
-            echo 'No merge-ref formatting corrections to synchronize.'
+          if [[ ${#dart_files[@]} -eq 0 ]]; then
+            echo "No changed Dart files to format-check."
             exit 0
           fi
 
-          tar -czf /tmp/formatted-dart-sources.tar.gz "${formatted_files[@]}"
-          git reset --hard
-          git checkout -B "${{ github.head_ref }}" "origin/${{ github.head_ref }}"
-          tar -xzf /tmp/formatted-dart-sources.tar.gz
-
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add "${formatted_files[@]}"
-          git commit -m 'style(nav): synchronize merge-ref Dart formatting'
-          git push origin HEAD:"${{ github.head_ref }}"
+          failed=0
+          for file in "${dart_files[@]}"; do
+            echo "Checking $file"
+            if ! dart format --output=none --set-exit-if-changed "$file"; then
+              failed=1
+            fi
+          done
+          exit "$failed"
       - name: Run theme system tests
         run: flutter test test/core/theme
       - name: Run network recovery tests
@@ -241,4 +215,4 @@ jobs:
           if-no-files-found: error
 
 # verifies theme packs, trusted catalog, sharing and formatted release sources
-# temporary merge-ref synchronization for eighth-round mobile navigation formatting
+# eighth round validates unified mobile back behavior across shell and pages
