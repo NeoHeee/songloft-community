@@ -79,6 +79,10 @@ jobs:
           if [[ ${#dart_files[@]} -gt 0 ]]; then
             printf 'Formatting %s\n' "${dart_files[@]}"
             dart format "${dart_files[@]}"
+            mkdir -p /tmp/formatted-dart-sources
+            for file in "${dart_files[@]}"; do
+              cp --parents "$file" /tmp/formatted-dart-sources
+            done
           fi
 
           git diff -- '*.dart' > /tmp/dart-format.patch
@@ -93,6 +97,13 @@ jobs:
         with:
           name: dart-format-patch
           path: /tmp/dart-format.patch
+          if-no-files-found: error
+          retention-days: 3
+      - name: Upload formatted Dart sources
+        uses: actions/upload-artifact@v4
+        with:
+          name: formatted-dart-sources
+          path: /tmp/formatted-dart-sources
           if-no-files-found: error
           retention-days: 3
       - name: Run theme system tests
