@@ -161,9 +161,7 @@ class SongFilterBar extends ConsumerWidget {
                       TextButton(
                         onPressed: () {
                           HapticFeedback.selectionClick();
-                          ref
-                              .read(songsListProvider.notifier)
-                              .clearSelection();
+                          ref.read(songsListProvider.notifier).clearSelection();
                         },
                         child: const Text('清空'),
                       ),
@@ -238,8 +236,8 @@ class SongFilterBar extends ConsumerWidget {
                           foregroundColor: colorScheme.onErrorContainer,
                           disabledBackgroundColor:
                               colorScheme.surfaceContainerHighest,
-                          disabledForegroundColor:
-                              colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                          disabledForegroundColor: colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.5),
                         ),
                       ),
                     ),
