@@ -31,13 +31,22 @@ void main() {
       expect(isUnavailableStatus(504), isTrue);
     });
 
-    test('normal HTTP errors still prove the server is reachable', () {
+    test('normal HTTP and transform errors still prove reachability', () {
       expect(
         isConnectionFailure(
           DioException(
             requestOptions: request,
             type: DioExceptionType.badResponse,
             response: Response<void>(requestOptions: request, statusCode: 401),
+          ),
+        ),
+        isFalse,
+      );
+      expect(
+        isConnectionFailure(
+          DioException(
+            requestOptions: request,
+            type: DioExceptionType.transformTimeout,
           ),
         ),
         isFalse,
