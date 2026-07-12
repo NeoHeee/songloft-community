@@ -1,14 +1,16 @@
 name: Diagnose Library Tests
 
 on:
-  push:
+  pull_request:
     branches:
-      - mobile-experience-completion
+      - main
     paths:
       - '.github/workflows/library-test-diagnostic.yml'
+      - 'lib/features/library/**'
+      - 'test/features/library/**'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   diagnose:
@@ -16,9 +18,6 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: mobile-experience-completion
-          fetch-depth: 0
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.41.5'
@@ -34,14 +33,11 @@ jobs:
           set -e
           echo "EXIT=$status" >> /tmp/library-test.log
           cat /tmp/library-test.log
-      - name: Persist temporary diagnostic log
+      - name: Upload library test log
         if: always()
-        shell: bash
-        run: |
-          mkdir -p diagnostics
-          cp /tmp/library-test.log diagnostics/library-test.log
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add diagnostics/library-test.log
-          git commit -m 'chore: capture library test diagnostic' || exit 0
-          git push origin HEAD:mobile-experience-completion
+        uses: actions/upload-artifact@v4
+        with:
+          name: library-test-diagnostic
+          path: /tmp/library-test.log
+          retention-days: 2
+          if-no-files-found: error
