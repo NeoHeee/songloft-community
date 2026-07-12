@@ -44,3 +44,4 @@ jobs:
           git push origin HEAD:mobile-eighth-round
 
 # Synchronize the stacked PR so the bootstrap workflow on its base can run.
+# Diagnostic rerun requested after the first exact-match failure.
