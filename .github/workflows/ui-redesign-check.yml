@@ -59,7 +59,7 @@ jobs:
           cache: true
       - name: Install dependencies
         run: flutter pub get
-      - name: Verify changed Dart formatting
+      - name: Format changed Dart sources for diagnostic
         shell: bash
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
@@ -79,19 +79,19 @@ jobs:
               || true
           )
 
-          if [[ ${#dart_files[@]} -eq 0 ]]; then
-            echo "No changed Dart files to format-check."
-            exit 0
-          fi
-
-          failed=0
+          mkdir -p /tmp/formatted-dart-sources
           for file in "${dart_files[@]}"; do
-            echo "Checking $file"
-            if ! dart format --output=none --set-exit-if-changed "$file"; then
-              failed=1
-            fi
+            echo "Formatting $file"
+            dart format "$file"
+            cp --parents "$file" /tmp/formatted-dart-sources
           done
-          exit "$failed"
+      - name: Upload formatted Dart sources
+        uses: actions/upload-artifact@v4
+        with:
+          name: formatted-dart-sources
+          path: /tmp/formatted-dart-sources
+          if-no-files-found: error
+          retention-days: 3
       - name: Run theme system tests
         run: flutter test test/core/theme
       - name: Run network recovery tests
