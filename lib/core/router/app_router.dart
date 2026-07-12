@@ -10,7 +10,7 @@ import '../../features/home/presentation/home_page.dart';
 import '../../features/home/presentation/plugin_webview_page.dart';
 import '../../features/home/presentation/tv_home_page.dart';
 import '../../features/jsplugin/presentation/widgets/plugin_registry.dart';
-import '../../features/library/presentation/library_page.dart';
+import '../../features/library/presentation/adaptive_library_page.dart';
 import '../../features/playlist/presentation/playlist_detail_page.dart';
 import '../../features/playlist/presentation/playlists_page.dart';
 import '../../features/settings/presentation/duplicate_check_page.dart';
@@ -144,7 +144,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                 pageBuilder:
                     (context, state) => NoTransitionPage(
                       key: state.pageKey,
-                      child: const LibraryPage(),
+                      child: const AdaptiveLibraryPage(),
                     ),
               ),
             ],
