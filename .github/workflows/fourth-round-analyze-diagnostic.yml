@@ -1,0 +1,44 @@
+name: Fourth Round Analyze Diagnostic
+
+on:
+  pull_request:
+    branches:
+      - mobile-third-round
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - '.github/workflows/fourth-round-analyze-diagnostic.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  analyze-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Capture analyzer output
+        id: analyze
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter analyze 2>&1 | tee /tmp/flutter-analyze.log
+      - name: Upload analyzer output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fourth-round-analyze-log
+          path: /tmp/flutter-analyze.log
+          if-no-files-found: error
+          retention-days: 3
+      - name: Fail when analyze failed
+        if: steps.analyze.outcome == 'failure'
+        run: exit 1
