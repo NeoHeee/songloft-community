@@ -94,9 +94,8 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
 
     final isPluginTab = location.startsWith('/plugin-tab/');
     final isSettings = location.startsWith('/settings');
-    final currentEntryPath = isPluginTab
-        ? location.replaceFirst('/plugin-tab/', '')
-        : null;
+    final currentEntryPath =
+        isPluginTab ? location.replaceFirst('/plugin-tab/', '') : null;
 
     // 动态插件标签共用一个 StatefulShellBranch，但每个访问过的插件页面
     // 都保留自己的 Widget/WebView 状态。配置中被移除的插件会立即释放。
@@ -104,10 +103,11 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
       _visitedPluginTabs.add(currentEntryPath);
     }
 
-    final validPluginPaths = activeDest.indexToRoute
-        .where((route) => route.startsWith('/plugin-tab/'))
-        .map((route) => route.replaceFirst('/plugin-tab/', ''))
-        .toSet();
+    final validPluginPaths =
+        activeDest.indexToRoute
+            .where((route) => route.startsWith('/plugin-tab/'))
+            .map((route) => route.replaceFirst('/plugin-tab/', ''))
+            .toSet();
     _visitedPluginTabs.retainAll(validPluginPaths);
 
     final Widget body;
