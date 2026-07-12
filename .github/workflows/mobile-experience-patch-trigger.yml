@@ -61,14 +61,71 @@ jobs:
           )
           exec(compile(script, 'mobile-experience-patch', 'exec'))
 
-          undo_test_path = Path('test/shared/utils/responsive_snackbar_test.dart')
-          undo_test = undo_test_path.read_text(encoding='utf-8')
-          undo_test = undo_test.replace(
-              'await tester.pump(const Duration(milliseconds: 150));',
-              'await tester.pump(const Duration(seconds: 2));',
-              1,
-          )
-          undo_test_path.write_text(undo_test, encoding='utf-8')
+          Path('test/shared/utils/responsive_snackbar_test.dart').write_text(r'''import 'package:flutter/material.dart';
+          import 'package:flutter_test/flutter_test.dart';
+          import 'package:songloft_flutter/shared/utils/responsive_snackbar.dart';
+
+          void main() {
+            testWidgets('点击撤销时回调 true', (tester) async {
+              bool? undone;
+              await tester.pumpWidget(
+                MaterialApp(
+                  home: Scaffold(
+                    body: Builder(
+                      builder:
+                          (context) => FilledButton(
+                            onPressed: () {
+                              ResponsiveSnackBar.showUndo(
+                                context,
+                                message: '已删除歌曲',
+                              ).then((value) => undone = value);
+                            },
+                            child: const Text('删除'),
+                          ),
+                    ),
+                  ),
+                ),
+              );
+
+              await tester.tap(find.text('删除'));
+              await tester.pump();
+              await tester.tap(find.text('撤销'));
+              await tester.pumpAndSettle();
+
+              expect(undone, isTrue);
+            });
+
+            testWidgets('提示自然关闭时回调 false', (tester) async {
+              bool? undone;
+              await tester.pumpWidget(
+                MaterialApp(
+                  home: Scaffold(
+                    body: Builder(
+                      builder:
+                          (context) => FilledButton(
+                            onPressed: () {
+                              ResponsiveSnackBar.showUndo(
+                                context,
+                                message: '已删除歌曲',
+                                duration: const Duration(milliseconds: 100),
+                              ).then((value) => undone = value);
+                            },
+                            child: const Text('删除'),
+                          ),
+                    ),
+                  ),
+                ),
+              );
+
+              await tester.tap(find.text('删除'));
+              await tester.pump();
+              await tester.pump(const Duration(seconds: 2));
+              await tester.pumpAndSettle();
+
+              expect(undone, isFalse);
+            });
+          }
+          ''', encoding='utf-8')
           PY
       - name: Publish patch diagnostic
         if: steps.patch.outcome == 'failure'
