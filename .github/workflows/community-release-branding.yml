@@ -1,0 +1,163 @@
+name: Brand Songloft Community Release
+
+on:
+  workflow_run:
+    workflows:
+      - Build and Release
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+concurrency:
+  group: community-release-branding-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  brand-release:
+    name: Normalize release title and package filenames
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout the built revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Resolve release and version
+        id: release
+        shell: bash
+        env:
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+
+          TAG=$(git tag --points-at "$HEAD_SHA" | grep '^v' | head -n 1 || true)
+          if [[ -n "$TAG" ]]; then
+            VERSION="${TAG#v}"
+            TITLE="Songloft Community ${TAG}"
+          else
+            TAG="dev"
+            VERSION="dev"
+            TITLE="Songloft Community Dev Build"
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "title=$TITLE" >> "$GITHUB_OUTPUT"
+
+      - name: Download existing release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+
+          for attempt in $(seq 1 12); do
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              gh release download "$TAG" --dir release-assets || true
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "Release $TAG was not found after waiting." >&2
+          exit 1
+
+      - name: Rename packages with Community identity
+        shell: bash
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p branded-assets
+
+          rename_asset() {
+            local source="$1"
+            local target="$2"
+            if [[ -f "release-assets/$source" ]]; then
+              cp "release-assets/$source" "branded-assets/$target"
+            fi
+          }
+
+          rename_asset "songloft-web-standalone.tar.gz" \
+            "Songloft-Community-Web-standalone-${VERSION}.tar.gz"
+          rename_asset "songloft-web-embedded.tar.gz" \
+            "Songloft-Community-Web-embedded-${VERSION}.tar.gz"
+
+          rename_asset "songloft-linux-x64.tar.gz" \
+            "Songloft-Community-Linux-x64-${VERSION}.tar.gz"
+          rename_asset "songloft-linux-x64.deb" \
+            "Songloft-Community-Linux-x64-${VERSION}.deb"
+          rename_asset "songloft-linux-x64.rpm" \
+            "Songloft-Community-Linux-x64-${VERSION}.rpm"
+          rename_asset "songloft-linux-x64.AppImage" \
+            "Songloft-Community-Linux-x64-${VERSION}.AppImage"
+
+          rename_asset "songloft-windows-x64.zip" \
+            "Songloft-Community-Windows-x64-${VERSION}.zip"
+          rename_asset "songloft-windows-x64.msix" \
+            "Songloft-Community-Windows-x64-${VERSION}.msix"
+
+          rename_asset "songloft-macos.zip" \
+            "Songloft-Community-macOS-Universal-${VERSION}.zip"
+          rename_asset "songloft-macos.dmg" \
+            "Songloft-Community-macOS-Universal-${VERSION}.dmg"
+
+          rename_asset "songloft-arm64-v8a.apk" \
+            "Songloft-Community-Android-arm64-v8a-${VERSION}.apk"
+          rename_asset "songloft-armeabi-v7a.apk" \
+            "Songloft-Community-Android-armeabi-v7a-${VERSION}.apk"
+          rename_asset "songloft-x86_64.apk" \
+            "Songloft-Community-Android-x86_64-${VERSION}.apk"
+
+          rename_asset "songloft-ios-nosign.ipa" \
+            "Songloft-Community-iOS-arm64-nosign-${VERSION}.ipa"
+
+          find release-assets -maxdepth 1 -type f \
+            ! -name 'songloft-web-standalone.tar.gz' \
+            ! -name 'songloft-web-embedded.tar.gz' \
+            ! -name 'songloft-linux-x64.tar.gz' \
+            ! -name 'songloft-linux-x64.deb' \
+            ! -name 'songloft-linux-x64.rpm' \
+            ! -name 'songloft-linux-x64.AppImage' \
+            ! -name 'songloft-windows-x64.zip' \
+            ! -name 'songloft-windows-x64.msix' \
+            ! -name 'songloft-macos.zip' \
+            ! -name 'songloft-macos.dmg' \
+            ! -name 'songloft-arm64-v8a.apk' \
+            ! -name 'songloft-armeabi-v7a.apk' \
+            ! -name 'songloft-x86_64.apk' \
+            ! -name 'songloft-ios-nosign.ipa' \
+            -exec cp {} branded-assets/ \;
+
+      - name: Replace release assets and title
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag }}
+          TITLE: ${{ steps.release.outputs.title }}
+        run: |
+          set -euo pipefail
+
+          gh release edit "$TAG" --title "$TITLE"
+
+          while IFS= read -r asset; do
+            gh release delete-asset "$TAG" "$asset" --yes
+          done < <(find release-assets -maxdepth 1 -type f -printf '%f\n')
+
+          if compgen -G 'branded-assets/*' > /dev/null; then
+            gh release upload "$TAG" branded-assets/* --clobber
+          fi
+
+      - name: Publish filename manifest
+        shell: bash
+        run: |
+          printf 'Songloft Community release: %s\n' \
+            '${{ steps.release.outputs.title }}'
+          find branded-assets -maxdepth 1 -type f -printf '%f\n' | sort
