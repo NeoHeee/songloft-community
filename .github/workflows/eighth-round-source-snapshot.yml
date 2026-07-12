@@ -1,9 +1,9 @@
 name: Eighth Round Source Snapshot
 
 on:
-  push:
+  pull_request:
     branches:
-      - mobile-eighth-round
+      - mobile-seventh-round
     paths:
       - '.github/workflows/eighth-round-source-snapshot.yml'
 
