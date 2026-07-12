@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:songloft_player/core/theme/accessibility.dart';
-import 'package:songloft_player/core/theme/app_theme.dart';
+import 'package:songloft_flutter/core/theme/accessibility.dart';
+import 'package:songloft_flutter/core/theme/app_theme.dart';
 
 void main() {
   test('mobile theme keeps primary controls at least 48 logical pixels', () {
