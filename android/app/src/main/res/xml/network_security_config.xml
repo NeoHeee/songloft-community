@@ -3,6 +3,8 @@
     <base-config cleartextTrafficPermitted="true">
         <trust-anchors>
             <certificates src="system" />
+            <!-- 支持用户主动安装的 NAS / 内网私有 CA -->
+            <certificates src="user" />
         </trust-anchors>
     </base-config>
 </network-security-config>
