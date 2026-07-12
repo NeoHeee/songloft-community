@@ -231,10 +231,7 @@ class SongsListNotifier extends Notifier<SongsListState> {
   void enterSelectionMode({int? initialSongId}) {
     final selection = Set<int>.from(state.selectedSongIds);
     if (initialSongId != null) selection.add(initialSongId);
-    state = state.copyWith(
-      isSelectionMode: true,
-      selectedSongIds: selection,
-    );
+    state = state.copyWith(isSelectionMode: true, selectedSongIds: selection);
   }
 
   /// 退出多选模式并清空选择。
