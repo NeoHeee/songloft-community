@@ -19,17 +19,17 @@ class MobilePlayerGestureHost extends ConsumerStatefulWidget {
     return Navigator.of(context).push(
       PageRouteBuilder<void>(
         opaque: true,
-        pageBuilder:
-            (context, animation, secondaryAnimation) =>
-                const MobilePlayerGestureHost(),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const MobilePlayerGestureHost(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 1),
-              end: Offset.zero,
-            ).animate(
-              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-            ),
+            position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
+                .animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
             child: child,
           );
         },
@@ -91,8 +91,7 @@ class _MobilePlayerGestureHostState
 
     final delta = end - start;
     final isVerticalSwipe =
-        delta.dy.abs() > delta.dx.abs() * 1.25 &&
-        delta.dy < -_swipeThreshold;
+        delta.dy.abs() > delta.dx.abs() * 1.25 && delta.dy < -_swipeThreshold;
 
     if (isVerticalSwipe) {
       HapticFeedback.mediumImpact();
