@@ -11,6 +11,10 @@
   <img src="https://img.shields.io/badge/Flutter-3.41.5-02569B?logo=flutter" alt="Flutter">
 </p>
 
+
+<img width="1536" height="1024" alt="ae63b573-3fde-444e-9873-108dd3e17b1f" src="https://github.com/user-attachments/assets/3cff0c1d-06c0-4b8b-91d5-44fc2fe25f94" />
+
+
 ## 项目介绍
 
 本项目是在开源音乐服务器项目 [Songloft](https://github.com/songloft-org/songloft) 及其 Flutter 客户端基础上持续改造的 **社区魔改版播放器**。
