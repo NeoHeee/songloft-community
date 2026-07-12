@@ -22,8 +22,9 @@ void main() {
     final router = container.read(routerProvider);
     addTearDown(router.dispose);
 
-    final shell =
-        router.configuration.routes.whereType<StatefulShellRoute>().single;
+    final shell = router.configuration.routes
+        .whereType<StatefulShellRoute>()
+        .single;
 
     expect(shell.branches, hasLength(5));
     expect(
@@ -49,8 +50,9 @@ void main() {
     final router = container.read(routerProvider);
     addTearDown(router.dispose);
 
-    final shell =
-        router.configuration.routes.whereType<StatefulShellRoute>().single;
+    final shell = router.configuration.routes
+        .whereType<StatefulShellRoute>()
+        .single;
     final playlistRoot = shell.branches[2].routes.single as GoRoute;
     final settingsRoot = shell.branches[4].routes.single as GoRoute;
 

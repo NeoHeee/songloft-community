@@ -37,10 +37,9 @@ class VinylRing extends StatelessWidget {
           top: -ringExtent,
           right: -ringExtent,
           bottom: -ringExtent,
-          child:
-              reduceMotion
-                  ? ring
-                  : RotationTransition(turns: rotationAnimation, child: ring),
+          child: reduceMotion
+              ? ring
+              : RotationTransition(turns: rotationAnimation, child: ring),
         ),
         child,
       ],
@@ -57,11 +56,10 @@ class _VinylRingPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final maxRadius = size.shortestSide / 2;
-    final paint =
-        Paint()
-          ..color = grooveColor
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.0;
+    final paint = Paint()
+      ..color = grooveColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
 
     for (double r = 3; r < maxRadius; r += 3) {
       canvas.drawCircle(center, r, paint);

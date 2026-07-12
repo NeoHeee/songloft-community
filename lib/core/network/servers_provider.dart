@@ -62,14 +62,13 @@ class ServersNotifier extends AsyncNotifier<List<ServerEntry>> {
     String? password,
   }) async {
     final current = state.value ?? const <ServerEntry>[];
-    final next =
-        current.map((e) {
-          if (e.url != url) return e;
-          return e.copyWith(
-            usernameOverride: () => username,
-            passwordOverride: () => password,
-          );
-        }).toList();
+    final next = current.map((e) {
+      if (e.url != url) return e;
+      return e.copyWith(
+        usernameOverride: () => username,
+        passwordOverride: () => password,
+      );
+    }).toList();
     await _save(next);
   }
 }

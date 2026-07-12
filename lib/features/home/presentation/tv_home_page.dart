@@ -28,18 +28,16 @@ class TvHomePage extends ConsumerWidget {
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: playlistsAsync.when(
-          data:
-              (state) => _TvHomeContent(
-                playlists: state.items,
-                normalCount: normalPlaylistsAsync.value?.totalCount ?? 0,
-                radioCount: radioPlaylistsAsync.value?.totalCount ?? 0,
-              ),
+          data: (state) => _TvHomeContent(
+            playlists: state.items,
+            normalCount: normalPlaylistsAsync.value?.totalCount ?? 0,
+            radioCount: radioPlaylistsAsync.value?.totalCount ?? 0,
+          ),
           loading: () => const _TvLoadingContent(),
-          error:
-              (error, _) => _TvErrorContent(
-                error: error.toString(),
-                onRetry: () => ref.invalidate(playlistListProvider(null)),
-              ),
+          error: (error, _) => _TvErrorContent(
+            error: error.toString(),
+            onRetry: () => ref.invalidate(playlistListProvider(null)),
+          ),
         ),
       ),
     );
@@ -207,12 +205,13 @@ class _TvHomeContent extends ConsumerWidget {
                         isCurrent: isCurrent,
                         isPlaying: isPlaying && isCurrent,
                         autofocus: playlists.isNotEmpty && index == 0,
-                        onSelect:
-                            () => context.push('/playlists/${playlist.id}'),
+                        onSelect: () =>
+                            context.push('/playlists/${playlist.id}'),
                       );
                     },
-                    childCount:
-                        normalPlaylists.length > 8 ? 8 : normalPlaylists.length,
+                    childCount: normalPlaylists.length > 8
+                        ? 8
+                        : normalPlaylists.length,
                   ),
                 ),
                 const SliverToBoxAdapter(
@@ -255,12 +254,13 @@ class _TvHomeContent extends ConsumerWidget {
                         playlist: playlist,
                         isCurrent: isCurrent,
                         isPlaying: isPlaying && isCurrent,
-                        onSelect:
-                            () => context.push('/playlists/${playlist.id}'),
+                        onSelect: () =>
+                            context.push('/playlists/${playlist.id}'),
                       );
                     },
-                    childCount:
-                        radioPlaylists.length > 8 ? 8 : radioPlaylists.length,
+                    childCount: radioPlaylists.length > 8
+                        ? 8
+                        : radioPlaylists.length,
                   ),
                 ),
               ],
@@ -394,10 +394,9 @@ class _TvPlaylistCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(TvTheme.cardRadius),
-          border:
-              isCurrent
-                  ? Border.all(color: colorScheme.primary, width: 3)
-                  : null,
+          border: isCurrent
+              ? Border.all(color: colorScheme.primary, width: 3)
+              : null,
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -433,10 +432,9 @@ class _TvPlaylistCard extends StatelessWidget {
                     playlist.name,
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color:
-                          isCurrent
-                              ? colorScheme.primary
-                              : colorScheme.onSurface,
+                      color: isCurrent
+                          ? colorScheme.primary
+                          : colorScheme.onSurface,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

@@ -122,8 +122,9 @@ class _PluginRegistryPageState extends ConsumerState<PluginRegistryPage> {
         pageSize: _pageSize,
         search: _searchText.isEmpty ? null : _searchText,
         githubProxy: _effectiveProxy.isEmpty ? null : _effectiveProxy,
-        token:
-            _selectedRegistry!.token.isEmpty ? null : _selectedRegistry!.token,
+        token: _selectedRegistry!.token.isEmpty
+            ? null
+            : _selectedRegistry!.token,
       );
       if (!mounted) return;
       setState(() {
@@ -175,8 +176,9 @@ class _PluginRegistryPageState extends ConsumerState<PluginRegistryPage> {
           PopupMenuButton<int>(
             icon: Icon(
               Icons.vpn_key_outlined,
-              color:
-                  _effectiveProxy.isNotEmpty ? theme.colorScheme.primary : null,
+              color: _effectiveProxy.isNotEmpty
+                  ? theme.colorScheme.primary
+                  : null,
             ),
             tooltip: 'GitHub 代理',
             onSelected: (value) {
@@ -187,50 +189,49 @@ class _PluginRegistryPageState extends ConsumerState<PluginRegistryPage> {
                 _refreshPlugins();
               }
             },
-            itemBuilder:
-                (context) => [
-                  ...List.generate(_kGithubProxies.length, (index) {
-                    return PopupMenuItem<int>(
-                      value: index,
-                      child: Row(
-                        children: [
-                          if (_selectedProxyIndex == index)
-                            Icon(
-                              Icons.check,
-                              size: 18,
-                              color: Theme.of(context).colorScheme.primary,
-                            )
-                          else
-                            const SizedBox(width: 18),
-                          const SizedBox(width: 8),
-                          Text(_kGithubProxies[index].label),
-                        ],
-                      ),
-                    );
-                  }),
-                  const PopupMenuDivider(),
-                  PopupMenuItem<int>(
-                    value: -1,
-                    child: Row(
-                      children: [
-                        if (_selectedProxyIndex == -1)
-                          Icon(
-                            Icons.check,
-                            size: 18,
-                            color: Theme.of(context).colorScheme.primary,
-                          )
-                        else
-                          const SizedBox(width: 18),
-                        const SizedBox(width: 8),
-                        Text(
-                          _selectedProxyIndex == -1
-                              ? '自定义: ${_customProxyController.text}'
-                              : '自定义代理...',
-                        ),
-                      ],
-                    ),
+            itemBuilder: (context) => [
+              ...List.generate(_kGithubProxies.length, (index) {
+                return PopupMenuItem<int>(
+                  value: index,
+                  child: Row(
+                    children: [
+                      if (_selectedProxyIndex == index)
+                        Icon(
+                          Icons.check,
+                          size: 18,
+                          color: Theme.of(context).colorScheme.primary,
+                        )
+                      else
+                        const SizedBox(width: 18),
+                      const SizedBox(width: 8),
+                      Text(_kGithubProxies[index].label),
+                    ],
                   ),
-                ],
+                );
+              }),
+              const PopupMenuDivider(),
+              PopupMenuItem<int>(
+                value: -1,
+                child: Row(
+                  children: [
+                    if (_selectedProxyIndex == -1)
+                      Icon(
+                        Icons.check,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.primary,
+                      )
+                    else
+                      const SizedBox(width: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      _selectedProxyIndex == -1
+                          ? '自定义: ${_customProxyController.text}'
+                          : '自定义代理...',
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           if (_selectedRegistry != null)
             IconButton(
@@ -245,12 +246,11 @@ class _PluginRegistryPageState extends ConsumerState<PluginRegistryPage> {
           ),
         ],
       ),
-      body:
-          _loadingRegistries
-              ? const Center(child: CircularProgressIndicator())
-              : _registries.isEmpty
-              ? _buildEmptyState(theme)
-              : _buildContent(theme),
+      body: _loadingRegistries
+          ? const Center(child: CircularProgressIndicator())
+          : _registries.isEmpty
+          ? _buildEmptyState(theme)
+          : _buildContent(theme),
     );
   }
 
@@ -305,51 +305,48 @@ class _PluginRegistryPageState extends ConsumerState<PluginRegistryPage> {
                   ),
                 ),
                 isExpanded: true,
-                items:
-                    enabledRegistries
-                        .map(
-                          (r) => DropdownMenuItem(
-                            value: r,
-                            child: Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    r.name.isEmpty ? r.url : r.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                items: enabledRegistries
+                    .map(
+                      (r) => DropdownMenuItem(
+                        value: r,
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                r.name.isEmpty ? r.url : r.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (r.url == _kOfficialRegistryUrl) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 1,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.primaryContainer,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  '官方',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimaryContainer,
                                   ),
                                 ),
-                                if (r.url == _kOfficialRegistryUrl) ...[
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 1,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          Theme.of(
-                                            context,
-                                          ).colorScheme.primaryContainer,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      '官方',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        color:
-                                            Theme.of(
-                                              context,
-                                            ).colorScheme.onPrimaryContainer,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        )
-                        .toList(),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    )
+                    .toList(),
                 onChanged: _onRegistryChanged,
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -363,17 +360,16 @@ class _PluginRegistryPageState extends ConsumerState<PluginRegistryPage> {
                     horizontal: 12,
                     vertical: 8,
                   ),
-                  suffixIcon:
-                      _searchText.isNotEmpty
-                          ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            tooltip: '清除搜索',
-                            onPressed: () {
-                              _searchController.clear();
-                              _onSearchChanged('');
-                            },
-                          )
-                          : null,
+                  suffixIcon: _searchText.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          tooltip: '清除搜索',
+                          onPressed: () {
+                            _searchController.clear();
+                            _onSearchChanged('');
+                          },
+                        )
+                      : null,
                 ),
                 onChanged: _onSearchChanged,
               ),
@@ -457,16 +453,15 @@ class _PluginRegistryPageState extends ConsumerState<PluginRegistryPage> {
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: plugins.length,
             separatorBuilder: (_, _) => const Divider(height: 1, indent: 16),
-            itemBuilder:
-                (context, index) => _RegistryPluginItem(
-                  entry: plugins[index],
-                  githubProxy: _effectiveProxy,
-                  token: _selectedRegistry?.token ?? '',
-                  onInstalled: () {
-                    _refreshPlugins();
-                    ref.invalidate(jsPluginsProvider);
-                  },
-                ),
+            itemBuilder: (context, index) => _RegistryPluginItem(
+              entry: plugins[index],
+              githubProxy: _effectiveProxy,
+              token: _selectedRegistry?.token ?? '',
+              onInstalled: () {
+                _refreshPlugins();
+                ref.invalidate(jsPluginsProvider);
+              },
+            ),
           ),
         ),
         // 分页
@@ -479,25 +474,23 @@ class _PluginRegistryPageState extends ConsumerState<PluginRegistryPage> {
                 IconButton(
                   icon: const Icon(Icons.chevron_left),
                   tooltip: '上一页',
-                  onPressed:
-                      _currentPage > 1
-                          ? () {
-                            setState(() => _currentPage--);
-                            _refreshPlugins();
-                          }
-                          : null,
+                  onPressed: _currentPage > 1
+                      ? () {
+                          setState(() => _currentPage--);
+                          _refreshPlugins();
+                        }
+                      : null,
                 ),
                 Text('$_currentPage / $totalPages'),
                 IconButton(
                   icon: const Icon(Icons.chevron_right),
                   tooltip: '下一页',
-                  onPressed:
-                      _currentPage < totalPages
-                          ? () {
-                            setState(() => _currentPage++);
-                            _refreshPlugins();
-                          }
-                          : null,
+                  onPressed: _currentPage < totalPages
+                      ? () {
+                          setState(() => _currentPage++);
+                          _refreshPlugins();
+                        }
+                      : null,
                 ),
               ],
             ),
@@ -510,32 +503,29 @@ class _PluginRegistryPageState extends ConsumerState<PluginRegistryPage> {
     final controller = TextEditingController(text: _customProxyController.text);
     showDialog<String>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('自定义代理'),
-            content: TextField(
-              controller: controller,
-              autofocus: true,
-              decoration: const InputDecoration(
-                hintText: 'https://your-proxy.com/',
-                helperText: '输入代理地址，如 https://ghproxy.com/',
-                border: OutlineInputBorder(),
-              ),
-              onSubmitted:
-                  (_) => Navigator.of(context).pop(controller.text.trim()),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('取消'),
-              ),
-              FilledButton(
-                onPressed:
-                    () => Navigator.of(context).pop(controller.text.trim()),
-                child: const Text('确定'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text('自定义代理'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'https://your-proxy.com/',
+            helperText: '输入代理地址，如 https://ghproxy.com/',
+            border: OutlineInputBorder(),
           ),
+          onSubmitted: (_) => Navigator.of(context).pop(controller.text.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+            child: const Text('确定'),
+          ),
+        ],
+      ),
     ).then((value) {
       if (value != null) {
         _customProxyController.text = value;
@@ -548,29 +538,28 @@ class _PluginRegistryPageState extends ConsumerState<PluginRegistryPage> {
   void _showRegistryManagement() {
     showDialog(
       context: context,
-      builder:
-          (context) => _RegistryManagementDialog(
-            registries: _registries,
-            onSaved: (registries) {
-              setState(() {
-                _registries = registries;
-                final enabled = registries.where((r) => r.enabled).toList();
-                if (_selectedRegistry != null &&
-                    !enabled.any((r) => r.url == _selectedRegistry!.url)) {
-                  _selectedRegistry = enabled.isNotEmpty ? enabled.first : null;
-                }
-                if (_selectedRegistry == null && enabled.isNotEmpty) {
-                  _selectedRegistry = enabled.first;
-                }
-              });
-              ref.invalidate(pluginRegistriesProvider);
-              if (_selectedRegistry != null) {
-                _refreshPlugins();
-              } else {
-                setState(() => _pluginResponse = null);
-              }
-            },
-          ),
+      builder: (context) => _RegistryManagementDialog(
+        registries: _registries,
+        onSaved: (registries) {
+          setState(() {
+            _registries = registries;
+            final enabled = registries.where((r) => r.enabled).toList();
+            if (_selectedRegistry != null &&
+                !enabled.any((r) => r.url == _selectedRegistry!.url)) {
+              _selectedRegistry = enabled.isNotEmpty ? enabled.first : null;
+            }
+            if (_selectedRegistry == null && enabled.isNotEmpty) {
+              _selectedRegistry = enabled.first;
+            }
+          });
+          ref.invalidate(pluginRegistriesProvider);
+          if (_selectedRegistry != null) {
+            _refreshPlugins();
+          } else {
+            setState(() => _pluginResponse = null);
+          }
+        },
+      ),
     );
   }
 }
@@ -665,25 +654,24 @@ class _RegistryPluginItemState extends ConsumerState<_RegistryPluginItem> {
       final isSvg = url.toLowerCase().endsWith('.svg');
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child:
-            isSvg
-                ? SvgPicture.network(
+        child: isSvg
+            ? SvgPicture.network(
+                url,
+                width: 40,
+                height: 40,
+                fit: BoxFit.contain,
+                placeholderBuilder: (_) => _buildFallbackIcon(entry, theme),
+                errorBuilder: (_, _, _) => _buildFallbackIcon(entry, theme),
+              )
+            : ExcludeSemantics(
+                child: Image.network(
                   url,
                   width: 40,
                   height: 40,
-                  fit: BoxFit.contain,
-                  placeholderBuilder: (_) => _buildFallbackIcon(entry, theme),
+                  fit: BoxFit.cover,
                   errorBuilder: (_, _, _) => _buildFallbackIcon(entry, theme),
-                )
-                : ExcludeSemantics(
-                  child: Image.network(
-                    url,
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => _buildFallbackIcon(entry, theme),
-                  ),
                 ),
+              ),
       );
     }
     return _buildFallbackIcon(entry, theme);
@@ -692,8 +680,9 @@ class _RegistryPluginItemState extends ConsumerState<_RegistryPluginItem> {
   Widget _buildFallbackIcon(RegistryPluginEntry entry, ThemeData theme) {
     final color =
         Colors.primaries[entry.entryPath.hashCode % Colors.primaries.length];
-    final initial =
-        entry.name.isNotEmpty ? entry.name.characters.first.toUpperCase() : '?';
+    final initial = entry.name.isNotEmpty
+        ? entry.name.characters.first.toUpperCase()
+        : '?';
     return CircleAvatar(
       backgroundColor: color.withValues(alpha: 0.2),
       foregroundColor: color,
@@ -808,75 +797,74 @@ class _RegistryManagementDialogState
     final isEdit = onSave != null;
     showDialog(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: Text(isEdit ? '编辑订阅源' : '添加订阅源'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: urlController,
-                  decoration: const InputDecoration(
-                    labelText: 'URL',
-                    hintText: 'https://example.com/registry.json',
-                    border: OutlineInputBorder(),
-                  ),
-                  autofocus: !isEdit,
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: '名称（可选）',
-                    hintText: '我的插件源',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: tokenController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Token（可选）',
-                    hintText: 'Bearer Token / GitHub PAT',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ],
+      builder: (ctx) => AlertDialog(
+        title: Text(isEdit ? '编辑订阅源' : '添加订阅源'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: urlController,
+              decoration: const InputDecoration(
+                labelText: 'URL',
+                hintText: 'https://example.com/registry.json',
+                border: OutlineInputBorder(),
+              ),
+              autofocus: !isEdit,
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('取消'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: '名称（可选）',
+                hintText: '我的插件源',
+                border: OutlineInputBorder(),
               ),
-              FilledButton(
-                onPressed: () {
-                  final url = urlController.text.trim();
-                  if (url.isEmpty) return;
-                  if (isEdit) {
-                    onSave(
-                      url,
-                      nameController.text.trim(),
-                      tokenController.text.trim(),
-                    );
-                  } else {
-                    setState(() {
-                      _registries.add(
-                        PluginRegistryConfig(
-                          url: url,
-                          name: nameController.text.trim(),
-                          enabled: true,
-                          token: tokenController.text.trim(),
-                        ),
-                      );
-                    });
-                  }
-                  Navigator.of(ctx).pop();
-                },
-                child: Text(isEdit ? '保存' : '添加'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: tokenController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Token（可选）',
+                hintText: 'Bearer Token / GitHub PAT',
+                border: OutlineInputBorder(),
               ),
-            ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('取消'),
           ),
+          FilledButton(
+            onPressed: () {
+              final url = urlController.text.trim();
+              if (url.isEmpty) return;
+              if (isEdit) {
+                onSave(
+                  url,
+                  nameController.text.trim(),
+                  tokenController.text.trim(),
+                );
+              } else {
+                setState(() {
+                  _registries.add(
+                    PluginRegistryConfig(
+                      url: url,
+                      name: nameController.text.trim(),
+                      enabled: true,
+                      token: tokenController.text.trim(),
+                    ),
+                  );
+                });
+              }
+              Navigator.of(ctx).pop();
+            },
+            child: Text(isEdit ? '保存' : '添加'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -928,20 +916,18 @@ class _RegistryManagementDialogState
                                 vertical: 1,
                               ),
                               decoration: BoxDecoration(
-                                color:
-                                    Theme.of(
-                                      context,
-                                    ).colorScheme.primaryContainer,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primaryContainer,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
                                 '官方',
                                 style: TextStyle(
                                   fontSize: 10,
-                                  color:
-                                      Theme.of(
-                                        context,
-                                      ).colorScheme.onPrimaryContainer,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimaryContainer,
                                 ),
                               ),
                             ),
@@ -959,15 +945,14 @@ class _RegistryManagementDialogState
                           ],
                         ],
                       ),
-                      subtitle:
-                          r.name.isNotEmpty
-                              ? Text(
-                                r.url,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodySmall,
-                              )
-                              : null,
+                      subtitle: r.name.isNotEmpty
+                          ? Text(
+                              r.url,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            )
+                          : null,
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -1005,14 +990,13 @@ class _RegistryManagementDialogState
         ),
         FilledButton(
           onPressed: _saving ? null : _save,
-          child:
-              _saving
-                  ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                  : const Text('保存'),
+          child: _saving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('保存'),
         ),
       ],
     );

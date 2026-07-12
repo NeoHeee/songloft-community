@@ -212,24 +212,23 @@ class _DuplicateCheckPageState extends ConsumerState<DuplicateCheckPage> {
   Future<bool?> _showDeleteConfirm(int count) {
     return showDialog<bool>(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: const Text('确认删除'),
-            content: Text('将删除 $count 首重复歌曲及其对应的音频文件，保留每组中选中的版本。此操作不可撤销。'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('取消'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.error,
-                ),
-                child: const Text('确认删除'),
-              ),
-            ],
+      builder: (ctx) => AlertDialog(
+        title: const Text('确认删除'),
+        content: Text('将删除 $count 首重复歌曲及其对应的音频文件，保留每组中选中的版本。此操作不可撤销。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('取消'),
           ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('确认删除'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -237,18 +236,17 @@ class _DuplicateCheckPageState extends ConsumerState<DuplicateCheckPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('重复歌曲检测')),
-      body:
-          _loading && _phase == _PagePhase.status
-              ? const Center(child: CircularProgressIndicator())
-              : ListView(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                children: [
-                  if (_error != null) _buildError(),
-                  if (_phase == _PagePhase.status) _buildStatusPhase(),
-                  if (_phase == _PagePhase.computing) _buildComputingPhase(),
-                  if (_phase == _PagePhase.results) _buildResultsPhase(),
-                ],
-              ),
+      body: _loading && _phase == _PagePhase.status
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              children: [
+                if (_error != null) _buildError(),
+                if (_phase == _PagePhase.status) _buildStatusPhase(),
+                if (_phase == _PagePhase.computing) _buildComputingPhase(),
+                if (_phase == _PagePhase.results) _buildResultsPhase(),
+              ],
+            ),
     );
   }
 
@@ -359,10 +357,9 @@ class _DuplicateCheckPageState extends ConsumerState<DuplicateCheckPage> {
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
-              onPressed:
-                  status.chromaprintAvailable
-                      ? (status.missing > 0 ? _startCompute : _loadDuplicates)
-                      : null,
+              onPressed: status.chromaprintAvailable
+                  ? (status.missing > 0 ? _startCompute : _loadDuplicates)
+                  : null,
               icon: const Icon(Icons.fingerprint),
               label: Text(status.missing > 0 ? '开始计算并检测' : '检测重复'),
             ),

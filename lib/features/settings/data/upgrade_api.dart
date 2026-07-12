@@ -15,10 +15,9 @@ class VersionInfo {
     return VersionInfo(
       version: json['version'] as String,
       releaseNotes: json['release_notes'] as String?,
-      releaseDate:
-          json['release_date'] != null
-              ? DateTime.parse(json['release_date'] as String)
-              : null,
+      releaseDate: json['release_date'] != null
+          ? DateTime.parse(json['release_date'] as String)
+          : null,
     );
   }
 

@@ -114,9 +114,8 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // 每个一级栏目拥有独立 Navigator，切换标签不会销毁页面和子路由栈。
       StatefulShellRoute.indexedStack(
-        builder:
-            (context, state, navigationShell) =>
-                ShellLayout(navigationShell: navigationShell),
+        builder: (context, state, navigationShell) =>
+            ShellLayout(navigationShell: navigationShell),
         branches: [
           StatefulShellBranch(
             navigatorKey: homeNavigatorKey,
@@ -124,14 +123,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.home,
-                pageBuilder:
-                    (context, state) => NoTransitionPage(
-                      key: state.pageKey,
-                      child:
-                          AppConfig.isTvMode
-                              ? const TvHomePage()
-                              : const HomePage(),
-                    ),
+                pageBuilder: (context, state) => NoTransitionPage(
+                  key: state.pageKey,
+                  child: AppConfig.isTvMode
+                      ? const TvHomePage()
+                      : const HomePage(),
+                ),
               ),
             ],
           ),
@@ -141,11 +138,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.library,
-                pageBuilder:
-                    (context, state) => NoTransitionPage(
-                      key: state.pageKey,
-                      child: const AdaptiveLibraryPage(),
-                    ),
+                pageBuilder: (context, state) => NoTransitionPage(
+                  key: state.pageKey,
+                  child: const AdaptiveLibraryPage(),
+                ),
               ),
             ],
           ),
@@ -155,11 +151,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.playlists,
-                pageBuilder:
-                    (context, state) => NoTransitionPage(
-                      key: state.pageKey,
-                      child: const PlaylistsPage(),
-                    ),
+                pageBuilder: (context, state) => NoTransitionPage(
+                  key: state.pageKey,
+                  child: const PlaylistsPage(),
+                ),
                 routes: [
                   GoRoute(
                     path: ':id',
@@ -195,11 +190,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.settings,
-                pageBuilder:
-                    (context, state) => NoTransitionPage(
-                      key: state.pageKey,
-                      child: const SettingsPage(),
-                    ),
+                pageBuilder: (context, state) => NoTransitionPage(
+                  key: state.pageKey,
+                  child: const SettingsPage(),
+                ),
                 routes: [
                   GoRoute(
                     path: 'servers',
@@ -224,35 +218,34 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
     ],
-    errorBuilder:
-        (context, state) => Scaffold(
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: Theme.of(context).colorScheme.error,
-                ),
-                const SizedBox(height: 16),
-                Text('页面未找到', style: Theme.of(context).textTheme.headlineSmall),
-                const SizedBox(height: 8),
-                Text(
-                  state.uri.path,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                FilledButton.icon(
-                  onPressed: () => context.go(AppRoutes.home),
-                  icon: const Icon(Icons.home),
-                  label: const Text('返回首页'),
-                ),
-              ],
+    errorBuilder: (context, state) => Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Theme.of(context).colorScheme.error,
             ),
-          ),
+            const SizedBox(height: 16),
+            Text('页面未找到', style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 8),
+            Text(
+              state.uri.path,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: () => context.go(AppRoutes.home),
+              icon: const Icon(Icons.home),
+              label: const Text('返回首页'),
+            ),
+          ],
         ),
+      ),
+    ),
   );
 });

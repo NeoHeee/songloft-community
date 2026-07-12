@@ -197,14 +197,14 @@ class _CategoryItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final foreground =
-        selected ? colorScheme.onPrimaryContainer : colorScheme.onSurface;
+    final foreground = selected
+        ? colorScheme.onPrimaryContainer
+        : colorScheme.onSurface;
 
     return Material(
-      color:
-          selected
-              ? colorScheme.primaryContainer.withValues(alpha: 0.72)
-              : Colors.transparent,
+      color: selected
+          ? colorScheme.primaryContainer.withValues(alpha: 0.72)
+          : Colors.transparent,
       borderRadius: BorderRadius.circular(18),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -214,12 +214,9 @@ class _CategoryItem extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(10, 9, 9, 9),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            border:
-                selected
-                    ? Border.all(
-                      color: colorScheme.primary.withValues(alpha: 0.18),
-                    )
-                    : null,
+            border: selected
+                ? Border.all(color: colorScheme.primary.withValues(alpha: 0.18))
+                : null,
           ),
           child: Row(
             children: [
@@ -235,8 +232,9 @@ class _CategoryItem extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: foreground,
-                        fontWeight:
-                            selected ? FontWeight.w700 : FontWeight.w600,
+                        fontWeight: selected
+                            ? FontWeight.w700
+                            : FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -245,12 +243,11 @@ class _CategoryItem extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color:
-                            selected
-                                ? colorScheme.onPrimaryContainer.withValues(
-                                  alpha: 0.68,
-                                )
-                                : colorScheme.onSurfaceVariant,
+                        color: selected
+                            ? colorScheme.onPrimaryContainer.withValues(
+                                alpha: 0.68,
+                              )
+                            : colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -280,10 +277,9 @@ class _CategoryIcon extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color:
-            selected
-                ? colorScheme.primary.withValues(alpha: 0.14)
-                : colorScheme.surfaceContainerHighest,
+        color: selected
+            ? colorScheme.primary.withValues(alpha: 0.14)
+            : colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(15),
       ),
       child: Icon(

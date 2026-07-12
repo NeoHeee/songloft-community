@@ -27,30 +27,26 @@ class TokenManager extends ConsumerWidget {
       children: [
         tokensAsync.when(
           data: (response) => _buildTokenList(context, ref, response.tokens),
-          loading:
-              () => const Padding(
-                padding: EdgeInsets.all(16),
-                child: Center(child: CircularProgressIndicator()),
-              ),
-          error:
-              (error, _) => Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Text(
-                      error is ApiException ? error.message : '加载失败',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: () => ref.invalidate(tokenListProvider),
-                      child: const Text('重试'),
-                    ),
-                  ],
+          loading: () => const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, _) => Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                Text(
+                  error is ApiException ? error.message : '加载失败',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
-              ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => ref.invalidate(tokenListProvider),
+                  child: const Text('重试'),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
@@ -93,21 +89,20 @@ class _TokenItemState extends ConsumerState<_TokenItem> {
   Future<void> _revokeToken() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('确认撤销'),
-            content: const Text('撤销此令牌后，对应的登录会话将失效。确定继续吗？'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('取消'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('撤销'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text('确认撤销'),
+        content: const Text('撤销此令牌后，对应的登录会话将失效。确定继续吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
           ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('撤销'),
+          ),
+        ],
+      ),
     );
 
     if (confirm != true) return;
@@ -198,21 +193,19 @@ class _TokenItemState extends ConsumerState<_TokenItem> {
           Text('过期时间: ${_formatDateTime(token.expiresAt)}'),
         ],
       ),
-      trailing:
-          token.isValid
-              ? IconButton(
-                icon:
-                    _isRevoking
-                        ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                        : const Icon(Icons.block),
-                onPressed: _isRevoking ? null : _revokeToken,
-                tooltip: '撤销',
-              )
-              : null,
+      trailing: token.isValid
+          ? IconButton(
+              icon: _isRevoking
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.block),
+              onPressed: _isRevoking ? null : _revokeToken,
+              tooltip: '撤销',
+            )
+          : null,
       isThreeLine: true,
     );
   }

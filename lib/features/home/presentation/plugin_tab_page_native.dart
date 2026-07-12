@@ -75,10 +75,9 @@ class _PluginTabPageState extends ConsumerState<PluginTabPage>
     final uri = Uri.parse(
       '${AppConfig.baseUrl}${AppConfig.basePath}/api/v1/jsplugin/${widget.entryPath}',
     );
-    final query =
-        Map<String, String>.from(uri.queryParameters)
-          ..['embed'] = ''
-          ..['theme'] = theme;
+    final query = Map<String, String>.from(uri.queryParameters)
+      ..['embed'] = ''
+      ..['theme'] = theme;
     if (token.isNotEmpty) {
       query['access_token'] = token;
     }
@@ -188,15 +187,14 @@ class _PluginTabPageState extends ConsumerState<PluginTabPage>
       offstage: !_windowVisible,
       child: InAppWebView(
         initialUrlRequest: URLRequest(url: WebUri(_buildPluginUrl(theme))),
-        initialUserScripts:
-            tokenScript.isNotEmpty
-                ? UnmodifiableListView([
-                  UserScript(
-                    source: tokenScript,
-                    injectionTime: UserScriptInjectionTime.AT_DOCUMENT_START,
-                  ),
-                ])
-                : null,
+        initialUserScripts: tokenScript.isNotEmpty
+            ? UnmodifiableListView([
+                UserScript(
+                  source: tokenScript,
+                  injectionTime: UserScriptInjectionTime.AT_DOCUMENT_START,
+                ),
+              ])
+            : null,
         initialSettings: InAppWebViewSettings(
           javaScriptEnabled: true,
           allowFileAccessFromFileURLs: true,

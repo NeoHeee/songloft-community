@@ -73,8 +73,8 @@ class AndroidEqualizerService implements EqualizerService {
     var closest = 0;
     var minDist = double.infinity;
     for (var i = 0; i < systemBands.length; i++) {
-      final dist =
-          (log(systemBands[i].centerFrequency) - log(targetFreq)).abs();
+      final dist = (log(systemBands[i].centerFrequency) - log(targetFreq))
+          .abs();
       if (dist < minDist) {
         minDist = dist;
         closest = i;

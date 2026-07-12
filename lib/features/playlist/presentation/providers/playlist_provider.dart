@@ -208,11 +208,12 @@ class PaginatedPlaylistsNotifier
 }
 
 /// 歌单列表 Provider（family 参数为 type 过滤）
-final playlistListProvider = AsyncNotifierProvider.family<
-  PaginatedPlaylistsNotifier,
-  PaginatedPlaylistsState,
-  String?
->(PaginatedPlaylistsNotifier.new);
+final playlistListProvider =
+    AsyncNotifierProvider.family<
+      PaginatedPlaylistsNotifier,
+      PaginatedPlaylistsState,
+      String?
+    >(PaginatedPlaylistsNotifier.new);
 
 // ============================================================
 // 歌单详情 Provider
@@ -356,11 +357,12 @@ class PaginatedSongsNotifier extends AsyncNotifier<PaginatedSongsState> {
 }
 
 /// 歌单内歌曲 Provider（family 参数为 playlistId）
-final playlistSongsProvider = AsyncNotifierProvider.family<
-  PaginatedSongsNotifier,
-  PaginatedSongsState,
-  int
->(PaginatedSongsNotifier.new);
+final playlistSongsProvider =
+    AsyncNotifierProvider.family<
+      PaginatedSongsNotifier,
+      PaginatedSongsState,
+      int
+    >(PaginatedSongsNotifier.new);
 
 // ============================================================
 // 歌单操作 Notifier

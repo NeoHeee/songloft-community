@@ -44,12 +44,11 @@ class SongPickerModal extends ConsumerStatefulWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder:
-          (context) => SongPickerModal(
-            excludeIds: excludeIds,
-            songType: songType,
-            excludeType: excludeType,
-          ),
+      builder: (context) => SongPickerModal(
+        excludeIds: excludeIds,
+        songType: songType,
+        excludeType: excludeType,
+      ),
     );
   }
 
@@ -156,20 +155,19 @@ class _SongPickerModalState extends ConsumerState<SongPickerModal> {
       );
 
       // 过滤歌曲：排除已有的 + 按类型过滤
-      final filteredSongs =
-          response.songs.where((song) {
-            // 排除已在歌单中的歌曲
-            if (widget.excludeIds.contains(song.id)) return false;
-            // 按类型过滤（只显示指定类型）
-            if (widget.songType != null && song.type != widget.songType) {
-              return false;
-            }
-            // 排除指定类型
-            if (widget.excludeType != null && song.type == widget.excludeType) {
-              return false;
-            }
-            return true;
-          }).toList();
+      final filteredSongs = response.songs.where((song) {
+        // 排除已在歌单中的歌曲
+        if (widget.excludeIds.contains(song.id)) return false;
+        // 按类型过滤（只显示指定类型）
+        if (widget.songType != null && song.type != widget.songType) {
+          return false;
+        }
+        // 排除指定类型
+        if (widget.excludeType != null && song.type == widget.excludeType) {
+          return false;
+        }
+        return true;
+      }).toList();
 
       setState(() {
         if (reset) {
@@ -430,14 +428,13 @@ class _SongPickerModalState extends ConsumerState<SongPickerModal> {
                     decoration: InputDecoration(
                       hintText: '搜索歌曲、艺术家或专辑',
                       prefixIcon: const Icon(Icons.search),
-                      suffixIcon:
-                          _searchController.text.isNotEmpty
-                              ? IconButton(
-                                icon: const Icon(Icons.clear),
-                                tooltip: '清除搜索',
-                                onPressed: _clearSearch,
-                              )
-                              : null,
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              tooltip: '清除搜索',
+                              onPressed: _clearSearch,
+                            )
+                          : null,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -498,18 +495,17 @@ class _SongPickerModalState extends ConsumerState<SongPickerModal> {
                         Checkbox(
                           value: _selectAllCheckboxValue(),
                           tristate: true,
-                          onChanged:
-                              _isSelectingAll
-                                  ? null
-                                  : (_) => _toggleSelectAll(),
+                          onChanged: _isSelectingAll
+                              ? null
+                              : (_) => _toggleSelectAll(),
                         ),
                         Expanded(
                           child: Text(
                             _isSelectingAll
                                 ? '正在选择全部...'
                                 : (_selectedIds.length >= _total && _total > 0
-                                    ? '取消全选（已选 ${_selectedIds.length}）'
-                                    : '全选 $_total 首'),
+                                      ? '取消全选（已选 ${_selectedIds.length}）'
+                                      : '全选 $_total 首'),
                           ),
                         ),
                         if (_isSelectingAll)
@@ -527,97 +523,92 @@ class _SongPickerModalState extends ConsumerState<SongPickerModal> {
 
           // 歌曲列表
           Expanded(
-            child:
-                _isLoading && _songs.isEmpty
-                    ? const Center(child: CircularProgressIndicator())
-                    : _songs.isEmpty
-                    ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.music_note,
-                            size: 64,
-                            color: colorScheme.onSurfaceVariant,
+            child: _isLoading && _songs.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : _songs.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.music_note,
+                          size: 64,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _emptyMessage(),
+                          style: TextStyle(color: colorScheme.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    controller: _scrollController,
+                    itemCount: _songs.length + (_isLoadingMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == _songs.length) {
+                        return const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+
+                      final song = _songs[index];
+                      final isSelected = _selectedIds.contains(song.id);
+
+                      return InkWell(
+                        onTap: () => _toggleSongSelection(song.id),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            _emptyMessage(),
-                            style: TextStyle(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                    : ListView.builder(
-                      controller: _scrollController,
-                      itemCount: _songs.length + (_isLoadingMore ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index == _songs.length) {
-                          return const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Center(child: CircularProgressIndicator()),
-                          );
-                        }
+                          child: Row(
+                            children: [
+                              Checkbox(
+                                value: isSelected,
+                                onChanged: (_) => _toggleSongSelection(song.id),
+                              ),
+                              const SizedBox(width: 8),
+                              CoverImage(
+                                coverUrl: song.coverUrl,
 
-                        final song = _songs[index];
-                        final isSelected = _selectedIds.contains(song.id);
-
-                        return InkWell(
-                          onTap: () => _toggleSongSelection(song.id),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            child: Row(
-                              children: [
-                                Checkbox(
-                                  value: isSelected,
-                                  onChanged:
-                                      (_) => _toggleSongSelection(song.id),
-                                ),
-                                const SizedBox(width: 8),
-                                CoverImage(
-                                  coverUrl: song.coverUrl,
-
-                                  size: 48,
-                                  borderRadius: 8,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
+                                size: 48,
+                                borderRadius: 8,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      song.title,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    if (song.artist != null)
                                       Text(
-                                        song.title,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
+                                        song.artist!,
+                                        style: TextStyle(
+                                          color: colorScheme.onSurfaceVariant,
+                                          fontSize: 12,
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
-                                      if (song.artist != null)
-                                        Text(
-                                          song.artist!,
-                                          style: TextStyle(
-                                            color: colorScheme.onSurfaceVariant,
-                                            fontSize: 12,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                    ],
-                                  ),
+                                  ],
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),

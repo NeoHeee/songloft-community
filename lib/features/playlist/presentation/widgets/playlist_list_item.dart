@@ -43,10 +43,9 @@ class PlaylistListItem extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
-        color:
-            highlighted
-                ? colorScheme.primaryContainer.withValues(alpha: 0.5)
-                : colorScheme.surfaceContainerLow,
+        color: highlighted
+            ? colorScheme.primaryContainer.withValues(alpha: 0.5)
+            : colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(20),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -58,10 +57,9 @@ class PlaylistListItem extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color:
-                    highlighted
-                        ? colorScheme.primary.withValues(alpha: 0.55)
-                        : colorScheme.outlineVariant.withValues(alpha: 0.22),
+                color: highlighted
+                    ? colorScheme.primary.withValues(alpha: 0.55)
+                    : colorScheme.outlineVariant.withValues(alpha: 0.22),
                 width: highlighted ? 1.5 : 1,
               ),
             ),
@@ -93,10 +91,9 @@ class PlaylistListItem extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.titleSmall?.copyWith(
-                                color:
-                                    isCurrentPlaylist
-                                        ? colorScheme.primary
-                                        : colorScheme.onSurface,
+                                color: isCurrentPlaylist
+                                    ? colorScheme.primary
+                                    : colorScheme.onSurface,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -135,11 +132,10 @@ class PlaylistListItem extends StatelessWidget {
                         Wrap(
                           spacing: 5,
                           runSpacing: 4,
-                          children:
-                              playlist.labels
-                                  .take(3)
-                                  .map((label) => _LabelChip(label: label))
-                                  .toList(),
+                          children: playlist.labels
+                              .take(3)
+                              .map((label) => _LabelChip(label: label))
+                              .toList(),
                         ),
                       ],
                     ],
@@ -149,10 +145,9 @@ class PlaylistListItem extends StatelessWidget {
                   if (onPlayAll != null)
                     _RoundActionButton(
                       tooltip: '播放全部',
-                      icon:
-                          isCurrentPlaylist && isPlaying
-                              ? Icons.equalizer_rounded
-                              : Icons.play_arrow_rounded,
+                      icon: isCurrentPlaylist && isPlaying
+                          ? Icons.equalizer_rounded
+                          : Icons.play_arrow_rounded,
                       selected: isCurrentPlaylist,
                       onPressed: onPlayAll,
                     ),
@@ -194,43 +189,42 @@ class PlaylistListItem extends StatelessWidget {
             break;
         }
       },
-      itemBuilder:
-          (context) => [
-            if (onEdit != null)
-              const PopupMenuItem(
-                value: 'edit',
-                child: ListTile(
-                  leading: Icon(Icons.edit_rounded),
-                  title: Text('编辑'),
-                  contentPadding: EdgeInsets.zero,
-                ),
+      itemBuilder: (context) => [
+        if (onEdit != null)
+          const PopupMenuItem(
+            value: 'edit',
+            child: ListTile(
+              leading: Icon(Icons.edit_rounded),
+              title: Text('编辑'),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+        if (onToggleVisibility != null && !playlist.isBuiltIn)
+          PopupMenuItem(
+            value: 'toggle_visibility',
+            child: ListTile(
+              leading: Icon(
+                playlist.isHidden
+                    ? Icons.visibility_rounded
+                    : Icons.visibility_off_rounded,
               ),
-            if (onToggleVisibility != null && !playlist.isBuiltIn)
-              PopupMenuItem(
-                value: 'toggle_visibility',
-                child: ListTile(
-                  leading: Icon(
-                    playlist.isHidden
-                        ? Icons.visibility_rounded
-                        : Icons.visibility_off_rounded,
-                  ),
-                  title: Text(playlist.isHidden ? '取消隐藏' : '隐藏歌单'),
-                  contentPadding: EdgeInsets.zero,
-                ),
+              title: Text(playlist.isHidden ? '取消隐藏' : '隐藏歌单'),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+        if (onDelete != null && !playlist.isBuiltIn)
+          PopupMenuItem(
+            value: 'delete',
+            child: ListTile(
+              leading: Icon(
+                Icons.delete_outline_rounded,
+                color: colorScheme.error,
               ),
-            if (onDelete != null && !playlist.isBuiltIn)
-              PopupMenuItem(
-                value: 'delete',
-                child: ListTile(
-                  leading: Icon(
-                    Icons.delete_outline_rounded,
-                    color: colorScheme.error,
-                  ),
-                  title: Text('删除', style: TextStyle(color: colorScheme.error)),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-          ],
+              title: Text('删除', style: TextStyle(color: colorScheme.error)),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+      ],
     );
   }
 }
@@ -271,10 +265,9 @@ class _Cover extends StatelessWidget {
             coverUrl: playlist.coverImageUrl,
             size: 64,
             borderRadius: 17,
-            placeholderIcon:
-                playlist.type == 'radio'
-                    ? Icons.radio_rounded
-                    : Icons.graphic_eq_rounded,
+            placeholderIcon: playlist.type == 'radio'
+                ? Icons.radio_rounded
+                : Icons.graphic_eq_rounded,
           ),
           if (isCurrentPlaylist && isPlaying)
             ExcludeSemantics(
@@ -316,10 +309,9 @@ class _RoundActionButton extends StatelessWidget {
       onPressed: onPressed,
       tooltip: tooltip,
       style: IconButton.styleFrom(
-        backgroundColor:
-            selected
-                ? colorScheme.primary
-                : colorScheme.primaryContainer.withValues(alpha: 0.62),
+        backgroundColor: selected
+            ? colorScheme.primary
+            : colorScheme.primaryContainer.withValues(alpha: 0.62),
         foregroundColor: selected ? colorScheme.onPrimary : colorScheme.primary,
       ),
       icon: Icon(icon),

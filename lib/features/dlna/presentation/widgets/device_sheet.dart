@@ -75,10 +75,9 @@ class _DlnaDeviceSheetState extends ConsumerState<DlnaDeviceSheet> {
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height * 0.4,
               ),
-              child:
-                  dlnaState.devices.isEmpty
-                      ? _buildEmptyState(dlnaState.isDiscovering)
-                      : _buildDeviceList(dlnaState.devices),
+              child: dlnaState.devices.isEmpty
+                  ? _buildEmptyState(dlnaState.isDiscovering)
+                  : _buildDeviceList(dlnaState.devices),
             ),
           ],
           if (dlnaState.isDiscovering)

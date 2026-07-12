@@ -57,14 +57,12 @@ class JSPlugin {
           [],
       filePath: json['file_path'] as String? ?? '',
       status: json['status'] as String? ?? 'inactive',
-      createdAt:
-          json['created_at'] != null
-              ? DateTime.parse(json['created_at'] as String)
-              : DateTime.now(),
-      updatedAt:
-          json['updated_at'] != null
-              ? DateTime.parse(json['updated_at'] as String)
-              : DateTime.now(),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
+          : DateTime.now(),
     );
   }
 
@@ -104,10 +102,9 @@ class JSPluginUploadResult {
   factory JSPluginUploadResult.fromJson(Map<String, dynamic> json) {
     return JSPluginUploadResult(
       fileName: json['file_name'] as String? ?? '',
-      plugin:
-          json['plugin'] != null
-              ? JSPlugin.fromJson(json['plugin'] as Map<String, dynamic>)
-              : null,
+      plugin: json['plugin'] != null
+          ? JSPlugin.fromJson(json['plugin'] as Map<String, dynamic>)
+          : null,
       error: json['error'] as String?,
       success: json['success'] as bool? ?? false,
     );

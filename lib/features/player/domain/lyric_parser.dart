@@ -98,10 +98,9 @@ class LyricParser {
     return [
       for (final l in lines)
         LyricLine(
-          time:
-              (l.time + offset) < Duration.zero
-                  ? Duration.zero
-                  : (l.time + offset),
+          time: (l.time + offset) < Duration.zero
+              ? Duration.zero
+              : (l.time + offset),
           text: l.text,
         ),
     ];

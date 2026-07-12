@@ -32,7 +32,10 @@ class ServerConnectionHost extends ConsumerWidget {
     });
 
     return Column(
-      children: [const ServerConnectionBanner(), Expanded(child: child)],
+      children: [
+        const ServerConnectionBanner(),
+        Expanded(child: child),
+      ],
     );
   }
 }

@@ -128,22 +128,21 @@ class _DesktopFullPlayerState extends ConsumerState<DesktopFullPlayer>
                       _buildTopBar(context, notifier, song.title),
                       const SizedBox(height: 14),
                       Expanded(
-                        child:
-                            compact
-                                ? _buildCompactContent(
-                                  context,
-                                  state,
-                                  notifier,
-                                  coverUrl,
-                                  palette,
-                                )
-                                : _buildWideContent(
-                                  context,
-                                  state,
-                                  notifier,
-                                  coverUrl,
-                                  palette,
-                                ),
+                        child: compact
+                            ? _buildCompactContent(
+                                context,
+                                state,
+                                notifier,
+                                coverUrl,
+                                palette,
+                              )
+                            : _buildWideContent(
+                                context,
+                                state,
+                                notifier,
+                                coverUrl,
+                                palette,
+                              ),
                       ),
                       const SizedBox(height: 16),
                       _ControlDeck(
@@ -363,42 +362,42 @@ class _DesktopFullPlayerState extends ConsumerState<DesktopFullPlayer>
     PlayerNotifier notifier, {
     required bool alignEnd,
   }) {
-    final children =
-        alignEnd
-            ? <Widget>[
-              PopupVolumeControl(
-                volume: state.volume,
-                onVolumeChanged: notifier.setVolume,
-              ),
-              PopupSleepTimerControl(
-                status: state.sleepTimer,
-                isLive: state.currentSong?.isLive ?? false,
-                onSetDuration: notifier.setSleepTimerByDuration,
-                onSetAfterSongs: notifier.setSleepTimerAfterSongs,
-                onCancel: notifier.cancelSleepTimer,
-              ),
-              IconButton(
-                onPressed: () => QueueBottomSheet.show(context),
-                icon: const Icon(Icons.queue_music_rounded),
-                tooltip: '播放队列',
-              ),
-            ]
-            : <Widget>[
-              FavoriteButton(
-                songId: state.currentSong!.id,
-                songType: state.currentSong!.type,
-                size: 24,
-              ),
-              PopupPlayModeControl(
-                playMode: state.playMode,
-                onPlayModeChanged: notifier.setPlayMode,
-              ),
-              const CastButton(iconSize: 24),
-            ];
+    final children = alignEnd
+        ? <Widget>[
+            PopupVolumeControl(
+              volume: state.volume,
+              onVolumeChanged: notifier.setVolume,
+            ),
+            PopupSleepTimerControl(
+              status: state.sleepTimer,
+              isLive: state.currentSong?.isLive ?? false,
+              onSetDuration: notifier.setSleepTimerByDuration,
+              onSetAfterSongs: notifier.setSleepTimerAfterSongs,
+              onCancel: notifier.cancelSleepTimer,
+            ),
+            IconButton(
+              onPressed: () => QueueBottomSheet.show(context),
+              icon: const Icon(Icons.queue_music_rounded),
+              tooltip: '播放队列',
+            ),
+          ]
+        : <Widget>[
+            FavoriteButton(
+              songId: state.currentSong!.id,
+              songType: state.currentSong!.type,
+              size: 24,
+            ),
+            PopupPlayModeControl(
+              playMode: state.playMode,
+              onPlayModeChanged: notifier.setPlayMode,
+            ),
+            const CastButton(iconSize: 24),
+          ];
 
     return Row(
-      mainAxisAlignment:
-          alignEnd ? MainAxisAlignment.end : MainAxisAlignment.start,
+      mainAxisAlignment: alignEnd
+          ? MainAxisAlignment.end
+          : MainAxisAlignment.start,
       children: children,
     );
   }
@@ -426,8 +425,9 @@ class _NowPlayingCard extends StatelessWidget {
 
     final info = Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment:
-          horizontal ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      crossAxisAlignment: horizontal
+          ? CrossAxisAlignment.start
+          : CrossAxisAlignment.center,
       children: [
         Text(
           song.title,
@@ -468,35 +468,34 @@ class _NowPlayingCard extends StatelessWidget {
     return _GlassSurface(
       borderRadius: 28,
       padding: EdgeInsets.all(horizontal ? 20 : 26),
-      child:
-          horizontal
-              ? Row(
-                children: [
-                  _AlbumArtwork(
+      child: horizontal
+          ? Row(
+              children: [
+                _AlbumArtwork(
+                  coverUrl: coverUrl,
+                  palette: palette,
+                  rotationController: rotationController,
+                  size: 164,
+                ),
+                const SizedBox(width: 24),
+                Expanded(child: info),
+              ],
+            )
+          : Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Flexible(
+                  child: _AlbumArtwork(
                     coverUrl: coverUrl,
                     palette: palette,
                     rotationController: rotationController,
-                    size: 164,
+                    size: 300,
                   ),
-                  const SizedBox(width: 24),
-                  Expanded(child: info),
-                ],
-              )
-              : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Flexible(
-                    child: _AlbumArtwork(
-                      coverUrl: coverUrl,
-                      palette: palette,
-                      rotationController: rotationController,
-                      size: 300,
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  info,
-                ],
-              ),
+                ),
+                const SizedBox(height: 28),
+                info,
+              ],
+            ),
     );
   }
 }
@@ -537,16 +536,15 @@ class _AlbumArtwork extends StatelessWidget {
           ],
         ),
         clipBehavior: Clip.antiAlias,
-        child:
-            coverUrl == null
-                ? _ArtworkPlaceholder(size: size)
-                : ExcludeSemantics(
-                  child: Image.network(
-                    UrlHelper.buildCoverUrl(coverUrl!),
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => _ArtworkPlaceholder(size: size),
-                  ),
+        child: coverUrl == null
+            ? _ArtworkPlaceholder(size: size)
+            : ExcludeSemantics(
+                child: Image.network(
+                  UrlHelper.buildCoverUrl(coverUrl!),
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => _ArtworkPlaceholder(size: size),
                 ),
+              ),
       ),
     );
   }

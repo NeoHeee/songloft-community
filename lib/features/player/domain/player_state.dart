@@ -210,15 +210,16 @@ class PlayerState {
       showFullPlayer: showFullPlayer ?? this.showFullPlayer,
       showPlaylistDrawer: showPlaylistDrawer ?? this.showPlaylistDrawer,
       sleepTimer: clearSleepTimer ? null : (sleepTimer ?? this.sleepTimer),
-      previousVolume:
-          clearPreviousVolume ? null : (previousVolume ?? this.previousVolume),
-      errorMessage:
-          clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
+      previousVolume: clearPreviousVolume
+          ? null
+          : (previousVolume ?? this.previousVolume),
+      errorMessage: clearErrorMessage
+          ? null
+          : (errorMessage ?? this.errorMessage),
       isRetrying: isRetrying ?? this.isRetrying,
-      sourcePlaylistId:
-          clearSourcePlaylistId
-              ? null
-              : (sourcePlaylistId ?? this.sourcePlaylistId),
+      sourcePlaylistId: clearSourcePlaylistId
+          ? null
+          : (sourcePlaylistId ?? this.sourcePlaylistId),
     );
   }
 

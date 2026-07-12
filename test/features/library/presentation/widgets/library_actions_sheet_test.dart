@@ -10,25 +10,23 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Builder(
-          builder:
-              (context) => Scaffold(
-                body: Center(
-                  child: FilledButton(
-                    onPressed:
-                        () => LibraryActionsSheet.show(
-                          context,
-                          currentSort: 'added_at',
-                          showHidden: false,
-                          onSortChanged: (value) => selectedSort = value,
-                          onAddRemote: () {},
-                          onAddRadio: () {},
-                          onToggleHidden: () => toggledHidden = true,
-                          onClean: () {},
-                        ),
-                    child: const Text('打开'),
-                  ),
+          builder: (context) => Scaffold(
+            body: Center(
+              child: FilledButton(
+                onPressed: () => LibraryActionsSheet.show(
+                  context,
+                  currentSort: 'added_at',
+                  showHidden: false,
+                  onSortChanged: (value) => selectedSort = value,
+                  onAddRemote: () {},
+                  onAddRadio: () {},
+                  onToggleHidden: () => toggledHidden = true,
+                  onClean: () {},
                 ),
+                child: const Text('打开'),
               ),
+            ),
+          ),
         ),
       ),
     );

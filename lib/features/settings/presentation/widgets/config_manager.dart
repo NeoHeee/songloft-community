@@ -43,30 +43,26 @@ class ConfigManager extends ConsumerWidget {
         // 配置列表
         configsAsync.when(
           data: (configs) => _buildConfigList(context, ref, configs),
-          loading:
-              () => const Padding(
-                padding: EdgeInsets.all(16),
-                child: Center(child: CircularProgressIndicator()),
-              ),
-          error:
-              (error, _) => Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Text(
-                      error is ApiException ? error.message : '加载失败',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: () => ref.invalidate(configsProvider),
-                      child: const Text('重试'),
-                    ),
-                  ],
+          loading: () => const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, _) => Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                Text(
+                  error is ApiException ? error.message : '加载失败',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
-              ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => ref.invalidate(configsProvider),
+                  child: const Text('重试'),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
@@ -116,62 +112,61 @@ class ConfigManager extends ConsumerWidget {
 
     final result = await showDialog<bool>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('添加配置'),
-            content: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: keyController,
-                    decoration: const InputDecoration(
-                      labelText: '配置键',
-                      hintText: '例如: app.setting.name',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return '请输入配置键';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: valueController,
-                    decoration: const InputDecoration(
-                      labelText: '配置值',
-                      hintText: '配置值（支持多行）',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 3,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return '请输入配置值';
-                      }
-                      return null;
-                    },
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('取消'),
-              ),
-              FilledButton(
-                onPressed: () {
-                  if (formKey.currentState!.validate()) {
-                    Navigator.pop(context, true);
+      builder: (context) => AlertDialog(
+        title: const Text('添加配置'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: keyController,
+                decoration: const InputDecoration(
+                  labelText: '配置键',
+                  hintText: '例如: app.setting.name',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '请输入配置键';
                   }
+                  return null;
                 },
-                child: const Text('添加'),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: valueController,
+                decoration: const InputDecoration(
+                  labelText: '配置值',
+                  hintText: '配置值（支持多行）',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '请输入配置值';
+                  }
+                  return null;
+                },
               ),
             ],
           ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                Navigator.pop(context, true);
+              }
+            },
+            child: const Text('添加'),
+          ),
+        ],
+      ),
     );
 
     if (result != true) return;
@@ -215,41 +210,40 @@ class _ConfigItemState extends ConsumerState<_ConfigItem> {
 
     final result = await showDialog<bool>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text('编辑配置: ${widget.config.key}'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '配置键: ${widget.config.key}',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: Colors.grey),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: valueController,
-                  decoration: const InputDecoration(
-                    labelText: '配置值',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 5,
-                ),
-              ],
+      builder: (context) => AlertDialog(
+        title: Text('编辑配置: ${widget.config.key}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '配置键: ${widget.config.key}',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.grey),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('取消'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: valueController,
+              decoration: const InputDecoration(
+                labelText: '配置值',
+                border: OutlineInputBorder(),
               ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('保存'),
-              ),
-            ],
+              maxLines: 5,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
           ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('保存'),
+          ),
+        ],
+      ),
     );
 
     if (result != true) return;
@@ -278,24 +272,23 @@ class _ConfigItemState extends ConsumerState<_ConfigItem> {
   Future<void> _deleteConfig() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('确认删除'),
-            content: Text('确定要删除配置 "${widget.config.key}" 吗？'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('取消'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.error,
-                ),
-                child: const Text('删除'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text('确认删除'),
+        content: Text('确定要删除配置 "${widget.config.key}" 吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
           ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('删除'),
+          ),
+        ],
+      ),
     );
 
     if (confirm != true) return;
@@ -359,14 +352,13 @@ class _ConfigItemState extends ConsumerState<_ConfigItem> {
           ),
           // 删除按钮
           IconButton(
-            icon:
-                _isDeleting
-                    ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                    : const Icon(Icons.delete_outline),
+            icon: _isDeleting
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.delete_outline),
             onPressed: _isDeleting ? null : _deleteConfig,
             tooltip: '删除',
           ),

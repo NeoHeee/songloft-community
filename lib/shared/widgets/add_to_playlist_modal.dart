@@ -64,8 +64,8 @@ class _AddToPlaylistModalState extends ConsumerState<AddToPlaylistModal> {
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Center(
           child: TextButton.icon(
-            onPressed:
-                () => ref.read(playlistListProvider(null).notifier).loadMore(),
+            onPressed: () =>
+                ref.read(playlistListProvider(null).notifier).loadMore(),
             icon: const Icon(Icons.refresh, size: 16),
             label: const Text('加载失败，点击重试'),
           ),
@@ -104,10 +104,9 @@ class _AddToPlaylistModalState extends ConsumerState<AddToPlaylistModal> {
         ResponsiveSnackBar.showError(context, message: '添加失败');
       } else {
         Navigator.of(context).pop();
-        final msg =
-            result.skipped > 0
-                ? '已添加 ${result.added} 首到「${playlist.name}」，跳过 ${result.skipped} 首'
-                : '已添加 ${result.added} 首歌曲到「${playlist.name}」';
+        final msg = result.skipped > 0
+            ? '已添加 ${result.added} 首到「${playlist.name}」，跳过 ${result.skipped} 首'
+            : '已添加 ${result.added} 首歌曲到「${playlist.name}」';
         ResponsiveSnackBar.show(context, message: msg);
       }
     } catch (e) {
@@ -127,39 +126,38 @@ class _AddToPlaylistModalState extends ConsumerState<AddToPlaylistModal> {
 
     final name = await showDialog<String>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('新建歌单'),
-            content: TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: '歌单名称',
-                border: OutlineInputBorder(),
-              ),
-              autofocus: true,
-              onSubmitted: (value) {
-                final trimmed = value.trim();
-                if (trimmed.isNotEmpty) {
-                  Navigator.of(context).pop(trimmed);
-                }
-              },
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('取消'),
-              ),
-              FilledButton(
-                onPressed: () {
-                  final trimmed = nameController.text.trim();
-                  if (trimmed.isNotEmpty) {
-                    Navigator.of(context).pop(trimmed);
-                  }
-                },
-                child: const Text('创建'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text('新建歌单'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            labelText: '歌单名称',
+            border: OutlineInputBorder(),
           ),
+          autofocus: true,
+          onSubmitted: (value) {
+            final trimmed = value.trim();
+            if (trimmed.isNotEmpty) {
+              Navigator.of(context).pop(trimmed);
+            }
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final trimmed = nameController.text.trim();
+              if (trimmed.isNotEmpty) {
+                Navigator.of(context).pop(trimmed);
+              }
+            },
+            child: const Text('创建'),
+          ),
+        ],
+      ),
     );
 
     if (name == null || name.isEmpty || !mounted) return;
@@ -182,10 +180,9 @@ class _AddToPlaylistModalState extends ConsumerState<AddToPlaylistModal> {
         if (!mounted) return;
         if (result != null) {
           Navigator.of(context).pop();
-          final msg =
-              result.skipped > 0
-                  ? '已创建歌单「$name」并添加 ${result.added} 首，跳过 ${result.skipped} 首'
-                  : '已创建歌单「$name」并添加 ${result.added} 首歌曲';
+          final msg = result.skipped > 0
+              ? '已创建歌单「$name」并添加 ${result.added} 首，跳过 ${result.skipped} 首'
+              : '已创建歌单「$name」并添加 ${result.added} 首歌曲';
           ResponsiveSnackBar.show(context, message: msg);
         }
       } else if (mounted) {
@@ -299,44 +296,40 @@ class _AddToPlaylistModalState extends ConsumerState<AddToPlaylistModal> {
                             subtitle: Text(
                               playlist.type == 'radio' ? '电台' : '歌单',
                             ),
-                            onTap:
-                                _isAdding
-                                    ? null
-                                    : () => _addToPlaylist(playlist),
+                            onTap: _isAdding
+                                ? null
+                                : () => _addToPlaylist(playlist),
                           );
                         },
                       ),
                     );
                   },
-                  loading:
-                      () => const Center(child: CircularProgressIndicator()),
-                  error:
-                      (error, stack) => Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              size: 48,
-                              color: theme.colorScheme.error,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              '加载失败',
-                              style: TextStyle(color: theme.colorScheme.error),
-                            ),
-                            const SizedBox(height: 8),
-                            FilledButton.icon(
-                              onPressed:
-                                  () => ref.invalidate(
-                                    playlistListProvider(null),
-                                  ),
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('重试'),
-                            ),
-                          ],
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (error, stack) => Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: theme.colorScheme.error,
                         ),
-                      ),
+                        const SizedBox(height: 16),
+                        Text(
+                          '加载失败',
+                          style: TextStyle(color: theme.colorScheme.error),
+                        ),
+                        const SizedBox(height: 8),
+                        FilledButton.icon(
+                          onPressed: () =>
+                              ref.invalidate(playlistListProvider(null)),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('重试'),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],

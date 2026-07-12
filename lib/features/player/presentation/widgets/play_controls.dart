@@ -74,8 +74,9 @@ class PlayControls extends StatelessWidget {
 
   Widget _buildPlayPauseButton(BuildContext context, double iconSize) {
     final theme = Theme.of(context);
-    final borderRadius =
-        useRoundedRect ? AppRadius.xxlAll : BorderRadius.circular(size);
+    final borderRadius = useRoundedRect
+        ? AppRadius.xxlAll
+        : BorderRadius.circular(size);
 
     Widget button;
 
@@ -130,8 +131,9 @@ class PlayControls extends StatelessWidget {
       duration: const Duration(milliseconds: 300),
       decoration: BoxDecoration(
         borderRadius: borderRadius,
-        boxShadow:
-            isPlaying ? AppEffects.primaryGlow(theme.colorScheme.primary) : [],
+        boxShadow: isPlaying
+            ? AppEffects.primaryGlow(theme.colorScheme.primary)
+            : [],
       ),
       child: button,
     );

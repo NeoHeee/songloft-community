@@ -22,25 +22,24 @@ class PluginIcon extends StatelessWidget {
       final isSvg = url.toLowerCase().endsWith('.svg');
       return ClipRRect(
         borderRadius: BorderRadius.circular(size / 5),
-        child:
-            isSvg
-                ? SvgPicture.network(
+        child: isSvg
+            ? SvgPicture.network(
+                url,
+                width: size,
+                height: size,
+                fit: BoxFit.contain,
+                placeholderBuilder: (_) => _buildFallback(),
+                errorBuilder: (_, _, _) => _buildFallback(),
+              )
+            : ExcludeSemantics(
+                child: Image.network(
                   url,
                   width: size,
                   height: size,
-                  fit: BoxFit.contain,
-                  placeholderBuilder: (_) => _buildFallback(),
+                  fit: BoxFit.cover,
                   errorBuilder: (_, _, _) => _buildFallback(),
-                )
-                : ExcludeSemantics(
-                  child: Image.network(
-                    url,
-                    width: size,
-                    height: size,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => _buildFallback(),
-                  ),
                 ),
+              ),
       );
     }
     return _buildFallback();
@@ -83,8 +82,9 @@ class PluginNavIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final iconColor =
-        selected ? colorScheme.primary : colorScheme.onSurfaceVariant;
+    final iconColor = selected
+        ? colorScheme.primary
+        : colorScheme.onSurfaceVariant;
     final fallback = IconTheme.merge(
       data: IconThemeData(color: iconColor, size: size),
       child: fallbackIcon,
@@ -94,25 +94,24 @@ class PluginNavIcon extends StatelessWidget {
     if (iconUrl != null && iconUrl!.isNotEmpty) {
       final url = iconUrl!;
       final isSvg = url.toLowerCase().endsWith('.svg');
-      content =
-          isSvg
-              ? SvgPicture.network(
+      content = isSvg
+          ? SvgPicture.network(
+              url,
+              width: size,
+              height: size,
+              fit: BoxFit.contain,
+              placeholderBuilder: (_) => fallback,
+              errorBuilder: (_, _, _) => fallback,
+            )
+          : ExcludeSemantics(
+              child: Image.network(
                 url,
                 width: size,
                 height: size,
-                fit: BoxFit.contain,
-                placeholderBuilder: (_) => fallback,
+                fit: BoxFit.cover,
                 errorBuilder: (_, _, _) => fallback,
-              )
-              : ExcludeSemantics(
-                child: Image.network(
-                  url,
-                  width: size,
-                  height: size,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => fallback,
-                ),
-              );
+              ),
+            );
     }
 
     return AnimatedContainer(
@@ -122,16 +121,14 @@ class PluginNavIcon extends StatelessWidget {
       height: size + 10,
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
-        color:
-            selected
-                ? colorScheme.primaryContainer.withValues(alpha: 0.72)
-                : colorScheme.surfaceContainerHighest.withValues(alpha: 0.62),
+        color: selected
+            ? colorScheme.primaryContainer.withValues(alpha: 0.72)
+            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.62),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color:
-              selected
-                  ? colorScheme.primary.withValues(alpha: 0.34)
-                  : colorScheme.outlineVariant.withValues(alpha: 0.24),
+          color: selected
+              ? colorScheme.primary.withValues(alpha: 0.34)
+              : colorScheme.outlineVariant.withValues(alpha: 0.24),
         ),
       ),
       child: ClipRRect(

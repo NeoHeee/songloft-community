@@ -64,12 +64,11 @@ class _PluginTabPageState extends ConsumerState<PluginTabPage> {
       ui_web.platformViewRegistry.registerViewFactory(_viewType, (int viewId) {
         final state = _activeStates[entryPath]!;
         final theme = state._lastTheme ?? 'light';
-        final iframe =
-            web.HTMLIFrameElement()
-              ..src = state._buildPluginUrl(theme)
-              ..style.border = 'none'
-              ..style.width = '100%'
-              ..style.height = '100%';
+        final iframe = web.HTMLIFrameElement()
+          ..src = state._buildPluginUrl(theme)
+          ..style.border = 'none'
+          ..style.width = '100%'
+          ..style.height = '100%';
         state._iframe = iframe;
         return iframe;
       });

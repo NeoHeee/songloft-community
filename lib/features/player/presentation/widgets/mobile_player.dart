@@ -33,22 +33,25 @@ class MobilePlayer extends ConsumerStatefulWidget {
     return Navigator.of(context).push(
       PageRouteBuilder(
         opaque: true,
-        transitionDuration:
-            reduceMotion ? Duration.zero : const Duration(milliseconds: 280),
-        reverseTransitionDuration:
-            reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
-        pageBuilder:
-            (context, animation, secondaryAnimation) => const MobilePlayer(),
+        transitionDuration: reduceMotion
+            ? Duration.zero
+            : const Duration(milliseconds: 280),
+        reverseTransitionDuration: reduceMotion
+            ? Duration.zero
+            : const Duration(milliseconds: 220),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const MobilePlayer(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           if (reduceMotion) return child;
           // 从下往上滑入动画
           return SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 1),
-              end: Offset.zero,
-            ).animate(
-              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-            ),
+            position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
+                .animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
             child: child,
           );
         },
@@ -128,11 +131,10 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onVerticalDragStart: _handleVerticalDragStart,
-      onVerticalDragUpdate:
-          (details) => _handleVerticalDragUpdate(
-            details,
-            MediaQuery.sizeOf(context).height * 0.45,
-          ),
+      onVerticalDragUpdate: (details) => _handleVerticalDragUpdate(
+        details,
+        MediaQuery.sizeOf(context).height * 0.45,
+      ),
       onVerticalDragEnd: _handleVerticalDragEnd,
       onVerticalDragCancel: _resetDismissDrag,
       child: child,
@@ -201,10 +203,9 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
       child: ColoredBox(
         color: Colors.black,
         child: AnimatedContainer(
-          duration:
-              _isDragging || reduceMotion
-                  ? Duration.zero
-                  : const Duration(milliseconds: 220),
+          duration: _isDragging || reduceMotion
+              ? Duration.zero
+              : const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
           transform: Matrix4.translationValues(0, _dragOffset, 0),
           transformAlignment: Alignment.topCenter,
@@ -441,10 +442,9 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
           margin: const EdgeInsets.symmetric(horizontal: 4),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color:
-                isActive
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurface.withValues(alpha: 0.3),
+            color: isActive
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurface.withValues(alpha: 0.3),
           ),
         );
       }),
@@ -492,10 +492,9 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
           PopupMenuButton<String>(
             icon: Icon(
               Icons.more_horiz_rounded,
-              color:
-                  state.sleepTimer != null
-                      ? Theme.of(context).colorScheme.primary
-                      : topBarColor,
+              color: state.sleepTimer != null
+                  ? Theme.of(context).colorScheme.primary
+                  : topBarColor,
             ),
             onSelected: (value) {
               switch (value) {
@@ -577,10 +576,9 @@ class _MobilePlayerState extends ConsumerState<MobilePlayer>
       height: size,
       decoration: BoxDecoration(
         borderRadius: AppRadius.xlAll,
-        boxShadow:
-            glowColor != null
-                ? AppEffects.primaryGlow(glowColor)
-                : AppEffects.softGlow(theme.colorScheme.onSurface),
+        boxShadow: glowColor != null
+            ? AppEffects.primaryGlow(glowColor)
+            : AppEffects.softGlow(theme.colorScheme.onSurface),
       ),
       child: CoverImage(
         coverUrl: coverUrl,

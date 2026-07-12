@@ -138,16 +138,14 @@ class _JSPluginManagerState extends ConsumerState<JSPluginManager> {
           const SizedBox(height: 12),
           pluginsAsync.when(
             data: (plugins) => _buildPluginContent(context, plugins),
-            loading:
-                () => const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 36),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-            error:
-                (error, _) => _PluginLoadError(
-                  message: error is ApiException ? error.message : '$error',
-                  onRetry: () => ref.invalidate(jsPluginsProvider),
-                ),
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 36),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (error, _) => _PluginLoadError(
+              message: error is ApiException ? error.message : '$error',
+              onRetry: () => ref.invalidate(jsPluginsProvider),
+            ),
           ),
         ],
       ),
@@ -162,17 +160,16 @@ class _JSPluginManagerState extends ConsumerState<JSPluginManager> {
       decoration: InputDecoration(
         hintText: '搜索插件名称、作者或功能描述',
         prefixIcon: const Icon(Icons.search_rounded),
-        suffixIcon:
-            _query.isEmpty
-                ? null
-                : IconButton(
-                  onPressed: () {
-                    _searchController.clear();
-                    setState(() => _query = '');
-                  },
-                  icon: const Icon(Icons.close_rounded),
-                  tooltip: '清除搜索',
-                ),
+        suffixIcon: _query.isEmpty
+            ? null
+            : IconButton(
+                onPressed: () {
+                  _searchController.clear();
+                  setState(() => _query = '');
+                },
+                icon: const Icon(Icons.close_rounded),
+                tooltip: '清除搜索',
+              ),
         filled: true,
         fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.58),
         border: OutlineInputBorder(
@@ -212,17 +209,16 @@ class _JSPluginManagerState extends ConsumerState<JSPluginManager> {
           onSelected: (value) {
             if (value == 'cleanup') _cleanupOrphanStorage();
           },
-          itemBuilder:
-              (context) => const [
-                PopupMenuItem(
-                  value: 'cleanup',
-                  child: ListTile(
-                    leading: Icon(Icons.cleaning_services_rounded),
-                    title: Text('清理卸载残留数据'),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-              ],
+          itemBuilder: (context) => const [
+            PopupMenuItem(
+              value: 'cleanup',
+              child: ListTile(
+                leading: Icon(Icons.cleaning_services_rounded),
+                title: Text('清理卸载残留数据'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -232,22 +228,21 @@ class _JSPluginManagerState extends ConsumerState<JSPluginManager> {
     final active = plugins.where((plugin) => plugin.isActive).length;
     final errors = plugins.where((plugin) => plugin.isError).length;
     final inactive = plugins.length - active - errors;
-    final filtered =
-        plugins.where((plugin) {
-          final query = _query.toLowerCase();
-          final matchesQuery =
-              query.isEmpty ||
-              plugin.displayName.toLowerCase().contains(query) ||
-              (plugin.author?.toLowerCase().contains(query) ?? false) ||
-              (plugin.description?.toLowerCase().contains(query) ?? false);
-          final matchesStatus = switch (_status) {
-            'active' => plugin.isActive,
-            'inactive' => !plugin.isActive && !plugin.isError,
-            'error' => plugin.isError,
-            _ => true,
-          };
-          return matchesQuery && matchesStatus;
-        }).toList();
+    final filtered = plugins.where((plugin) {
+      final query = _query.toLowerCase();
+      final matchesQuery =
+          query.isEmpty ||
+          plugin.displayName.toLowerCase().contains(query) ||
+          (plugin.author?.toLowerCase().contains(query) ?? false) ||
+          (plugin.description?.toLowerCase().contains(query) ?? false);
+      final matchesStatus = switch (_status) {
+        'active' => plugin.isActive,
+        'inactive' => !plugin.isActive && !plugin.isError,
+        'error' => plugin.isError,
+        _ => true,
+      };
+      return matchesQuery && matchesStatus;
+    }).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,10 +289,9 @@ class _JSPluginManagerState extends ConsumerState<JSPluginManager> {
           LayoutBuilder(
             builder: (context, constraints) {
               final columns = constraints.maxWidth >= 900 ? 2 : 1;
-              final itemWidth =
-                  columns == 1
-                      ? constraints.maxWidth
-                      : (constraints.maxWidth - 12) / 2;
+              final itemWidth = columns == 1
+                  ? constraints.maxWidth
+                  : (constraints.maxWidth - 12) / 2;
 
               return Wrap(
                 spacing: 12,
@@ -319,11 +313,10 @@ class _JSPluginManagerState extends ConsumerState<JSPluginManager> {
   void _showUploadDialog() {
     showDialog(
       context: context,
-      builder:
-          (context) => _JSPluginUploadDialog(
-            pluginApi: ref.read(jsPluginApiProvider),
-            onUploadComplete: () => ref.invalidate(jsPluginsProvider),
-          ),
+      builder: (context) => _JSPluginUploadDialog(
+        pluginApi: ref.read(jsPluginApiProvider),
+        onUploadComplete: () => ref.invalidate(jsPluginsProvider),
+      ),
     );
   }
 
@@ -331,38 +324,37 @@ class _JSPluginManagerState extends ConsumerState<JSPluginManager> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder:
-          (context) => _JSPluginBatchUpdateDialog(
-            pluginApi: ref.read(jsPluginApiProvider),
-            onUpdateComplete: () => ref.invalidate(jsPluginsProvider),
-          ),
+      builder: (context) => _JSPluginBatchUpdateDialog(
+        pluginApi: ref.read(jsPluginApiProvider),
+        onUpdateComplete: () => ref.invalidate(jsPluginsProvider),
+      ),
     );
   }
 
   Future<void> _cleanupOrphanStorage() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('清理卸载残留数据'),
-            content: const Text('将删除已卸载插件遗留的持久化存储数据。此操作不可撤销。'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('取消'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('开始清理'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text('清理卸载残留数据'),
+        content: const Text('将删除已卸载插件遗留的持久化存储数据。此操作不可撤销。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
           ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('开始清理'),
+          ),
+        ],
+      ),
     );
     if (confirmed != true) return;
 
     try {
-      final message =
-          await ref.read(jsPluginApiProvider).cleanupOrphanStorage();
+      final message = await ref
+          .read(jsPluginApiProvider)
+          .cleanupOrphanStorage();
       if (mounted) ResponsiveSnackBar.showSuccess(context, message: message);
     } on ApiException catch (error) {
       if (mounted) {
@@ -399,10 +391,9 @@ class _StatusFilterChip extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(right: 7),
       child: Material(
-        color:
-            selected
-                ? accent.withValues(alpha: 0.14)
-                : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        color: selected
+            ? accent.withValues(alpha: 0.14)
+            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(13),
         child: InkWell(
           onTap: onTap,
@@ -426,10 +417,9 @@ class _StatusFilterChip extends StatelessWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color:
-                        selected
-                            ? accent.withValues(alpha: 0.16)
-                            : colorScheme.surface,
+                    color: selected
+                        ? accent.withValues(alpha: 0.16)
+                        : colorScheme.surface,
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
@@ -471,12 +461,11 @@ class _JSPluginCardState extends ConsumerState<_JSPluginCard> {
     final colorScheme = theme.colorScheme;
     final keepAlive = ref.watch(pluginKeepAliveProvider).value ?? <String>[];
     final isKeepAlive = keepAlive.contains(plugin.entryPath);
-    final statusColor =
-        plugin.isError
-            ? colorScheme.error
-            : plugin.isActive
-            ? Colors.green
-            : colorScheme.onSurfaceVariant;
+    final statusColor = plugin.isError
+        ? colorScheme.error
+        : plugin.isActive
+        ? Colors.green
+        : colorScheme.onSurfaceVariant;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -484,10 +473,9 @@ class _JSPluginCardState extends ConsumerState<_JSPluginCard> {
         color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(21),
         border: Border.all(
-          color:
-              plugin.isError
-                  ? colorScheme.error.withValues(alpha: 0.35)
-                  : colorScheme.outlineVariant.withValues(alpha: 0.22),
+          color: plugin.isError
+              ? colorScheme.error.withValues(alpha: 0.35)
+              : colorScheme.outlineVariant.withValues(alpha: 0.22),
         ),
       ),
       child: Column(
@@ -551,17 +539,17 @@ class _JSPluginCardState extends ConsumerState<_JSPluginCard> {
               ),
               _toggling
                   ? const Padding(
-                    padding: EdgeInsets.all(10),
-                    child: SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  )
+                      padding: EdgeInsets.all(10),
+                      child: SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
                   : Switch(
-                    value: plugin.isActive,
-                    onChanged: (_) => _togglePlugin(),
-                  ),
+                      value: plugin.isActive,
+                      onChanged: (_) => _togglePlugin(),
+                    ),
             ],
           ),
           if (plugin.description?.isNotEmpty == true) ...[
@@ -626,14 +614,13 @@ class _JSPluginCardState extends ConsumerState<_JSPluginCard> {
               ),
               PopupMenuButton<String>(
                 tooltip: '更多操作',
-                icon:
-                    _forceUpdating || _deleting
-                        ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                        : const Icon(Icons.more_horiz_rounded),
+                icon: _forceUpdating || _deleting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.more_horiz_rounded),
                 onSelected: (value) {
                   switch (value) {
                     case 'homepage':
@@ -644,40 +631,39 @@ class _JSPluginCardState extends ConsumerState<_JSPluginCard> {
                       _deletePlugin();
                   }
                 },
-                itemBuilder:
-                    (context) => [
-                      if (plugin.homepage?.isNotEmpty == true)
-                        const PopupMenuItem(
-                          value: 'homepage',
-                          child: ListTile(
-                            leading: Icon(Icons.open_in_new_rounded),
-                            title: Text('打开插件主页'),
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                        ),
-                      const PopupMenuItem(
-                        value: 'force_update',
-                        child: ListTile(
-                          leading: Icon(Icons.refresh_rounded),
-                          title: Text('强制重新安装'),
-                          contentPadding: EdgeInsets.zero,
-                        ),
+                itemBuilder: (context) => [
+                  if (plugin.homepage?.isNotEmpty == true)
+                    const PopupMenuItem(
+                      value: 'homepage',
+                      child: ListTile(
+                        leading: Icon(Icons.open_in_new_rounded),
+                        title: Text('打开插件主页'),
+                        contentPadding: EdgeInsets.zero,
                       ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: ListTile(
-                          leading: Icon(
-                            Icons.delete_outline_rounded,
-                            color: colorScheme.error,
-                          ),
-                          title: Text(
-                            '删除插件',
-                            style: TextStyle(color: colorScheme.error),
-                          ),
-                          contentPadding: EdgeInsets.zero,
-                        ),
+                    ),
+                  const PopupMenuItem(
+                    value: 'force_update',
+                    child: ListTile(
+                      leading: Icon(Icons.refresh_rounded),
+                      title: Text('强制重新安装'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: ListTile(
+                      leading: Icon(
+                        Icons.delete_outline_rounded,
+                        color: colorScheme.error,
                       ),
-                    ],
+                      title: Text(
+                        '删除插件',
+                        style: TextStyle(color: colorScheme.error),
+                      ),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -714,10 +700,9 @@ class _JSPluginCardState extends ConsumerState<_JSPluginCard> {
     if (entryPath == null || entryPath.isEmpty) return;
 
     final current = ref.read(pluginKeepAliveProvider).value ?? <String>[];
-    final updated =
-        current.contains(entryPath)
-            ? current.where((item) => item != entryPath).toList()
-            : [...current, entryPath];
+    final updated = current.contains(entryPath)
+        ? current.where((item) => item != entryPath).toList()
+        : [...current, entryPath];
 
     try {
       await ref.read(settingsApiProvider).setPluginKeepAlive(updated);
@@ -747,24 +732,22 @@ class _JSPluginCardState extends ConsumerState<_JSPluginCard> {
   void _showUpdateDialog() {
     showDialog(
       context: context,
-      builder:
-          (context) => _JSPluginUpdateDialog(
-            plugin: widget.plugin,
-            pluginApi: ref.read(jsPluginApiProvider),
-            onUpdateComplete: () => ref.invalidate(jsPluginsProvider),
-          ),
+      builder: (context) => _JSPluginUpdateDialog(
+        plugin: widget.plugin,
+        pluginApi: ref.read(jsPluginApiProvider),
+        onUpdateComplete: () => ref.invalidate(jsPluginsProvider),
+      ),
     );
   }
 
   Future<void> _forceUpdate() async {
     final proxy = await showDialog<String>(
       context: context,
-      builder:
-          (context) => _ProxyConfirmDialog(
-            title: '强制重新安装',
-            description: '将忽略版本检查，重新下载并安装“${widget.plugin.displayName}”。',
-            confirmLabel: '开始安装',
-          ),
+      builder: (context) => _ProxyConfirmDialog(
+        title: '强制重新安装',
+        description: '将忽略版本检查，重新下载并安装“${widget.plugin.displayName}”。',
+        confirmLabel: '开始安装',
+      ),
     );
     if (proxy == null || !mounted) return;
 
@@ -803,49 +786,44 @@ class _JSPluginCardState extends ConsumerState<_JSPluginCard> {
       builder: (context) {
         var keepData = false;
         return StatefulBuilder(
-          builder:
-              (context, setDialogState) => AlertDialog(
-                title: const Text('删除插件'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('确定删除“${widget.plugin.displayName}”吗？'),
-                    const SizedBox(height: 10),
-                    CheckboxListTile(
-                      value: keepData,
-                      onChanged: (value) {
-                        setDialogState(() => keepData = value ?? false);
-                      },
-                      title: const Text('保留插件数据'),
-                      subtitle: const Text('以后重新安装时可继续使用原有设置和数据'),
-                      controlAffinity: ListTileControlAffinity.leading,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ],
+          builder: (context, setDialogState) => AlertDialog(
+            title: const Text('删除插件'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('确定删除“${widget.plugin.displayName}”吗？'),
+                const SizedBox(height: 10),
+                CheckboxListTile(
+                  value: keepData,
+                  onChanged: (value) {
+                    setDialogState(() => keepData = value ?? false);
+                  },
+                  title: const Text('保留插件数据'),
+                  subtitle: const Text('以后重新安装时可继续使用原有设置和数据'),
+                  controlAffinity: ListTileControlAffinity.leading,
+                  contentPadding: EdgeInsets.zero,
                 ),
-                actions: [
-                  TextButton(
-                    onPressed:
-                        () => Navigator.pop(context, (
-                          confirmed: false,
-                          keepData: false,
-                        )),
-                    child: const Text('取消'),
-                  ),
-                  FilledButton(
-                    onPressed:
-                        () => Navigator.pop(context, (
-                          confirmed: true,
-                          keepData: keepData,
-                        )),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.error,
-                    ),
-                    child: const Text('删除'),
-                  ),
-                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () =>
+                    Navigator.pop(context, (confirmed: false, keepData: false)),
+                child: const Text('取消'),
               ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, (
+                  confirmed: true,
+                  keepData: keepData,
+                )),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                ),
+                child: const Text('删除'),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -882,12 +860,11 @@ class _PluginStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final (label, color) =
-        plugin.isError
-            ? ('异常', colorScheme.error)
-            : plugin.isActive
-            ? ('已启用', Colors.green)
-            : ('已禁用', colorScheme.onSurfaceVariant);
+    final (label, color) = plugin.isError
+        ? ('异常', colorScheme.error)
+        : plugin.isActive
+        ? ('已启用', Colors.green)
+        : ('已禁用', colorScheme.onSurfaceVariant);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -1013,10 +990,9 @@ class _JSPluginUploadDialogState extends State<_JSPluginUploadDialog> {
             ),
             const SizedBox(height: 14),
             Material(
-              color:
-                  _selectedFile == null
-                      ? colorScheme.surfaceContainerLow
-                      : colorScheme.primaryContainer.withValues(alpha: 0.36),
+              color: _selectedFile == null
+                  ? colorScheme.surfaceContainerLow
+                  : colorScheme.primaryContainer.withValues(alpha: 0.36),
               borderRadius: BorderRadius.circular(19),
               child: InkWell(
                 onTap: _uploading ? null : _pickFile,
@@ -1029,10 +1005,9 @@ class _JSPluginUploadDialogState extends State<_JSPluginUploadDialog> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(19),
                     border: Border.all(
-                      color:
-                          _selectedFile == null
-                              ? colorScheme.outlineVariant
-                              : colorScheme.primary,
+                      color: _selectedFile == null
+                          ? colorScheme.outlineVariant
+                          : colorScheme.primary,
                       width: _selectedFile == null ? 1 : 1.5,
                     ),
                   ),
@@ -1078,17 +1053,16 @@ class _JSPluginUploadDialogState extends State<_JSPluginUploadDialog> {
         ),
         FilledButton.icon(
           onPressed: _selectedFile == null || _uploading ? null : _uploadFile,
-          icon:
-              _uploading
-                  ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                  : const Icon(Icons.upload_rounded),
+          icon: _uploading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Icon(Icons.upload_rounded),
           label: Text(_uploading ? '正在上传' : '上传插件'),
         ),
       ],
@@ -1141,10 +1115,9 @@ class _JSPluginUploadDialogState extends State<_JSPluginUploadDialog> {
       if (response.failed == 0 && response.success > 0) {
         ResponsiveSnackBar.showSuccess(
           context,
-          message:
-              response.message.isEmpty
-                  ? '成功上传 ${response.success} 个插件'
-                  : response.message,
+          message: response.message.isEmpty
+              ? '成功上传 ${response.success} 个插件'
+              : response.message,
         );
       } else {
         final details = response.results
@@ -1201,10 +1174,9 @@ class _JSPluginUpdateDialogState extends State<_JSPluginUpdateDialog> {
   String? _error;
   JSPluginUpdateCheck? _result;
 
-  String get _proxy =>
-      _proxyIndex == -1
-          ? _customProxyController.text.trim()
-          : _kGithubProxies[_proxyIndex].value;
+  String get _proxy => _proxyIndex == -1
+      ? _customProxyController.text.trim()
+      : _kGithubProxies[_proxyIndex].value;
 
   @override
   void dispose() {
@@ -1432,10 +1404,9 @@ class _JSPluginBatchUpdateDialogState
   String? _error;
   JSPluginBatchUpdateResponse? _result;
 
-  String get _proxy =>
-      _proxyIndex == -1
-          ? _customProxyController.text.trim()
-          : _kGithubProxies[_proxyIndex].value;
+  String get _proxy => _proxyIndex == -1
+      ? _customProxyController.text.trim()
+      : _kGithubProxies[_proxyIndex].value;
 
   @override
   void dispose() {
@@ -1559,10 +1530,9 @@ class _ProxyConfirmDialogState extends State<_ProxyConfirmDialog> {
   int _proxyIndex = 0;
   final _customProxyController = TextEditingController();
 
-  String get _proxy =>
-      _proxyIndex == -1
-          ? _customProxyController.text.trim()
-          : _kGithubProxies[_proxyIndex].value;
+  String get _proxy => _proxyIndex == -1
+      ? _customProxyController.text.trim()
+      : _kGithubProxies[_proxyIndex].value;
 
   @override
   void dispose() {
@@ -1698,12 +1668,11 @@ class _BatchUpdateResult extends StatelessWidget {
                   : item.error != null
                   ? Icons.error_outline_rounded
                   : Icons.check_rounded,
-              color:
-                  item.success
-                      ? Colors.green
-                      : item.error != null
-                      ? colorScheme.error
-                      : colorScheme.onSurfaceVariant,
+              color: item.success
+                  ? Colors.green
+                  : item.error != null
+                  ? colorScheme.error
+                  : colorScheme.onSurfaceVariant,
             ),
             title: Text(
               item.pluginName.isEmpty ? item.entryPath : item.pluginName,

@@ -123,8 +123,9 @@ class MpvEqualizerService implements EqualizerService {
       16744.0,
       20000.0,
     ];
-    final srcFreqs =
-        EqualizerSetting.frequencies.map((f) => f.toDouble()).toList();
+    final srcFreqs = EqualizerSetting.frequencies
+        .map((f) => f.toDouble())
+        .toList();
     final result = List<double>.filled(18, 0);
     for (var i = 0; i < 18; i++) {
       result[i] = _interpolate(mpv18Freqs[i], srcFreqs, tenBands);

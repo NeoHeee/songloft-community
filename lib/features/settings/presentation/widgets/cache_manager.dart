@@ -258,12 +258,11 @@ class _CacheManagerState extends ConsumerState<CacheManager> {
     final cacheApi = ref.read(cacheApiProvider);
     final result = await showDialog<String>(
       context: context,
-      builder:
-          (ctx) => _CacheDirDialog(
-            cacheApi: cacheApi,
-            currentDir: config.cacheDir,
-            defaultDir: config.defaultCacheDir,
-          ),
+      builder: (ctx) => _CacheDirDialog(
+        cacheApi: cacheApi,
+        currentDir: config.cacheDir,
+        defaultDir: config.defaultCacheDir,
+      ),
     );
     if (result == null || result == config.cacheDir) return;
     try {
@@ -293,24 +292,23 @@ class _CacheManagerState extends ConsumerState<CacheManager> {
   }) {
     return showDialog<bool>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text(title),
-            content: Text(content),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('取消'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.error,
-                ),
-                child: const Text('确认清理'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
           ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('确认清理'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -377,8 +375,8 @@ class _CacheManagerState extends ConsumerState<CacheManager> {
               ),
             ),
             TextButton.icon(
-              onPressed:
-                  () => setState(() => _serverExpanded = !_serverExpanded),
+              onPressed: () =>
+                  setState(() => _serverExpanded = !_serverExpanded),
               icon: Icon(
                 _serverExpanded ? Icons.expand_less : Icons.tune,
                 size: 18,
@@ -394,12 +392,12 @@ class _CacheManagerState extends ConsumerState<CacheManager> {
         statsAsync.when(
           data: (stats) {
             final maxSize = stats.maxSize;
-            final progress =
-                maxSize > 0 ? (stats.totalSize / maxSize).clamp(0.0, 1.0) : 0.0;
-            final sizeText =
-                maxSize > 0
-                    ? '${_formatSize(stats.totalSize)} / ${_formatSize(maxSize)}'
-                    : '${_formatSize(stats.totalSize)} (无上限)';
+            final progress = maxSize > 0
+                ? (stats.totalSize / maxSize).clamp(0.0, 1.0)
+                : 0.0;
+            final sizeText = maxSize > 0
+                ? '${_formatSize(stats.totalSize)} / ${_formatSize(maxSize)}'
+                : '${_formatSize(stats.totalSize)} (无上限)';
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -434,14 +432,12 @@ class _CacheManagerState extends ConsumerState<CacheManager> {
               ],
             );
           },
-          loading:
-              () => const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: LinearProgressIndicator(),
-              ),
-          error:
-              (e, _) =>
-                  Text('获取缓存信息失败', style: TextStyle(color: colorScheme.error)),
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: LinearProgressIndicator(),
+          ),
+          error: (e, _) =>
+              Text('获取缓存信息失败', style: TextStyle(color: colorScheme.error)),
         ),
 
         // 折叠区域：Slider + 清理按钮
@@ -455,10 +451,9 @@ class _CacheManagerState extends ConsumerState<CacheManager> {
               // 缓存目录
               configAsync.when(
                 data: (config) {
-                  final dir =
-                      config.cacheDir.isNotEmpty
-                          ? config.cacheDir
-                          : config.defaultCacheDir;
+                  final dir = config.cacheDir.isNotEmpty
+                      ? config.cacheDir
+                      : config.defaultCacheDir;
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.folder_outlined),
@@ -525,23 +520,21 @@ class _CacheManagerState extends ConsumerState<CacheManager> {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: _isCleaningServer ? null : _cleanServerCache,
-                  icon:
-                      _isCleaningServer
-                          ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                          : const Icon(Icons.delete_outline),
+                  icon: _isCleaningServer
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.delete_outline),
                   label: Text(_isCleaningServer ? '清理中...' : '清理服务端缓存'),
                 ),
               ),
             ],
           ),
-          crossFadeState:
-              _serverExpanded
-                  ? CrossFadeState.showSecond
-                  : CrossFadeState.showFirst,
+          crossFadeState: _serverExpanded
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
           duration: const Duration(milliseconds: 200),
         ),
       ],
@@ -644,23 +637,21 @@ class _CacheManagerState extends ConsumerState<CacheManager> {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: _isCleaningLocal ? null : _cleanLocalCache,
-                  icon:
-                      _isCleaningLocal
-                          ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                          : const Icon(Icons.delete_outline),
+                  icon: _isCleaningLocal
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.delete_outline),
                   label: Text(_isCleaningLocal ? '清理中...' : '清理本地缓存'),
                 ),
               ),
             ],
           ),
-          crossFadeState:
-              _localExpanded
-                  ? CrossFadeState.showSecond
-                  : CrossFadeState.showFirst,
+          crossFadeState: _localExpanded
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
           duration: const Duration(milliseconds: 200),
         ),
       ],
@@ -696,14 +687,13 @@ class _CacheManagerState extends ConsumerState<CacheManager> {
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: _isCleaningBrowser ? null : _cleanBrowserCache,
-            icon:
-                _isCleaningBrowser
-                    ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                    : const Icon(Icons.refresh_outlined),
+            icon: _isCleaningBrowser
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.refresh_outlined),
             label: Text(_isCleaningBrowser ? '清理中...' : '清理浏览器缓存'),
           ),
         ),
@@ -758,14 +748,13 @@ class _CacheDirDialogState extends State<_CacheDirDialog> {
     } catch (e) {
       if (mounted) {
         setState(
-          () =>
-              _validateResult = DirValidateResult(
-                valid: false,
-                created: false,
-                totalSize: 0,
-                freeSize: 0,
-                error: e.toString(),
-              ),
+          () => _validateResult = DirValidateResult(
+            valid: false,
+            created: false,
+            totalSize: 0,
+            freeSize: 0,
+            error: e.toString(),
+          ),
         );
       }
     } finally {
@@ -810,18 +799,16 @@ class _CacheDirDialogState extends State<_CacheDirDialog> {
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: OutlinedButton(
-                    onPressed:
-                        _validating || _controller.text.trim().isEmpty
-                            ? null
-                            : _validate,
-                    child:
-                        _validating
-                            ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                            : const Text('验证'),
+                    onPressed: _validating || _controller.text.trim().isEmpty
+                        ? null
+                        : _validate,
+                    child: _validating
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('验证'),
                   ),
                 ),
               ],

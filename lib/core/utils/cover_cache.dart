@@ -29,10 +29,9 @@ abstract final class CoverCache {
     final uri = Uri.tryParse(normalized);
     if (uri == null || uri.queryParameters.isEmpty) return normalized;
 
-    final queryParameters =
-        Map<String, String>.from(uri.queryParameters)
-          ..remove('access_token')
-          ..remove('token');
+    final queryParameters = Map<String, String>.from(uri.queryParameters)
+      ..remove('access_token')
+      ..remove('token');
     if (queryParameters.isEmpty) return _removeQuery(normalized);
     return uri.replace(queryParameters: queryParameters).toString();
   }

@@ -144,8 +144,9 @@ class _Sidebar extends StatelessWidget {
         ],
       ),
       child: Column(
-        crossAxisAlignment:
-            compact ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+        crossAxisAlignment: compact
+            ? CrossAxisAlignment.center
+            : CrossAxisAlignment.start,
         children: [
           _BrandHeader(compact: compact),
           Padding(
@@ -213,8 +214,9 @@ class _BrandHeader extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.fromLTRB(compact ? 17 : 20, 22, compact ? 17 : 20, 8),
       child: Row(
-        mainAxisAlignment:
-            compact ? MainAxisAlignment.center : MainAxisAlignment.start,
+        mainAxisAlignment: compact
+            ? MainAxisAlignment.center
+            : MainAxisAlignment.start,
         children: [
           Container(
             width: 48,
@@ -286,16 +288,14 @@ class _SidebarItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final foreground =
-        selected
-            ? colorScheme.onPrimaryContainer
-            : colorScheme.onSurfaceVariant;
+    final foreground = selected
+        ? colorScheme.onPrimaryContainer
+        : colorScheme.onSurfaceVariant;
 
     final item = Material(
-      color:
-          selected
-              ? colorScheme.primaryContainer.withValues(alpha: 0.78)
-              : Colors.transparent,
+      color: selected
+          ? colorScheme.primaryContainer.withValues(alpha: 0.78)
+          : Colors.transparent,
       borderRadius: BorderRadius.circular(17),
       child: InkWell(
         onTap: onTap,
@@ -306,16 +306,14 @@ class _SidebarItem extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: compact ? 0 : 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(17),
-            border:
-                selected
-                    ? Border.all(
-                      color: colorScheme.primary.withValues(alpha: 0.18),
-                    )
-                    : null,
+            border: selected
+                ? Border.all(color: colorScheme.primary.withValues(alpha: 0.18))
+                : null,
           ),
           child: Row(
-            mainAxisAlignment:
-                compact ? MainAxisAlignment.center : MainAxisAlignment.start,
+            mainAxisAlignment: compact
+                ? MainAxisAlignment.center
+                : MainAxisAlignment.start,
             children: [
               IconTheme(
                 data: IconThemeData(color: foreground, size: 24),
@@ -376,37 +374,33 @@ class _LibraryStatus extends StatelessWidget {
           color: colorScheme.secondaryContainer.withValues(alpha: 0.45),
           borderRadius: BorderRadius.circular(18),
         ),
-        child:
-            compact
-                ? Icon(Icons.cloud_done_rounded, color: colorScheme.secondary)
-                : Row(
-                  children: [
-                    Icon(
-                      Icons.cloud_done_rounded,
-                      color: colorScheme.secondary,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '音乐库已连接',
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
+        child: compact
+            ? Icon(Icons.cloud_done_rounded, color: colorScheme.secondary)
+            : Row(
+                children: [
+                  Icon(Icons.cloud_done_rounded, color: colorScheme.secondary),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '音乐库已连接',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
                           ),
-                          Text(
-                            '随时开始播放',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
+                        ),
+                        Text(
+                          '随时开始播放',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
       ),
     );
   }

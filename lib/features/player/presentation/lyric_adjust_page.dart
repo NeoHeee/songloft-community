@@ -132,21 +132,20 @@ class _LyricAdjustPageState extends ConsumerState<LyricAdjustPage> {
     if (!_hasChanges) return true;
     final ok = await showDialog<bool>(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: const Text('放弃修改？'),
-            content: const Text('当前调整尚未保存，确定要离开吗？'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('继续编辑'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('放弃'),
-              ),
-            ],
+      builder: (ctx) => AlertDialog(
+        title: const Text('放弃修改？'),
+        content: const Text('当前调整尚未保存，确定要离开吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('继续编辑'),
           ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('放弃'),
+          ),
+        ],
+      ),
     );
     return ok ?? false;
   }
@@ -305,32 +304,30 @@ class _LyricAdjustPageState extends ConsumerState<LyricAdjustPage> {
             ),
             TextButton(
               onPressed: (_saving || !_hasChanges) ? null : _save,
-              child:
-                  _saving
-                      ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                      : const Text('保存'),
+              child: _saving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('保存'),
             ),
           ],
         ),
-        body:
-            _baseLines.isEmpty
-                ? const Center(child: Text('暂无可调整的歌词'))
-                : Column(
-                  children: [
-                    _buildGlobalOffsetCard(theme),
-                    const Divider(height: 1),
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: _baseLines.length,
-                        itemBuilder: (_, i) => _buildLine(i, theme),
-                      ),
+        body: _baseLines.isEmpty
+            ? const Center(child: Text('暂无可调整的歌词'))
+            : Column(
+                children: [
+                  _buildGlobalOffsetCard(theme),
+                  const Divider(height: 1),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: _baseLines.length,
+                      itemBuilder: (_, i) => _buildLine(i, theme),
                     ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
       ),
     );
   }

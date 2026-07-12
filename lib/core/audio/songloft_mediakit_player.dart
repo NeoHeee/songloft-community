@@ -93,10 +93,9 @@ class SongloftMediaKitPlayer extends AudioPlayerPlatform {
             }
           }
         } else if (_processingState != ProcessingStateMessage.completed) {
-          _processingState =
-              isBuffering
-                  ? ProcessingStateMessage.buffering
-                  : ProcessingStateMessage.ready;
+          _processingState = isBuffering
+              ? ProcessingStateMessage.buffering
+              : ProcessingStateMessage.ready;
           if (_duration == null) _updateDuration(player.state.duration);
         }
         _errorCode = null;
@@ -343,8 +342,9 @@ class SongloftMediaKitPlayer extends AudioPlayerPlatform {
     await player.setShuffle(shuffling);
     _addPlayerData(
       PlayerDataMessage(
-        shuffleMode:
-            shuffling ? ShuffleModeMessage.all : ShuffleModeMessage.none,
+        shuffleMode: shuffling
+            ? ShuffleModeMessage.all
+            : ShuffleModeMessage.none,
       ),
     );
     return SetShuffleModeResponse();
@@ -463,9 +463,8 @@ class SongloftMediaKitPlayer extends AudioPlayerPlatform {
       start: start,
       end: end,
     ),
-    _ =>
-      throw UnsupportedError(
-        '${source.runtimeType} is currently not supported',
-      ),
+    _ => throw UnsupportedError(
+      '${source.runtimeType} is currently not supported',
+    ),
   };
 }

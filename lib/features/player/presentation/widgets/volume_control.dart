@@ -106,10 +106,9 @@ class _VolumeControlState extends State<VolumeControl> {
           child: ConstrainedBox(
             constraints: BoxConstraints(
               minWidth: sliderMinWidth,
-              maxWidth:
-                  widget.sliderWidth > sliderMinWidth
-                      ? widget.sliderWidth
-                      : sliderMinWidth,
+              maxWidth: widget.sliderWidth > sliderMinWidth
+                  ? widget.sliderWidth
+                  : sliderMinWidth,
             ),
             child: SliderTheme(
               data: SliderTheme.of(context).copyWith(
@@ -195,20 +194,19 @@ class _PopupVolumeControlState extends State<PopupVolumeControl> {
     final size = renderBox.size;
 
     _overlayEntry = OverlayEntry(
-      builder:
-          (context) => _VolumeOverlayPanel(
-            volume: widget.volume,
-            onVolumeChanged: (value) {
-              widget.onVolumeChanged(value);
-              // 强制重建 overlay 以更新音量值
-              _overlayEntry?.markNeedsBuild();
-            },
-            onToggleMute: _toggleMute,
-            onDismiss: _removeOverlay,
-            anchorPosition: position,
-            anchorSize: size,
-            volumeIcon: _volumeIcon,
-          ),
+      builder: (context) => _VolumeOverlayPanel(
+        volume: widget.volume,
+        onVolumeChanged: (value) {
+          widget.onVolumeChanged(value);
+          // 强制重建 overlay 以更新音量值
+          _overlayEntry?.markNeedsBuild();
+        },
+        onToggleMute: _toggleMute,
+        onDismiss: _removeOverlay,
+        anchorPosition: position,
+        anchorSize: size,
+        volumeIcon: _volumeIcon,
+      ),
     );
 
     Overlay.of(context).insert(_overlayEntry!);
@@ -467,8 +465,8 @@ class _VolumeOverlayPanelState extends State<_VolumeOverlayPanel> {
                               setState(() => _currentVolume = value);
                               widget.onVolumeChanged(value);
                             },
-                            semanticFormatterCallback:
-                                (value) => '音量 ${value.round()}%',
+                            semanticFormatterCallback: (value) =>
+                                '音量 ${value.round()}%',
                           ),
                         ),
                       ),

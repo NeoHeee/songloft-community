@@ -26,8 +26,8 @@ class SongloftAudioHandler extends BaseAudioHandler with SeekHandler {
     audioPipeline: ja.AudioPipeline(
       androidAudioEffects:
           !kIsWeb && defaultTargetPlatform == TargetPlatform.android
-              ? [androidEqualizer]
-              : const [],
+          ? [androidEqualizer]
+          : const [],
     ),
   );
 
@@ -158,14 +158,13 @@ class SongloftAudioHandler extends BaseAudioHandler with SeekHandler {
         MediaAction.stop,
       },
       androidCompactActionIndices: const [0, 1, 2],
-      processingState:
-          const {
-            ja.ProcessingState.idle: AudioProcessingState.idle,
-            ja.ProcessingState.loading: AudioProcessingState.loading,
-            ja.ProcessingState.buffering: AudioProcessingState.buffering,
-            ja.ProcessingState.ready: AudioProcessingState.ready,
-            ja.ProcessingState.completed: AudioProcessingState.completed,
-          }[_player.processingState]!,
+      processingState: const {
+        ja.ProcessingState.idle: AudioProcessingState.idle,
+        ja.ProcessingState.loading: AudioProcessingState.loading,
+        ja.ProcessingState.buffering: AudioProcessingState.buffering,
+        ja.ProcessingState.ready: AudioProcessingState.ready,
+        ja.ProcessingState.completed: AudioProcessingState.completed,
+      }[_player.processingState]!,
       playing: _player.playing,
       updatePosition: _player.position,
       bufferedPosition: _player.bufferedPosition,
@@ -550,10 +549,9 @@ class SongloftAudioHandler extends BaseAudioHandler with SeekHandler {
       return;
     }
 
-    final artist =
-        _originalArtist?.isNotEmpty == true
-            ? '$_originalTitle - $_originalArtist'
-            : _originalTitle!;
+    final artist = _originalArtist?.isNotEmpty == true
+        ? '$_originalTitle - $_originalArtist'
+        : _originalTitle!;
 
     mediaItem.add(current.copyWith(title: lyricLine, artist: artist));
   }

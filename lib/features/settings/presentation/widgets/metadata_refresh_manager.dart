@@ -60,23 +60,22 @@ class _MetadataRefreshManagerState
         ),
       ),
       value: isTag,
-      onChanged:
-          asyncValue.isLoading
-              ? null
-              : (value) async {
-                try {
-                  await ref
-                      .read(remoteTitleSourceProvider.notifier)
-                      .setValue(value ? 'tag' : 'filename');
-                  if (mounted) {
-                    ResponsiveSnackBar.show(context, message: '已保存');
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    ResponsiveSnackBar.showError(context, message: '保存失败: $e');
-                  }
+      onChanged: asyncValue.isLoading
+          ? null
+          : (value) async {
+              try {
+                await ref
+                    .read(remoteTitleSourceProvider.notifier)
+                    .setValue(value ? 'tag' : 'filename');
+                if (mounted) {
+                  ResponsiveSnackBar.show(context, message: '已保存');
                 }
-              },
+              } catch (e) {
+                if (mounted) {
+                  ResponsiveSnackBar.showError(context, message: '保存失败: $e');
+                }
+              }
+            },
     );
   }
 
@@ -98,10 +97,9 @@ class _MetadataRefreshManagerState
   }
 
   Widget _buildRunningState(MetadataRefreshProgress progress, ThemeData theme) {
-    final label =
-        progress.total > 0
-            ? '${progress.completedCount} / ${progress.total}'
-            : '准备中...';
+    final label = progress.total > 0
+        ? '${progress.completedCount} / ${progress.total}'
+        : '准备中...';
     return ListTile(
       leading: SizedBox(
         width: 24,
@@ -133,21 +131,19 @@ class _MetadataRefreshManagerState
   }
 
   Widget _buildDoneState(MetadataRefreshProgress progress, ThemeData theme) {
-    final statusText =
-        progress.status == 'cancelled'
-            ? '已取消'
-            : progress.status == 'failed'
-            ? '执行失败'
-            : '已完成';
+    final statusText = progress.status == 'cancelled'
+        ? '已取消'
+        : progress.status == 'failed'
+        ? '执行失败'
+        : '已完成';
     final detail =
         '成功 ${progress.processed} 首${progress.failed > 0 ? '，失败 ${progress.failed} 首' : ''}';
     return ListTile(
       leading: Icon(
         progress.status == 'done' ? Icons.check_circle : Icons.info_outlined,
-        color:
-            progress.status == 'done'
-                ? theme.colorScheme.primary
-                : theme.colorScheme.outline,
+        color: progress.status == 'done'
+            ? theme.colorScheme.primary
+            : theme.colorScheme.outline,
       ),
       title: Text('刷新元数据$statusText'),
       subtitle: Text(detail),

@@ -98,8 +98,8 @@ Future<List<DiscoveredServer>> discoverSongloftServers({
     client.close(force: true);
   }
 
-  final results =
-      found.values.toList()..sort((a, b) => a.latency.compareTo(b.latency));
+  final results = found.values.toList()
+    ..sort((a, b) => a.latency.compareTo(b.latency));
   return results;
 }
 

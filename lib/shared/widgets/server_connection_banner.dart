@@ -21,15 +21,13 @@ class ServerConnectionBanner extends ConsumerWidget {
     return AnimatedSize(
       duration: duration,
       alignment: Alignment.topCenter,
-      child:
-          shouldShow
-              ? _ConnectionBannerContent(
-                state: state,
-                onRetry:
-                    () =>
-                        ref.read(serverConnectionProvider.notifier).retryNow(),
-              )
-              : const SizedBox.shrink(),
+      child: shouldShow
+          ? _ConnectionBannerContent(
+              state: state,
+              onRetry: () =>
+                  ref.read(serverConnectionProvider.notifier).retryNow(),
+            )
+          : const SizedBox.shrink(),
     );
   }
 }
@@ -47,24 +45,22 @@ class _ConnectionBannerContent extends StatelessWidget {
         state.phase == ServerConnectionPhase.connected &&
         state.showRestoredMessage;
     final reconnecting = state.phase == ServerConnectionPhase.reconnecting;
-    final background =
-        restored ? colorScheme.primaryContainer : colorScheme.errorContainer;
-    final foreground =
-        restored
-            ? colorScheme.onPrimaryContainer
-            : colorScheme.onErrorContainer;
-    final title =
-        restored
-            ? '连接已恢复'
-            : reconnecting
-            ? '正在重新连接服务器…'
-            : '无法连接服务器';
-    final subtitle =
-        restored
-            ? '首页、歌曲库和歌单正在自动刷新'
-            : reconnecting
-            ? '正在检查服务器是否恢复可用'
-            : state.lastError ?? '请检查网络、服务器地址或 NAS 状态';
+    final background = restored
+        ? colorScheme.primaryContainer
+        : colorScheme.errorContainer;
+    final foreground = restored
+        ? colorScheme.onPrimaryContainer
+        : colorScheme.onErrorContainer;
+    final title = restored
+        ? '连接已恢复'
+        : reconnecting
+        ? '正在重新连接服务器…'
+        : '无法连接服务器';
+    final subtitle = restored
+        ? '首页、歌曲库和歌单正在自动刷新'
+        : reconnecting
+        ? '正在检查服务器是否恢复可用'
+        : state.lastError ?? '请检查网络、服务器地址或 NAS 状态';
 
     return Semantics(
       container: true,

@@ -56,16 +56,15 @@ class ActiveDestinations {
     }
 
     for (final pt in config.pluginTabs) {
-      final plugin =
-          plugins
-              .where(
-                (p) =>
-                    p.entryPath == pt.entryPath &&
-                    p.isActive &&
-                    p.entryPath != null &&
-                    p.entryPath!.isNotEmpty,
-              )
-              .firstOrNull;
+      final plugin = plugins
+          .where(
+            (p) =>
+                p.entryPath == pt.entryPath &&
+                p.isActive &&
+                p.entryPath != null &&
+                p.entryPath!.isNotEmpty,
+          )
+          .firstOrNull;
       if (plugin != null) {
         destinations.add(
           NavDestination(
