@@ -1,0 +1,50 @@
+name: Sixth Round Patch Diagnostic
+
+on:
+  pull_request:
+    branches:
+      - mobile-fifth-round
+    paths:
+      - '.github/workflows/sixth-round-patch-diagnostic.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - name: Extract and run patch script
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+
+          lines = Path('.github/workflows/sixth-round-bootstrap.yml').read_text().splitlines()
+          start = next(i for i, line in enumerate(lines) if "python <<'PY'" in line)
+          end = next(
+              i
+              for i, line in enumerate(lines[start + 1 :], start + 1)
+              if line.strip() == 'PY'
+          )
+          script_lines = []
+          for line in lines[start + 1 : end]:
+              script_lines.append(line[10:] if line.startswith('          ') else line)
+          Path('/tmp/sixth_round_patch.py').write_text('\n'.join(script_lines) + '\n')
+          PY
+          set +e
+          python /tmp/sixth_round_patch.py > /tmp/sixth-round-report.txt 2>&1
+          rc=$?
+          set -e
+          echo "RC=$rc" >> /tmp/sixth-round-report.txt
+          cat /tmp/sixth-round-report.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sixth-round-patch-report
+          path: /tmp/sixth-round-report.txt
+          if-no-files-found: error
+          retention-days: 3
