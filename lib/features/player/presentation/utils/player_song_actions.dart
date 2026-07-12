@@ -19,10 +19,9 @@ Future<bool> toggleCurrentSongFavorite(
   final isRadio = song.type == AppConstants.songTypeRadio;
   try {
     final notifier = ref.read(favoriteProvider.notifier);
-    final favorited =
-        isRadio
-            ? await notifier.toggleRadioFavorite(song.id)
-            : await notifier.toggleFavorite(song.id);
+    final favorited = isRadio
+        ? await notifier.toggleRadioFavorite(song.id)
+        : await notifier.toggleFavorite(song.id);
     HapticFeedback.selectionClick();
     if (context.mounted) {
       ResponsiveSnackBar.show(
@@ -48,51 +47,47 @@ Future<void> showCurrentSongActionsSheet(
   final song = state.currentSong;
   if (song == null) return;
   final isRadio = song.type == AppConstants.songTypeRadio;
-  final isFavorited =
-      isRadio
-          ? ref.read(isRadioFavoritedProvider(song.id))
-          : ref.read(isSongFavoritedProvider(song.id));
+  final isFavorited = isRadio
+      ? ref.read(isRadioFavoritedProvider(song.id))
+      : ref.read(isSongFavoritedProvider(song.id));
 
   final action = await showModalBottomSheet<String>(
     context: context,
     useSafeArea: true,
     showDragHandle: true,
-    builder:
-        (sheetContext) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: Icon(
-                  isFavorited
-                      ? Icons.favorite_rounded
-                      : Icons.favorite_border_rounded,
-                ),
-                title: Text(isFavorited ? '取消收藏' : '收藏歌曲'),
-                onTap: () => Navigator.pop(sheetContext, 'favorite'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.playlist_add_rounded),
-                title: const Text('添加到歌单'),
-                onTap: () => Navigator.pop(sheetContext, 'playlist'),
-              ),
-              ListTile(
-                leading: Icon(
-                  Icons.delete_outline_rounded,
-                  color: Theme.of(sheetContext).colorScheme.error,
-                ),
-                title: Text(
-                  '删除歌曲',
-                  style: TextStyle(
-                    color: Theme.of(sheetContext).colorScheme.error,
-                  ),
-                ),
-                onTap: () => Navigator.pop(sheetContext, 'delete'),
-              ),
-            ],
+    builder: (sheetContext) => Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: Icon(
+              isFavorited
+                  ? Icons.favorite_rounded
+                  : Icons.favorite_border_rounded,
+            ),
+            title: Text(isFavorited ? '取消收藏' : '收藏歌曲'),
+            onTap: () => Navigator.pop(sheetContext, 'favorite'),
           ),
-        ),
+          ListTile(
+            leading: const Icon(Icons.playlist_add_rounded),
+            title: const Text('添加到歌单'),
+            onTap: () => Navigator.pop(sheetContext, 'playlist'),
+          ),
+          ListTile(
+            leading: Icon(
+              Icons.delete_outline_rounded,
+              color: Theme.of(sheetContext).colorScheme.error,
+            ),
+            title: Text(
+              '删除歌曲',
+              style: TextStyle(color: Theme.of(sheetContext).colorScheme.error),
+            ),
+            onTap: () => Navigator.pop(sheetContext, 'delete'),
+          ),
+        ],
+      ),
+    ),
   );
   if (!context.mounted || action == null) return;
 

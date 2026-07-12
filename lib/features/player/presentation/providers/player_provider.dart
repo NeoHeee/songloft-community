@@ -312,14 +312,12 @@ class PlayerNotifier extends Notifier<PlayerState> {
       _liveActivity.startActivity(
         title: song.title,
         artist: song.artist ?? '',
-        lyricLine:
-            lyricState.currentLyricText.isNotEmpty
-                ? lyricState.currentLyricText
-                : null,
-        artUrl:
-            song.coverUrl != null
-                ? UrlHelper.buildCoverUrl(song.coverUrl!)
-                : null,
+        lyricLine: lyricState.currentLyricText.isNotEmpty
+            ? lyricState.currentLyricText
+            : null,
+        artUrl: song.coverUrl != null
+            ? UrlHelper.buildCoverUrl(song.coverUrl!)
+            : null,
       );
     }
   }
@@ -594,10 +592,9 @@ class PlayerNotifier extends Notifier<PlayerState> {
     if (state.playMode == PlayMode.random) {
       // 投屏期间列表可能变化，预选索引可能失效，越界则重新随机
       final pre = _preSelectedNextIndex;
-      nextIndex =
-          (pre != null && pre >= 0 && pre < state.playlist.length)
-              ? pre
-              : _getRandomIndex();
+      nextIndex = (pre != null && pre >= 0 && pre < state.playlist.length)
+          ? pre
+          : _getRandomIndex();
     } else {
       nextIndex = state.currentIndex + 1;
       if (nextIndex >= state.playlist.length) {
@@ -865,10 +862,9 @@ class PlayerNotifier extends Notifier<PlayerState> {
       }
 
       // playPlaylist 内部会递增 _loadGeneration，取消之前的后台加载
-      final startIndex =
-          state.playMode == PlayMode.random
-              ? _random.nextInt(firstPageSongs.length)
-              : 0;
+      final startIndex = state.playMode == PlayMode.random
+          ? _random.nextInt(firstPageSongs.length)
+          : 0;
       await playPlaylist(
         firstPageSongs,
         startIndex: startIndex,
@@ -1169,8 +1165,8 @@ class PlayerNotifier extends Notifier<PlayerState> {
       // playPlaylist 内部会递增 _loadGeneration，取消之前的后台加载
       final effectiveStartIndex =
           startIndex == 0 && state.playMode == PlayMode.random
-              ? _random.nextInt(firstPageSongs.length)
-              : startIndex;
+          ? _random.nextInt(firstPageSongs.length)
+          : startIndex;
       final safeStartIndex = effectiveStartIndex.clamp(
         0,
         firstPageSongs.length - 1,
@@ -1735,11 +1731,10 @@ class PlayerNotifier extends Notifier<PlayerState> {
     }
 
     // 获取未播放的索引
-    final availableIndices =
-        List<int>.generate(
-          state.playlist.length,
-          (i) => i,
-        ).where((i) => !_playedIndices.contains(i)).toList();
+    final availableIndices = List<int>.generate(
+      state.playlist.length,
+      (i) => i,
+    ).where((i) => !_playedIndices.contains(i)).toList();
 
     if (availableIndices.isEmpty) {
       return _random.nextInt(state.playlist.length);

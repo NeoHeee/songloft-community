@@ -114,15 +114,14 @@ class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> {
               const Divider(height: 1),
               // 歌曲列表
               Expanded(
-                child:
-                    state.playlist.isEmpty
-                        ? _buildEmptyState(context, colorScheme, theme)
-                        : _buildQueueList(
-                          context,
-                          state,
-                          notifier,
-                          scrollController,
-                        ),
+                child: state.playlist.isEmpty
+                    ? _buildEmptyState(context, colorScheme, theme)
+                    : _buildQueueList(
+                        context,
+                        state,
+                        notifier,
+                        scrollController,
+                      ),
               ),
             ],
           ),
@@ -328,24 +327,23 @@ class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> {
   void _showClearConfirmation(BuildContext context, PlayerNotifier notifier) {
     showDialog(
       context: context,
-      builder:
-          (dialogContext) => AlertDialog(
-            title: const Text('清空播放队列'),
-            content: const Text('确定要清空播放队列吗？'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('取消'),
-              ),
-              FilledButton(
-                onPressed: () {
-                  notifier.clearPlaylist();
-                  Navigator.pop(dialogContext); // 关闭确认对话框，队列弹窗由 ref.listen 自动关闭
-                },
-                child: const Text('清空'),
-              ),
-            ],
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('清空播放队列'),
+        content: const Text('确定要清空播放队列吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('取消'),
           ),
+          FilledButton(
+            onPressed: () {
+              notifier.clearPlaylist();
+              Navigator.pop(dialogContext); // 关闭确认对话框，队列弹窗由 ref.listen 自动关闭
+            },
+            child: const Text('清空'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -386,10 +384,9 @@ class _QueueSongItem extends StatelessWidget {
         child: Icon(Icons.delete_rounded, color: colorScheme.onErrorContainer),
       ),
       child: Material(
-        color:
-            isCurrentSong
-                ? colorScheme.primaryContainer.withValues(alpha: 0.3)
-                : Colors.transparent,
+        color: isCurrentSong
+            ? colorScheme.primaryContainer.withValues(alpha: 0.3)
+            : Colors.transparent,
         child: InkWell(
           onTap: onTap,
           child: Padding(
@@ -453,14 +450,12 @@ class _QueueSongItem extends StatelessWidget {
                       Text(
                         song.title,
                         style: textTheme.bodyMedium?.copyWith(
-                          fontWeight:
-                              isCurrentSong
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
-                          color:
-                              isCurrentSong
-                                  ? colorScheme.primary
-                                  : colorScheme.onSurface,
+                          fontWeight: isCurrentSong
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                          color: isCurrentSong
+                              ? colorScheme.primary
+                              : colorScheme.onSurface,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

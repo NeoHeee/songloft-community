@@ -44,12 +44,8 @@ void main() {
     final notifier = FakePlayerNotifier();
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          playerStateProvider.overrideWith(() => notifier),
-        ],
-        child: const MaterialApp(
-          home: Scaffold(body: MiniPlayer()),
-        ),
+        overrides: [playerStateProvider.overrideWith(() => notifier)],
+        child: const MaterialApp(home: Scaffold(body: MiniPlayer())),
       ),
     );
 
