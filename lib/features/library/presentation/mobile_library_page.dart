@@ -582,12 +582,11 @@ class _MobileLibraryPageState extends ConsumerState<MobileLibraryPage> {
                   Navigator.pop(dialogContext);
                   final cleaned =
                       await ref.read(songsListProvider.notifier).cleanSongs();
-                  if (mounted) {
-                    ResponsiveSnackBar.show(
-                      context,
-                      message: '已清理 $cleaned 首无效歌曲',
-                    );
-                  }
+                  if (!context.mounted) return;
+                  ResponsiveSnackBar.show(
+                    context,
+                    message: '已清理 $cleaned 首无效歌曲',
+                  );
                 },
                 child: const Text('清理'),
               ),
