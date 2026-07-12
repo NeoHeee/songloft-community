@@ -1,0 +1,28 @@
+name: Diagnose Community Analyze
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/analyze-community-diagnostic.yml'
+      - 'lib/**'
+      - 'pubspec.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Flutter analyze only
+        run: flutter analyze --no-fatal-infos
