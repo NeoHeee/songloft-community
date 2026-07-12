@@ -95,19 +95,26 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     ),
   ];
 
+  Future<bool> _handleBackButton() async {
+    if (MediaQuery.viewInsetsOf(context).bottom > 0) {
+      FocusManager.instance.primaryFocus?.unfocus();
+      return true;
+    }
+    if (_mobileDetailIndex != null) {
+      setState(() => _mobileDetailIndex = null);
+      return true;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMobile = !context.isWideScreen || context.isTv;
 
     if (isMobile && _mobileDetailIndex != null) {
       final category = _categories[_mobileDetailIndex!];
-      return PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, _) {
-          if (!didPop) {
-            setState(() => _mobileDetailIndex = null);
-          }
-        },
+      return BackButtonListener(
+        onBackButtonPressed: _handleBackButton,
         child: Scaffold(
           appBar: AppBar(
             leading: BackButton(
@@ -142,13 +149,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       return settingsScaffold;
     }
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) {
-          context.go(AppRoutes.home);
-        }
-      },
+    return BackButtonListener(
+      onBackButtonPressed: _handleBackButton,
       child: settingsScaffold,
     );
   }

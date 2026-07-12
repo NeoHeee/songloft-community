@@ -51,7 +51,10 @@ void main() {
       final first = DateTime(2026, 7, 12, 12);
 
       expect(tracker.shouldExit(first), isFalse);
-      expect(tracker.shouldExit(first.add(const Duration(seconds: 3))), isFalse);
+      expect(
+        tracker.shouldExit(first.add(const Duration(seconds: 3))),
+        isFalse,
+      );
       tracker.reset();
       expect(
         tracker.shouldExit(first.add(const Duration(seconds: 4))),

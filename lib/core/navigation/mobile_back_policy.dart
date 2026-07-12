@@ -38,9 +38,7 @@ class MobileExitTracker {
   final Duration confirmationWindow;
   DateTime? _lastBackPressedAt;
 
-  MobileExitTracker({
-    this.confirmationWindow = const Duration(seconds: 2),
-  });
+  MobileExitTracker({this.confirmationWindow = const Duration(seconds: 2)});
 
   bool shouldExit(DateTime now) {
     final previous = _lastBackPressedAt;
