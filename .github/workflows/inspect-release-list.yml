@@ -1,4 +1,4 @@
-name: Inspect release workflow history
+name: Verify dev release
 
 on:
   push:
@@ -12,27 +12,30 @@ permissions:
   actions: read
 
 jobs:
-  inspect:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: fix/desktop-page-width-alignment
-      - name: Collect workflow history
+      - name: Record dev release and recent runs
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          echo "checked_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" > workflow-history.txt
-          echo '=== workflow files ===' >> workflow-history.txt
-          find .github/workflows -maxdepth 1 -type f -print | sort >> workflow-history.txt
-          echo '=== release-related lines ===' >> workflow-history.txt
-          grep -RInE 'release|iOS-arm64-nosign|Web-embedded|Windows-x64-dev|AppImage|\.dmg|\.msix' .github/workflows >> workflow-history.txt || true
-          echo '=== recent runs ===' >> workflow-history.txt
-          gh run list --repo "$GITHUB_REPOSITORY" --limit 30 >> workflow-history.txt
+          {
+            echo "checked_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo '=== dev release ==='
+            gh release view dev --repo "$GITHUB_REPOSITORY" \
+              --json name,tagName,isPrerelease,targetCommitish,publishedAt,url,assets \
+              --jq '{name,tagName,isPrerelease,targetCommitish,publishedAt,url,assets:[.assets[]|{name,size}]}'
+            echo
+            echo '=== recent runs ==='
+            gh run list --repo "$GITHUB_REPOSITORY" --limit 10
+          } > release-verification.txt
       - name: Commit result
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add workflow-history.txt
-          git commit -m "chore: record release workflow history"
+          git add release-verification.txt
+          git commit -m "chore: verify refreshed dev release"
           git push origin HEAD:fix/desktop-page-width-alignment
