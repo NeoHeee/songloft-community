@@ -1,0 +1,21 @@
+name: Inspect release list
+
+on:
+  push:
+    branches:
+      - fix/desktop-page-width-alignment
+    paths:
+      - '.github/workflows/inspect-release-list.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: List releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release list --repo "$GITHUB_REPOSITORY" --limit 20
