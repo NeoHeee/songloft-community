@@ -1,4 +1,4 @@
-name: Inspect release list
+name: Inspect release and workflow history
 
 on:
   push:
@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
   inspect:
@@ -16,24 +17,40 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: fix/desktop-page-width-alignment
-      - name: Save release details
+          ref: main
+          fetch-depth: 1
+      - name: Collect workflow and artifact history
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           {
             echo "checked_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            echo '=== release list ==='
-            gh release list --repo "$GITHUB_REPOSITORY" --limit 20
+            echo '=== workflow files ==='
+            find .github/workflows -maxdepth 1 -type f -print | sort
             echo
-            echo '=== dev ==='
-            gh release view dev --repo "$GITHUB_REPOSITORY" --json name,tagName,isPrerelease,targetCommitish,publishedAt,url,assets --jq '{name,tagName,isPrerelease,targetCommitish,publishedAt,url,assets:[.assets[]|{name,size}]}'
+            echo '=== release-related workflow lines ==='
+            grep -RInE 'release|iOS-arm64-nosign|Web-embedded|Windows-x64-dev|AppImage|\.dmg|\.msix' .github/workflows || true
             echo
-            echo '=== stable ==='
-            gh release view v1.0.0-community.2 --repo "$GITHUB_REPOSITORY" --json name,tagName,isPrerelease,targetCommitish,publishedAt,url,assets --jq '{name,tagName,isPrerelease,targetCommitish,publishedAt,url,assets:[.assets[]|{name,size}]}'
-          } > release-details.txt
+            echo '=== recent workflow runs ==='
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs?per_page=50" \
+              --jq '.workflow_runs[] | [.id,.name,.event,.head_branch,.head_sha,.status,.conclusion,.created_at] | @tsv'
+            echo
+            echo '=== recent run artifacts ==='
+            for run_id in $(gh api "repos/$GITHUB_REPOSITORY/actions/runs?per_page=50" --jq '.workflow_runs[].id'); do
+              artifacts=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/artifacts?per_page=100" \
+                --jq '.artifacts[]? | [.id,.name,.size_in_bytes,.expired] | @tsv')
+              if [[ -n "$artifacts" ]]; then
+                echo "RUN $run_id"
+                printf '%s\n' "$artifacts"
+              fi
+            done
+          } > workflow-history.txt
+      - name: Commit inspection result
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add release-details.txt
-          git commit -m "chore: refresh release details"
+          git checkout fix/desktop-page-width-alignment
+          git pull --ff-only origin fix/desktop-page-width-alignment
+          git add workflow-history.txt
+          git commit -m "chore: record workflow and artifact history"
           git push origin HEAD:fix/desktop-page-width-alignment
