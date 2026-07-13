@@ -1,5 +1,8 @@
 # Flutter 构建产物
-build/
+# Docker Web runtime image needs build/web, but no other Flutter outputs.
+build/*
+!build/web/
+!build/web/**
 .dart_tool/
 .flutter-plugins-dependencies
 .pub-cache/
