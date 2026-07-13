@@ -17,13 +17,22 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: fix/desktop-page-width-alignment
-      - name: Save release list
+      - name: Save release details
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release list --repo "$GITHUB_REPOSITORY" --limit 20 > release-list.txt
+          {
+            echo '=== release list ==='
+            gh release list --repo "$GITHUB_REPOSITORY" --limit 20
+            echo
+            echo '=== dev ==='
+            gh release view dev --repo "$GITHUB_REPOSITORY" --json name,tagName,isPrerelease,targetCommitish,publishedAt,url,assets --jq '{name,tagName,isPrerelease,targetCommitish,publishedAt,url,assets:[.assets[]|{name,size}]}'
+            echo
+            echo '=== stable ==='
+            gh release view v1.0.0-community.2 --repo "$GITHUB_REPOSITORY" --json name,tagName,isPrerelease,targetCommitish,publishedAt,url,assets --jq '{name,tagName,isPrerelease,targetCommitish,publishedAt,url,assets:[.assets[]|{name,size}]}'
+          } > release-details.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add release-list.txt
-          git commit -m "chore: record current release list"
+          git add release-details.txt
+          git commit -m "chore: record current release details"
           git push origin HEAD:fix/desktop-page-width-alignment
