@@ -3,6 +3,10 @@ from pathlib import Path
 path = Path("lib/features/home/presentation/home_page.dart")
 text = path.read_text(encoding="utf-8")
 
+if "final useDesktopHeroLayout =" in text:
+    print("Desktop home hero layout is already applied")
+    raise SystemExit(0)
+
 import_anchor = "import 'package:cached_network_image/cached_network_image.dart';\n"
 foundation_import = "import 'package:flutter/foundation.dart';\n"
 if foundation_import not in text:
