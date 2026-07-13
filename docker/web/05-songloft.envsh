@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# This file is sourced by the official nginx entrypoint before envsubst renders
+# /etc/nginx/templates/default.conf.template.
+
+set -eu
+
+api_url="${SONGLOFT_API_URL:-http://host.docker.internal:58091}"
+api_url="${api_url%/}"
+
+case "$api_url" in
+  http://?*|https://?*)
+    ;;
+  *)
+    echo >&2 "[songloft-web] SONGLOFT_API_URL must start with http:// or https://"
+    return 1
+    ;;
+esac
+
+export SONGLOFT_API_URL="$api_url"
+echo "[songloft-web] proxying /api/ to $SONGLOFT_API_URL"

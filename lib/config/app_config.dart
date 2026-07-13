@@ -16,7 +16,7 @@ class AppConfig {
 
   static String get apiBaseUrl => '$baseUrl$apiPrefix';
 
-  /// 是否为嵌入模式（Flutter Web 打包进 Go 二进制）
+  /// 是否为嵌入模式（Flutter Web 打包进 Go 后端）
   /// 编译时常量，tree-shaking 会移除未使用的分支代码
   static const bool isEmbedded = _kDeployMode == 'embedded';
 
@@ -62,11 +62,11 @@ class AppConfig {
       tracelyHost.isNotEmpty;
 
   /// 前端 GitHub 仓库
-  static const String frontendRepo = 'NeoHeee/songloft-player';
+  static const String frontendRepo = 'NeoHeee/songloft-community';
 
   /// 前端最新发布地址
   static const String frontendReleasesUrl =
-      'https://github.com/NeoHeee/songloft-player/releases/latest';
+      'https://github.com/NeoHeee/songloft-community/releases/latest';
 
   /// 格式化前端版本号用于显示
   /// 'dev' -> '开发版本', '1.0.14' -> 'v1.0.14'
