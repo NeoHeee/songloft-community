@@ -6,6 +6,7 @@ import 'package:songloft_flutter/core/navigation/mobile_primary_back_scope.dart'
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  // Flutter widget tests use Android as the default target platform.
   setUpAll(() {
     AppConfig.isTvMode = false;
   });
