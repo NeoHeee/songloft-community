@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
+          ref: fix/desktop-page-width-alignment
           fetch-depth: 1
       - name: Collect workflow and artifact history
         env:
@@ -32,11 +32,11 @@ jobs:
             grep -RInE 'release|iOS-arm64-nosign|Web-embedded|Windows-x64-dev|AppImage|\.dmg|\.msix' .github/workflows || true
             echo
             echo '=== recent workflow runs ==='
-            gh api "repos/$GITHUB_REPOSITORY/actions/runs?per_page=50" \
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs?per_page=30" \
               --jq '.workflow_runs[] | [.id,.name,.event,.head_branch,.head_sha,.status,.conclusion,.created_at] | @tsv'
             echo
             echo '=== recent run artifacts ==='
-            for run_id in $(gh api "repos/$GITHUB_REPOSITORY/actions/runs?per_page=50" --jq '.workflow_runs[].id'); do
+            for run_id in $(gh api "repos/$GITHUB_REPOSITORY/actions/runs?per_page=30" --jq '.workflow_runs[].id'); do
               artifacts=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/artifacts?per_page=100" \
                 --jq '.artifacts[]? | [.id,.name,.size_in_bytes,.expired] | @tsv')
               if [[ -n "$artifacts" ]]; then
@@ -49,8 +49,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout fix/desktop-page-width-alignment
-          git pull --ff-only origin fix/desktop-page-width-alignment
           git add workflow-history.txt
           git commit -m "chore: record workflow and artifact history"
           git push origin HEAD:fix/desktop-page-width-alignment
