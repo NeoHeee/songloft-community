@@ -129,10 +129,15 @@ class _DashboardContent extends ConsumerWidget {
     final isPlaying = ref.watch(isPlayingProvider);
     final normal = playlists.where((p) => p.type == 'normal').toList();
     final radios = playlists.where((p) => p.type == 'radio').toList();
+    final useDesktopContentLayout =
+        context.screenWidth >= ResponsiveBreakpoints.desktop &&
+        (kIsWeb || defaultTargetPlatform == TargetPlatform.windows);
 
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1380),
+        constraints: BoxConstraints(
+          maxWidth: useDesktopContentLayout ? 1200 : 1380,
+        ),
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: _pagePadding(context)),
           child: Column(
@@ -175,8 +180,10 @@ class _DashboardContent extends ConsumerWidget {
                 ],
               ],
               const JSPluginGrid(),
-              const SizedBox(height: 28),
-              StatsStrip(normalCount: normalCount, radioCount: radioCount),
+              if (!useDesktopContentLayout) ...[
+                const SizedBox(height: 28),
+                StatsStrip(normalCount: normalCount, radioCount: radioCount),
+              ],
               SizedBox(height: MediaQuery.of(context).padding.bottom + 120),
             ],
           ),
@@ -204,18 +211,27 @@ class _DashboardHeader extends StatelessWidget {
     return Center(
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: useDesktopHeroLayout ? 1220 : 1380,
+          maxWidth: useDesktopHeroLayout ? 1200 : 1380,
         ),
         child: Padding(
           padding: EdgeInsets.fromLTRB(
             _pagePadding(context),
-            context.responsive<double>(mobile: 18, tablet: 24, desktop: 28),
+            useDesktopHeroLayout
+                ? 16
+                : context.responsive<double>(
+                  mobile: 18,
+                  tablet: 24,
+                  desktop: 28,
+                ),
             _pagePadding(context),
             0,
           ),
           child: Container(
             width: double.infinity,
-            padding: EdgeInsets.all(isWide ? 34 : 24),
+            padding:
+                useDesktopHeroLayout
+                    ? const EdgeInsets.fromLTRB(34, 22, 34, 20)
+                    : EdgeInsets.all(isWide ? 34 : 24),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(30),
               gradient: LinearGradient(
@@ -276,7 +292,7 @@ class _DashboardHeader extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: useDesktopHeroLayout ? 14 : 20),
                     SizedBox(
                       width: double.infinity,
                       child: FittedBox(
@@ -295,7 +311,7 @@ class _DashboardHeader extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: useDesktopHeroLayout ? 6 : 8),
                     Text(
                       '选一张歌单，让熟悉的旋律接管现在。',
                       style: theme.textTheme.titleMedium?.copyWith(
@@ -303,7 +319,7 @@ class _DashboardHeader extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: useDesktopHeroLayout ? 18 : 24),
                     LayoutBuilder(
                       builder: (context, constraints) {
                         final compact = constraints.maxWidth < 600;
