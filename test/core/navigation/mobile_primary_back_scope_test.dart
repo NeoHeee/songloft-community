@@ -19,9 +19,11 @@ void main() {
 
   testWidgets('first back on a primary branch returns to home', (tester) async {
     var returnHomeCount = 0;
+    final navigatorKey = GlobalKey<NavigatorState>();
 
     await tester.pumpWidget(
       MaterialApp(
+        navigatorKey: navigatorKey,
         home: MobilePrimaryBackScope(
           onReturnHome: () => returnHomeCount++,
           child: const Scaffold(body: Text('设置')),
@@ -29,9 +31,10 @@ void main() {
       ),
     );
 
-    await tester.binding.handlePopRoute();
+    final handled = await navigatorKey.currentState!.maybePop();
     await tester.pump();
 
+    expect(handled, isTrue);
     expect(returnHomeCount, 1);
     expect(find.text('设置'), findsOneWidget);
   });
@@ -59,9 +62,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.binding.handlePopRoute();
+    final handled = await navigatorKey.currentState!.maybePop();
     await tester.pumpAndSettle();
 
+    expect(handled, isTrue);
     expect(find.text('歌曲详情'), findsNothing);
     expect(find.text('歌曲库'), findsOneWidget);
     expect(returnHomeCount, 0);
