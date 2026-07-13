@@ -28,10 +28,13 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Songloft Community">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/Icon-192.png?v=community-2">
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <!-- Browser tab icons reuse the branded PWA assets. The versioned URL also
+       forces browsers to drop the original upstream favicon from their cache. -->
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/Icon-192.png?v=community-2">
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/Icon-512.png?v=community-2">
+  <link rel="shortcut icon" type="image/png" href="icons/Icon-192.png?v=community-2">
 
   <title>Songloft Community</title>
   <link rel="manifest" href="manifest.json">
