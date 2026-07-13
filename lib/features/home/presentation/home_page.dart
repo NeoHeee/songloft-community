@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -196,10 +197,15 @@ class _DashboardHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isWide = context.isWideScreen;
+    final useDesktopHeroLayout =
+        context.screenWidth >= ResponsiveBreakpoints.desktop &&
+        (kIsWeb || defaultTargetPlatform == TargetPlatform.windows);
 
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1380),
+        constraints: BoxConstraints(
+          maxWidth: useDesktopHeroLayout ? 1220 : 1380,
+        ),
         child: Padding(
           padding: EdgeInsets.fromLTRB(
             _pagePadding(context),
@@ -321,6 +327,18 @@ class _DashboardHeader extends StatelessWidget {
                             compact: compact,
                           ),
                         ];
+
+                        if (useDesktopHeroLayout) {
+                          return Row(
+                            children: [
+                              for (var i = 0; i < metrics.length; i++) ...[
+                                Expanded(child: metrics[i]),
+                                if (i != metrics.length - 1)
+                                  const SizedBox(width: 12),
+                              ],
+                            ],
+                          );
+                        }
 
                         if (!compact) {
                           return Wrap(
