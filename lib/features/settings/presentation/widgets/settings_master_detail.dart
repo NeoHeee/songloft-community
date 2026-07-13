@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/responsive.dart';
+
+const double _desktopPageMaxWidth = 1200;
 
 class SettingsCategory {
   final IconData icon;
@@ -118,8 +121,7 @@ class SettingsMasterDetail extends StatelessWidget {
   Widget _buildWideLayout(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-
-    return Row(
+    final layout = Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Container(
@@ -178,6 +180,22 @@ class SettingsMasterDetail extends StatelessWidget {
           ),
         ),
       ],
+    );
+
+    final useDesktopAlignedWidth =
+        context.screenWidth >= ResponsiveBreakpoints.desktop &&
+        (kIsWeb || defaultTargetPlatform == TargetPlatform.windows);
+    if (!useDesktopAlignedWidth) return layout;
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: _desktopPageMaxWidth),
+        child: SizedBox(
+          width: double.infinity,
+          height: double.infinity,
+          child: layout,
+        ),
+      ),
     );
   }
 }
