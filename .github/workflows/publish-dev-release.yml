@@ -1,0 +1,108 @@
+name: Publish current build to dev release
+
+on:
+  push:
+    branches:
+      - fix/desktop-page-width-alignment
+    paths:
+      - '.github/workflows/publish-dev-release.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download validated build artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p dist/android dist/web dist/windows
+          gh run download 29260004252 --repo "$GITHUB_REPOSITORY" \
+            --name Songloft-Community-Android-preview --dir dist/android
+          gh run download 29260004252 --repo "$GITHUB_REPOSITORY" \
+            --name Songloft-Community-Web-preview --dir dist/web
+          gh run download 29260004252 --repo "$GITHUB_REPOSITORY" \
+            --name Songloft-Community-Windows-x64-preview --dir dist/windows
+          find dist -type f -print
+
+      - name: Generate checksums and release notes
+        run: |
+          find dist -type f -print0 | sort -z | xargs -0 sha256sum > dist/SHA256SUMS.txt
+          cat > release-notes.md <<'EOF'
+          ## Songloft Community 开发预览版
+
+          本次更新已合并 PR #38，重点优化 Web 与 Windows 桌面端的页面宽度和视觉连续性：
+
+          - 首页顶部紫色区域上下压缩，并与下方主体内容统一宽度
+          - 首页移除桌面端重复统计栏
+          - 歌曲库筛选栏、多选操作栏与上下内容保持同宽
+          - 首页、歌曲库、歌单和设置统一为相同的桌面内容宽度
+          - 减少四个主页面切换时忽宽忽窄的视觉跳跃
+          - Android、iOS、TV 等移动与电视端布局保持不变
+
+          ### 附件
+
+          - Android：arm64-v8a、armeabi-v7a、x86_64
+          - Windows：x64 完整便携包
+          - Web：可部署的构建压缩包
+          - SHA256SUMS.txt：附件校验值
+
+          ### 验证
+
+          Dart 格式检查、Flutter Analyze、专项测试、Android 构建、Windows 构建、Web 构建及 Docker Web Player 均已通过。
+          EOF
+
+      - name: Move rolling dev tag to latest main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f dev "$(git rev-parse HEAD)"
+          git push origin refs/tags/dev --force
+
+      - name: Update dev prerelease and replace assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view dev --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit dev --repo "$GITHUB_REPOSITORY" \
+              --title "Songloft Community Dev Build" \
+              --notes-file release-notes.md \
+              --prerelease \
+              --latest=false
+            while IFS= read -r asset; do
+              [[ -z "$asset" ]] || gh release delete-asset dev "$asset" --repo "$GITHUB_REPOSITORY" --yes
+            done < <(gh release view dev --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name')
+          else
+            gh release create dev --repo "$GITHUB_REPOSITORY" \
+              --target "$(git rev-parse HEAD)" \
+              --title "Songloft Community Dev Build" \
+              --notes-file release-notes.md \
+              --prerelease
+          fi
+          mapfile -d '' assets < <(find dist -type f -print0)
+          gh release upload dev "${assets[@]}" --repo "$GITHUB_REPOSITORY" --clobber
+
+      - name: Record publication result
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "status=published"
+            echo "tag=dev"
+            echo "target=$(git rev-parse HEAD)"
+            echo "url=$(gh release view dev --repo "$GITHUB_REPOSITORY" --json url --jq .url)"
+            echo "assets=$(gh release view dev --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets | length')"
+          } > release-publish-result.txt
+          git checkout fix/desktop-page-width-alignment
+          git pull --ff-only origin fix/desktop-page-width-alignment
+          git add release-publish-result.txt
+          git commit -m "chore: record dev release publication"
+          git push origin HEAD:fix/desktop-page-width-alignment
