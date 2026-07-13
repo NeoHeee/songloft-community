@@ -1,0 +1,18 @@
+services:
+  songloft-community-web:
+    image: ghcr.io/neoheee/songloft-community-web:latest
+    container_name: songloft-community-web
+    restart: unless-stopped
+
+    ports:
+      - "${SONGLOFT_WEB_PORT:-58092}:80"
+
+    environment:
+      # Point this at the existing Songloft backend. Do not append /api/v1.
+      SONGLOFT_API_URL: "${SONGLOFT_API_URL:-http://host.docker.internal:58091}"
+
+    # Lets Linux Docker containers reach a backend exposed on the Docker host.
+    # When the backend has its own LAN IP or is on the same Docker network, this
+    # entry can remain in place and SONGLOFT_API_URL can use that address/name.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
