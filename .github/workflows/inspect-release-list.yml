@@ -22,6 +22,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           {
+            echo "checked_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
             echo '=== release list ==='
             gh release list --repo "$GITHUB_REPOSITORY" --limit 20
             echo
@@ -34,5 +35,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add release-details.txt
-          git commit -m "chore: record current release details"
+          git commit -m "chore: refresh release details"
           git push origin HEAD:fix/desktop-page-width-alignment
