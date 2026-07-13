@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -90,18 +91,16 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
             SliverToBoxAdapter(
               child: playlistsAsync.when(
-                data:
-                    (state) => _DashboardContent(
-                      playlists: state.items,
-                      normalCount: normalCount,
-                      radioCount: radioCount,
-                    ),
+                data: (state) => _DashboardContent(
+                  playlists: state.items,
+                  normalCount: normalCount,
+                  radioCount: radioCount,
+                ),
                 loading: () => const _LoadingContent(),
-                error:
-                    (error, stack) => _ErrorContent(
-                      error: error.toString(),
-                      onRetry: () => ref.invalidate(playlistListProvider(null)),
-                    ),
+                error: (error, stack) => _ErrorContent(
+                  error: error.toString(),
+                  onRetry: () => ref.invalidate(playlistListProvider(null)),
+                ),
               ),
             ),
           ],
@@ -196,10 +195,15 @@ class _DashboardHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isWide = context.isWideScreen;
+    final useDesktopHeroLayout =
+        context.screenWidth >= ResponsiveBreakpoints.desktop &&
+        (kIsWeb || defaultTargetPlatform == TargetPlatform.windows);
 
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1380),
+        constraints: BoxConstraints(
+          maxWidth: useDesktopHeroLayout ? 1220 : 1380,
+        ),
         child: Padding(
           padding: EdgeInsets.fromLTRB(
             _pagePadding(context),
@@ -321,6 +325,18 @@ class _DashboardHeader extends StatelessWidget {
                             compact: compact,
                           ),
                         ];
+
+                        if (useDesktopHeroLayout) {
+                          return Row(
+                            children: [
+                              for (var i = 0; i < metrics.length; i++) ...[
+                                Expanded(child: metrics[i]),
+                                if (i != metrics.length - 1)
+                                  const SizedBox(width: 12),
+                              ],
+                            ],
+                          );
+                        }
 
                         if (!compact) {
                           return Wrap(
@@ -632,8 +648,9 @@ class _PlaylistGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final columns = context.responsive<int>(mobile: 2, tablet: 3, desktop: 4);
-    final itemCount =
-        playlists.length > columns * 2 ? columns * 2 : playlists.length;
+    final itemCount = playlists.length > columns * 2
+        ? columns * 2
+        : playlists.length;
 
     return GridView.builder(
       shrinkWrap: true,
@@ -692,10 +709,9 @@ class _PlaylistCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18),
                       color: colorScheme.surfaceContainerHighest,
-                      border:
-                          isCurrent
-                              ? Border.all(color: colorScheme.primary, width: 2)
-                              : null,
+                      border: isCurrent
+                          ? Border.all(color: colorScheme.primary, width: 2)
+                          : null,
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: Stack(
@@ -707,12 +723,10 @@ class _PlaylistCard extends StatelessWidget {
                               playlist.coverImageUrl!,
                             ),
                             fit: BoxFit.cover,
-                            placeholder:
-                                (_, _) =>
-                                    _CoverPlaceholder(colorScheme: colorScheme),
-                            errorWidget:
-                                (_, _, _) =>
-                                    _CoverPlaceholder(colorScheme: colorScheme),
+                            placeholder: (_, _) =>
+                                _CoverPlaceholder(colorScheme: colorScheme),
+                            errorWidget: (_, _, _) =>
+                                _CoverPlaceholder(colorScheme: colorScheme),
                           )
                         else
                           _CoverPlaceholder(colorScheme: colorScheme),
@@ -723,10 +737,9 @@ class _PlaylistCard extends StatelessWidget {
                             width: 42,
                             height: 42,
                             decoration: BoxDecoration(
-                              color:
-                                  isCurrent
-                                      ? colorScheme.primary
-                                      : Colors.black.withValues(alpha: 0.62),
+                              color: isCurrent
+                                  ? colorScheme.primary
+                                  : Colors.black.withValues(alpha: 0.62),
                               shape: BoxShape.circle,
                               boxShadow: const [
                                 BoxShadow(
