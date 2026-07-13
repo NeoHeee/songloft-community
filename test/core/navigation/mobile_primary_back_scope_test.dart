@@ -7,14 +7,16 @@ import 'package:songloft_flutter/core/navigation/mobile_primary_back_scope.dart'
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  setUpAll(() {
+    AppConfig.isTvMode = false;
+  });
+
   setUp(() {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
-    AppConfig.isTvMode = false;
   });
 
   tearDown(() {
     debugDefaultTargetPlatformOverride = null;
-    AppConfig.isTvMode = false;
   });
 
   testWidgets('first back on a primary branch returns to home', (tester) async {
