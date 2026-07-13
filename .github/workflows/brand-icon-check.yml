@@ -1,0 +1,47 @@
+name: Platform Brand Icon Audit
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'assets/icons/**'
+      - 'web/**'
+      - 'android/app/src/main/AndroidManifest.xml'
+      - 'android/app/src/main/res/**'
+      - 'windows/runner/Runner.rc'
+      - 'windows/runner/resources/**'
+      - 'ios/Runner/**'
+      - 'macos/Runner/**'
+      - 'linux/runner/my_application.cc'
+      - 'scripts/check-brand-icons.sh'
+      - '.github/workflows/brand-icon-check.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'assets/icons/**'
+      - 'web/**'
+      - 'android/app/src/main/AndroidManifest.xml'
+      - 'android/app/src/main/res/**'
+      - 'windows/runner/Runner.rc'
+      - 'windows/runner/resources/**'
+      - 'ios/Runner/**'
+      - 'macos/Runner/**'
+      - 'linux/runner/my_application.cc'
+      - 'scripts/check-brand-icons.sh'
+      - '.github/workflows/brand-icon-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Audit Android, TV, Web, Windows and Apple icons
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run platform brand icon audit
+        run: bash scripts/check-brand-icons.sh
