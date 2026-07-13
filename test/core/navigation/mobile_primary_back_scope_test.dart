@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:songloft_flutter/config/app_config.dart';
@@ -9,14 +8,6 @@ void main() {
 
   setUpAll(() {
     AppConfig.isTvMode = false;
-  });
-
-  setUp(() {
-    debugDefaultTargetPlatformOverride = TargetPlatform.android;
-  });
-
-  tearDown(() {
-    debugDefaultTargetPlatformOverride = null;
   });
 
   testWidgets('Android primary branch root installs a non-poppable scope', (
