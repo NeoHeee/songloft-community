@@ -79,9 +79,16 @@ jobs:
             --dart-define=DEPLOY_MODE=embedded \
             --dart-define=FRONTEND_VERSION=${{ steps.vars.outputs.version }} \
             --dart-define=FRONTEND_BUILD_TIME=${{ steps.vars.outputs.build_time }}
+
+          # Keep /favicon.png as a branded compatibility fallback for browsers
+          # that request it even when explicit rel=icon tags are present.
+          cp build/web/icons/Icon-192.png build/web/favicon.png
+
           test -f build/web/index.html
           test -f build/web/main.dart.js
           grep -q "_deployMode = 'embedded'" build/web/deploy-mode.js
+          grep -q 'icons/Icon-192.png?v=community-2' build/web/index.html
+          cmp build/web/favicon.png build/web/icons/Icon-192.png
 
       - uses: docker/setup-qemu-action@v3
 
@@ -148,4 +155,8 @@ jobs:
           done
 
           curl --fail --silent http://127.0.0.1:18080/ | grep -q 'Songloft Community'
+          curl --fail --silent http://127.0.0.1:18080/ | grep -q 'icons/Icon-192.png?v=community-2'
+          curl --fail --silent http://127.0.0.1:18080/icons/Icon-192.png -o /tmp/community-icon.png
+          curl --fail --silent http://127.0.0.1:18080/favicon.png -o /tmp/community-favicon.png
+          cmp /tmp/community-icon.png /tmp/community-favicon.png
           docker exec songloft-web-smoke nginx -t
