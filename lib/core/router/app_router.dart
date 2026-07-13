@@ -18,6 +18,7 @@ import '../../features/settings/presentation/servers_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
 import '../../features/settings/presentation/tab_config_page.dart';
 import '../../shared/layouts/shell_layout.dart';
+import '../navigation/mobile_primary_back_scope.dart';
 
 /// 路由路径常量
 class AppRoutes {
@@ -144,7 +145,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                 pageBuilder:
                     (context, state) => NoTransitionPage(
                       key: state.pageKey,
-                      child: const AdaptiveLibraryPage(),
+                      child: MobilePrimaryBackScope(
+                        onReturnHome: () => context.go(AppRoutes.home),
+                        child: const AdaptiveLibraryPage(),
+                      ),
                     ),
               ),
             ],
@@ -158,7 +162,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                 pageBuilder:
                     (context, state) => NoTransitionPage(
                       key: state.pageKey,
-                      child: const PlaylistsPage(),
+                      child: MobilePrimaryBackScope(
+                        onReturnHome: () => context.go(AppRoutes.home),
+                        child: const PlaylistsPage(),
+                      ),
                     ),
                 routes: [
                   GoRoute(
@@ -183,7 +190,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                   final entryPath = state.pathParameters['entryPath'] ?? '';
                   return NoTransitionPage(
                     key: ValueKey('plugin-tab-$entryPath'),
-                    child: const SizedBox.shrink(),
+                    child: MobilePrimaryBackScope(
+                      onReturnHome: () => context.go(AppRoutes.home),
+                      child: const SizedBox.shrink(),
+                    ),
                   );
                 },
               ),
@@ -198,7 +208,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                 pageBuilder:
                     (context, state) => NoTransitionPage(
                       key: state.pageKey,
-                      child: const SettingsPage(),
+                      child: MobilePrimaryBackScope(
+                        onReturnHome: () => context.go(AppRoutes.home),
+                        child: const SettingsPage(),
+                      ),
                     ),
                 routes: [
                   GoRoute(
