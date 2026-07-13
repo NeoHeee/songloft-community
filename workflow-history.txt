@@ -1,4 +1,4 @@
-checked_at=2026-07-13T15:33:36Z
+checked_at=2026-07-13T15:34:03Z
 === workflow files ===
 .github/workflows/android-fixed-signing-v4.yml
 .github/workflows/brand-icon-check.yml
@@ -9,8 +9,7 @@ checked_at=2026-07-13T15:33:36Z
 .github/workflows/publish-community-v1.0.0-community.2.yml
 .github/workflows/publish-dev-release.yml
 .github/workflows/ui-redesign-check.yml
-
-=== release-related workflow lines ===
+=== release-related lines ===
 .github/workflows/build-and-release.yml:8:      - main      # push 到 main 自动打测试包（全平台 dev 构建 + main 的 prerelease）
 .github/workflows/build-and-release.yml:42:  group: release-${{ github.ref }}
 .github/workflows/build-and-release.yml:82:      - run: flutter build web --release --no-web-resources-cdn --dart-define=DEPLOY_MODE=${{ matrix.mode }} --dart-define=FRONTEND_VERSION=${{ steps.version.outputs.version }} --dart-define=FRONTEND_BUILD_TIME=${{ steps.version.outputs.build_time }} --dart-define=TRACELY_APP_ID=${{ secrets.TRACELY_APP_ID }} --dart-define=TRACELY_APP_SECRET=${{ secrets.TRACELY_APP_SECRET }} --dart-define=TRACELY_HOST=${{ secrets.TRACELY_HOST }}
@@ -71,10 +70,11 @@ checked_at=2026-07-13T15:33:36Z
 .github/workflows/ui-redesign-check.yml:238:# verifies theme packs, trusted catalog, sharing and formatted release sources
 .github/workflows/ui-redesign-check.yml:239:# main pushes validate Android, Web and Windows release candidates before repository rename
 .github/workflows/docker-web.yml:78:          flutter build web --release --base-href / \
-.github/workflows/inspect-release-list.yml:1:name: Inspect release and workflow history
+.github/workflows/inspect-release-list.yml:1:name: Inspect release workflow history
 .github/workflows/inspect-release-list.yml:8:      - '.github/workflows/inspect-release-list.yml'
-.github/workflows/inspect-release-list.yml:31:            echo '=== release-related workflow lines ==='
-.github/workflows/inspect-release-list.yml:32:            grep -RInE 'release|iOS-arm64-nosign|Web-embedded|Windows-x64-dev|AppImage|\.dmg|\.msix' .github/workflows || true
+.github/workflows/inspect-release-list.yml:28:          echo '=== release-related lines ===' >> workflow-history.txt
+.github/workflows/inspect-release-list.yml:29:          grep -RInE 'release|iOS-arm64-nosign|Web-embedded|Windows-x64-dev|AppImage|\.dmg|\.msix' .github/workflows >> workflow-history.txt || true
+.github/workflows/inspect-release-list.yml:37:          git commit -m "chore: record release workflow history"
 .github/workflows/community-release-branding.yml:14:  group: community-release-branding-${{ github.event.workflow_run.head_sha }}
 .github/workflows/community-release-branding.yml:18:  brand-release:
 .github/workflows/community-release-branding.yml:19:    name: Normalize release title and package filenames
@@ -176,54 +176,34 @@ checked_at=2026-07-13T15:33:36Z
 .github/workflows/publish-community-v1.0.0-community.2.yml:284:            const sums = fs.readFileSync('release-assets/SHA256SUMS.txt', 'utf8').trim();
 .github/workflows/publish-community-v1.0.0-community.2.yml:324:      - name: Record release failure
 .github/workflows/publish-community-v1.0.0-community.2.yml:330:            const marker = '<!-- community-release-status -->';
-
-=== recent workflow runs ===
-29262726288	Inspect release and workflow history	push	fix/desktop-page-width-alignment	87b27b43769d0cb20ff93f80c933e6fd021b1f46	in_progress		2026-07-13T15:33:29Z
-29262696416	Inspect release and workflow history	push	fix/desktop-page-width-alignment	ce76a8260fc8de8405d6583198b445210c53874a	completed	failure	2026-07-13T15:33:03Z
-29262644524	Inspect release list	push	fix/desktop-page-width-alignment	cdb2062079b3dbc73f11c85fb25826cb7cee80a1	completed	success	2026-07-13T15:32:20Z
-29262577214	Publish current build to dev release	push	fix/desktop-page-width-alignment	19d50e133b449150ad6da79ef0e2bd159ab4c36d	completed	success	2026-07-13T15:31:21Z
-29262528904	Inspect release list	push	fix/desktop-page-width-alignment	da22576e9dc33242756f3613dd86c5232e91b0af	completed	success	2026-07-13T15:30:41Z
-29262492704	Inspect release list	push	fix/desktop-page-width-alignment	a0e1371803bae2ebba3dcde68d2a5b6feb2fbf57	completed	success	2026-07-13T15:30:12Z
-29262473138	Inspect release list	push	fix/desktop-page-width-alignment	b12c6119418429835815fa6a2ee9924b03580f86	completed	success	2026-07-13T15:29:56Z
-29262441274	Android Fixed Signing v4	push	main	daae0345670ad96f88d89b1978ef31dbd9a87c13	in_progress		2026-07-13T15:29:29Z
-29262440637	Build and Release	push	main	daae0345670ad96f88d89b1978ef31dbd9a87c13	in_progress		2026-07-13T15:29:28Z
-29262435614	UI Redesign Check	push	main	daae0345670ad96f88d89b1978ef31dbd9a87c13	in_progress		2026-07-13T15:29:24Z
-29262435592	Docker Web Player	push	main	daae0345670ad96f88d89b1978ef31dbd9a87c13	completed	success	2026-07-13T15:29:24Z
-29260004252	UI Redesign Check	pull_request	fix/desktop-page-width-alignment	f5844dadee2ba82c729523f14c462456c4e58d69	completed	success	2026-07-13T14:55:16Z
-29260004236	Docker Web Player	pull_request	fix/desktop-page-width-alignment	f5844dadee2ba82c729523f14c462456c4e58d69	completed	success	2026-07-13T14:55:16Z
-29259985242	UI Redesign Check	pull_request	fix/desktop-page-width-alignment	41d754d60bba10f5683626ce8082e388de852331	completed	cancelled	2026-07-13T14:55:02Z
-29259983753	Docker Web Player	pull_request	fix/desktop-page-width-alignment	41d754d60bba10f5683626ce8082e388de852331	completed	cancelled	2026-07-13T14:55:01Z
-29259887317	UI Redesign Check	pull_request	fix/desktop-page-width-alignment	3983ba8d9be7794d00249e8badfc056ee528700a	completed	failure	2026-07-13T14:53:42Z
-29259883252	Docker Web Player	pull_request	fix/desktop-page-width-alignment	3983ba8d9be7794d00249e8badfc056ee528700a	completed	cancelled	2026-07-13T14:53:38Z
-29259878636	Temporary format desktop fix	push	fix/desktop-page-width-alignment	3983ba8d9be7794d00249e8badfc056ee528700a	completed	success	2026-07-13T14:53:34Z
-29259769683	Docker Web Player	pull_request	fix/desktop-page-width-alignment	d5affbb455cd3c3e49ee66c87be60802b97622e5	completed	cancelled	2026-07-13T14:52:05Z
-29259767979	UI Redesign Check	pull_request	fix/desktop-page-width-alignment	d5affbb455cd3c3e49ee66c87be60802b97622e5	completed	failure	2026-07-13T14:52:04Z
-29259758311	Docker Web Player	pull_request	fix/desktop-page-width-alignment	4b6bb7a4c39f008aaf4c7d5d9bbbddb46e499e20	completed	cancelled	2026-07-13T14:51:55Z
-29259758126	UI Redesign Check	pull_request	fix/desktop-page-width-alignment	4b6bb7a4c39f008aaf4c7d5d9bbbddb46e499e20	completed	cancelled	2026-07-13T14:51:55Z
-29259675617	UI Redesign Check	pull_request	fix/desktop-page-width-alignment	aa9b989ed24f20210cf7442f6f6d3ee244b34845	completed	failure	2026-07-13T14:50:45Z
-29259675592	Docker Web Player	pull_request	fix/desktop-page-width-alignment	aa9b989ed24f20210cf7442f6f6d3ee244b34845	completed	cancelled	2026-07-13T14:50:45Z
-29259673420	Temporary format desktop fix	push	fix/desktop-page-width-alignment	aa9b989ed24f20210cf7442f6f6d3ee244b34845	completed	success	2026-07-13T14:50:44Z
-29259533750	UI Redesign Check	pull_request	fix/desktop-page-width-alignment	b5cff968e903801d3b4d6e1f06f4ad2685daf0c5	completed	failure	2026-07-13T14:48:43Z
-29259533506	Docker Web Player	pull_request	fix/desktop-page-width-alignment	b5cff968e903801d3b4d6e1f06f4ad2685daf0c5	completed	success	2026-07-13T14:48:43Z
-29259516457	Docker Web Player	pull_request	fix/desktop-page-width-alignment	9553985fd1ea5f636ed870020aec49afe877748c	completed	cancelled	2026-07-13T14:48:28Z
-29259516401	UI Redesign Check	pull_request	fix/desktop-page-width-alignment	9553985fd1ea5f636ed870020aec49afe877748c	completed	cancelled	2026-07-13T14:48:28Z
-29259390823	Docker Web Player	pull_request	fix/desktop-page-width-alignment	e4c049a4b0a7da0c747f016effafa0810431613e	completed	cancelled	2026-07-13T14:46:39Z
-
-=== recent run artifacts ===
-RUN 29262440637
-8283993532	songloft-web-embedded	42775308	false
-8283990993	songloft-web-standalone	42779802	false
-RUN 29262435614
-8284044166	Songloft-Community-Web-preview	42779465	false
-RUN 29262435592
-8284008706	NeoHeee~songloft-community~X2GG2F.dockerbuild	84703	false
-RUN 29260004252
-8283262176	Songloft-Community-Windows-x64-preview	46983492	false
-8283226932	Songloft-Community-Android-preview	59261740	false
-8283004791	Songloft-Community-Web-preview	42778431	false
-RUN 29260004236
-8282960117	NeoHeee~songloft-community~0V590S.dockerbuild	34292	false
-RUN 29259533506
-8282763153	NeoHeee~songloft-community~E8SQYS.dockerbuild	33995	false
-RUN 29259390823
-8282702647	NeoHeee~songloft-community~QT51IX.dockerbuild	35244	false
+=== recent runs ===
+in_progress		chore: simplify release workflow inspection	Inspect release list	fix/desktop-page-width-alignment	push	29262760988	8s	2026-07-13T15:33:57Z
+completed	success	chore: rerun workflow artifact inspection	Inspect release list	fix/desktop-page-width-alignment	push	29262726288	22s	2026-07-13T15:33:29Z
+completed	failure	chore: inspect release workflow artifacts	Inspect release list	fix/desktop-page-width-alignment	push	29262696416	29s	2026-07-13T15:33:03Z
+completed	success	chore: refresh release details	Inspect release list	fix/desktop-page-width-alignment	push	29262644524	14s	2026-07-13T15:32:20Z
+completed	success	ci: publish validated build to dev release	Publish current build to dev release	fix/desktop-page-width-alignment	push	29262577214	43s	2026-07-13T15:31:21Z
+completed	success	chore: inspect release assets	Inspect release list	fix/desktop-page-width-alignment	push	29262528904	14s	2026-07-13T15:30:41Z
+completed	success	chore: record current release list for publishing	Inspect release list	fix/desktop-page-width-alignment	push	29262492704	9s	2026-07-13T15:30:12Z
+completed	success	chore: inspect current release list	Inspect release list	fix/desktop-page-width-alignment	push	29262473138	8s	2026-07-13T15:29:56Z
+in_progress		fix(desktop): unify main page widths on Web and Windows (#38)	Android Fixed Signing v4	main	push	29262441274	4m36s	2026-07-13T15:29:29Z
+in_progress		fix(desktop): unify main page widths on Web and Windows (#38)	Build and Release	main	push	29262440637	4m37s	2026-07-13T15:29:28Z
+in_progress		fix(desktop): unify main page widths on Web and Windows (#38)	UI Redesign Check	main	push	29262435614	4m41s	2026-07-13T15:29:24Z
+completed	success	fix(desktop): unify main page widths on Web and Windows (#38)	Docker Web Player	main	push	29262435592	2m16s	2026-07-13T15:29:24Z
+completed	success	fix(desktop): unify main page widths on Web and Windows	UI Redesign Check	fix/desktop-page-width-alignment	pull_request	29260004252	11m45s	2026-07-13T14:55:16Z
+completed	success	fix(desktop): unify main page widths on Web and Windows	Docker Web Player	fix/desktop-page-width-alignment	pull_request	29260004236	1m52s	2026-07-13T14:55:16Z
+completed	cancelled	fix(desktop): unify main page widths on Web and Windows	UI Redesign Check	fix/desktop-page-width-alignment	pull_request	29259985242	17s	2026-07-13T14:55:02Z
+completed	cancelled	fix(desktop): unify main page widths on Web and Windows	Docker Web Player	fix/desktop-page-width-alignment	pull_request	29259983753	19s	2026-07-13T14:55:01Z
+completed	failure	fix(desktop): unify main page widths on Web and Windows	UI Redesign Check	fix/desktop-page-width-alignment	pull_request	29259887317	26s	2026-07-13T14:53:42Z
+completed	cancelled	fix(desktop): unify main page widths on Web and Windows	Docker Web Player	fix/desktop-page-width-alignment	pull_request	29259883252	1m31s	2026-07-13T14:53:38Z
+completed	success	ci: format after resolving dependencies	Temporary format desktop fix	fix/desktop-page-width-alignment	push	29259878636	51s	2026-07-13T14:53:34Z
+completed	cancelled	fix(desktop): unify main page widths on Web and Windows	Docker Web Player	fix/desktop-page-width-alignment	pull_request	29259769683	1m37s	2026-07-13T14:52:05Z
+completed	failure	fix(desktop): unify main page widths on Web and Windows	UI Redesign Check	fix/desktop-page-width-alignment	pull_request	29259767979	34s	2026-07-13T14:52:04Z
+completed	cancelled	fix(desktop): unify main page widths on Web and Windows	Docker Web Player	fix/desktop-page-width-alignment	pull_request	29259758311	11s	2026-07-13T14:51:55Z
+completed	cancelled	fix(desktop): unify main page widths on Web and Windows	UI Redesign Check	fix/desktop-page-width-alignment	pull_request	29259758126	13s	2026-07-13T14:51:55Z
+completed	failure	fix(desktop): unify main page widths on Web and Windows	UI Redesign Check	fix/desktop-page-width-alignment	pull_request	29259675617	35s	2026-07-13T14:50:45Z
+completed	cancelled	fix(desktop): unify main page widths on Web and Windows	Docker Web Player	fix/desktop-page-width-alignment	pull_request	29259675592	1m27s	2026-07-13T14:50:45Z
+completed	success	ci: format with pinned Flutter version	Temporary format desktop fix	fix/desktop-page-width-alignment	push	29259673420	39s	2026-07-13T14:50:44Z
+completed	failure	fix(desktop): unify main page widths on Web and Windows	UI Redesign Check	fix/desktop-page-width-alignment	pull_request	29259533750	55s	2026-07-13T14:48:43Z
+completed	success	fix(desktop): unify main page widths on Web and Windows	Docker Web Player	fix/desktop-page-width-alignment	pull_request	29259533506	1m52s	2026-07-13T14:48:43Z
+completed	cancelled	fix(desktop): unify main page widths on Web and Windows	Docker Web Player	fix/desktop-page-width-alignment	pull_request	29259516457	18s	2026-07-13T14:48:28Z
+completed	cancelled	fix(desktop): unify main page widths on Web and Windows	UI Redesign Check	fix/desktop-page-width-alignment	pull_request	29259516401	20s	2026-07-13T14:48:28Z
