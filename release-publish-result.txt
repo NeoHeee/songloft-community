@@ -1,0 +1,5 @@
+status=published
+tag=dev
+target=daae0345670ad96f88d89b1978ef31dbd9a87c13
+url=https://github.com/NeoHeee/songloft-community/releases/tag/dev
+assets=6
